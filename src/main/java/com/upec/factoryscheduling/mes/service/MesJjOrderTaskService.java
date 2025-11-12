@@ -6,6 +6,11 @@ import com.upec.factoryscheduling.mes.entity.MesJjOrderTask;
 import com.upec.factoryscheduling.mes.repository.MesJjOrderTaskRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.data.web.SpringDataWebProperties;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
@@ -32,8 +37,8 @@ public class MesJjOrderTaskService {
         this.mesJjOrderTaskRepository = mesJjOrderTaskRepository;
     }
 
-    public List<MesJjOrderTask> queryAllByOrderNoInAndTaskStatus(List<String> orderNos, List<String> taskStatus) {
-        return mesJjOrderTaskRepository.queryAllByOrderNoInAndTaskStatusIn(orderNos, taskStatus);
+    public List<MesJjOrderTask> queryAllByTaskNoInAndTaskStatusIn(List<String> orderNos, List<String> taskStatus) {
+        return mesJjOrderTaskRepository.queryAllByTaskNoInAndTaskStatusIn(orderNos, taskStatus);
     }
     
     /**
@@ -145,7 +150,8 @@ public class MesJjOrderTaskService {
         
         // 执行分页查询
         List<OrderTaskQueryDTO> dtoList = mySqlTemplate.query(sqlBuilder.toString(), params.toArray(), rowMapper);
-        
+
+        Pageable pageable = PageRequest.of(pageNum - 1, pageSize, Sort.by(Sort.Direction.DESC, "orderPlanQuantity"));
         // 构建返回结果
         Map<String, Object> result = new HashMap<>();
         result.put("records", dtoList);

@@ -99,9 +99,10 @@ public class MesOrderService {
         this.mesJjRouteProcedureService = mesJjRouteProcedureService;
     }
 
-    public List<Timeslot> mergePlannerData(List<String> orderNos) {
-        List<MesJjOrder> mesOrders = getMesOrders(orderNos);
-        List<MesJjOrderTask> mesOrderTasks = getOrderTasks(mesOrders);
+    public List<Timeslot> mergePlannerData(List<String> taskNos) {
+
+        List<MesJjOrderTask> mesOrderTasks = getOrderTasks(taskNos);
+        List<MesJjOrder> mesOrders = getMesOrders(taskNos);
         List<MesJjProcedure> mesProcedures = getProcedures(mesOrderTasks);
         List<String> workCenterCodes =
                 mesProcedures.stream().map(MesJjProcedure::getWorkCenterSeq).distinct().collect(Collectors.toList());
@@ -250,11 +251,10 @@ public class MesOrderService {
     }
 
 
-    private List<MesJjOrderTask> getOrderTasks(List<MesJjOrder> mesOrders) {
-        List<String> orderNos = mesOrders.stream().map(MesJjOrder::getOrderNo).distinct().collect(Collectors.toList());
+    private List<MesJjOrderTask> getOrderTasks(List<String> taskNos) {
         List<MesJjOrderTask> orderTasks = new ArrayList<>();
-        Lists.partition(orderNos, 999).forEach(orderNo -> {
-            orderTasks.addAll(mesJjOrderTaskService.queryAllByOrderNoInAndTaskStatus(orderNo, List.of("生产中")));
+        Lists.partition(taskNos, 999).forEach(taskNo -> {
+            orderTasks.addAll(mesJjOrderTaskService.queryAllByTaskNoInAndTaskStatusIn(taskNo, List.of("生产中")));
         });
         return orderTasks;
     }

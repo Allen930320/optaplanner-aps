@@ -13,4 +13,5 @@ public interface MesJjOrderTaskRepository extends JpaRepository<MesJjOrderTask, 
 
     List<MesJjOrderTask> queryAllByOrderNoInAndTaskStatusIn(Collection<String> orderNos, Collection<String> taskStatuses);
 
+    List<MesJjOrderTask> queryAllByTaskNoInAndTaskStatusIn(Collection<String> taskNos, Collection<String> taskStatuses);
 }

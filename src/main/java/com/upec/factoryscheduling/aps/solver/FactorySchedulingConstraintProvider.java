@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.solver;
+package com.upec.factoryscheduling.aps.solver;
 
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.entity.WorkCenterMaintenance;
@@ -106,17 +106,17 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
         return constraintFactory.forEach(Timeslot.class)
                 // 跳过手动设置的时间槽，它们不需要优化开始时间
                 .filter(timeslot -> !timeslot.isManual())
-                .filter(timeslot -> timeslot.getOrder() != null && timeslot.getStartTime() != null && 
+                .filter(timeslot -> timeslot.getOrder() != null && timeslot.getStartTime() != null &&
                         timeslot.getOrder().getPlanStartDate() != null && timeslot.getSliceIndex() == 0)
                 .penalize("Order start date proximity", HardSoftScore.ofSoft(1),
                         timeslot -> {
                             // 计算时间槽开始时间与订单计划开始时间的差异（分钟）
                             // 将LocalDate转换为LocalDateTime进行比较
                             LocalDateTime planStartDateTime = LocalDateTime.of(
-                                    timeslot.getOrder().getPlanStartDate(), 
+                                    timeslot.getOrder().getPlanStartDate(),
                                     LocalTime.MIN);
                             long minutesDiff = ChronoUnit.MINUTES.between(
-                                    planStartDateTime, 
+                                    planStartDateTime,
                                     timeslot.getStartTime());
                             // 只惩罚比计划时间晚的情况，不惩罚提前开始
                             return Math.max(0, (int)minutesDiff);

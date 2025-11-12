@@ -2,6 +2,7 @@ package com.upec.factoryscheduling.mes.controller;
 
 import com.upec.factoryscheduling.mes.service.MesOrderService;
 import com.upec.factoryscheduling.mes.service.MesJjOrderTaskService;
+import com.upec.factoryscheduling.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,10 +21,10 @@ public class MesOrderController {
     @Autowired
     private MesJjOrderTaskService mesJjOrderTaskService;
 
-    @PostMapping("syncData")
-    public ResponseEntity<Void> syncData(@RequestBody List<String> orderNos) {
+    @PostMapping("/syncData")
+    public ApiResponse<Void> syncData(@RequestBody List<String> orderNos) {
         mesOrderService.mergePlannerData(orderNos);
-        return ResponseEntity.ok().build();
+        return ApiResponse.success();
     }
     
     /**
