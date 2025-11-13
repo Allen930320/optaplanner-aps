@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Pagination, Button, Space, Typography, message, Form, Input, DatePicker, Select, Row, Col, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { queryOrderTasksWithPagination } from '../services/orderService';
+import {queryOrderTasksWithPagination, syncOrderData} from '../services/orderService';
 import type { OrderTask, OrderTaskQueryParams } from '../services/orderService';
 
 const { Title } = Typography;
@@ -119,12 +119,12 @@ const OrderQueryPage: React.FC = () => {
       key: 'orderNo',
       width: 150,
     },
-    {
-      title: '订单名称',
-      dataIndex: 'orderName',
-      key: 'orderName',
-      width: 150,
-    },
+    // {
+    //   title: '订单名称',
+    //   dataIndex: 'orderName',
+    //   key: 'orderName',
+    //   width: 150,
+    // },
     {
       title: '合同编号',
       dataIndex: 'contractNum',
@@ -135,50 +135,44 @@ const OrderQueryPage: React.FC = () => {
       title: '任务状态',
       dataIndex: 'taskStatus',
       key: 'taskStatus',
-      width: 100,
+      width: 120,
     },
     {
       title: '订单状态',
       dataIndex: 'orderStatus',
       key: 'orderStatus',
-      width: 100,
+      width: 120,
     },
     {
       title: '计划数量',
       dataIndex: 'planQuantity',
       key: 'planQuantity',
-      width: 100,
-    },
-    {
-      title: '订单计划数量',
-      dataIndex: 'orderPlanQuantity',
-      key: 'orderPlanQuantity',
       width: 120,
     },
     {
       title: '计划开始日期',
       dataIndex: 'planStartDate',
       key: 'planStartDate',
-      width: 120,
+      width: 150,
     },
     {
       title: '计划结束日期',
       dataIndex: 'planEndDate',
       key: 'planEndDate',
-      width: 120,
+      width: 150,
     },
     {
       title: '实际开始日期',
       dataIndex: 'factStartDate',
       key: 'factStartDate',
-      width: 120,
+      width: 150,
       render: (date) => date || '-',
     },
     {
       title: '实际结束日期',
       dataIndex: 'factEndDate',
       key: 'factEndDate',
-      width: 120,
+      width: 150,
       render: (date) => date || '-',
     },
     {
@@ -197,7 +191,7 @@ const OrderQueryPage: React.FC = () => {
         <Form
           form={form}
           layout="horizontal"
-          labelCol={{ span: 4 }}
+          labelCol={{ span: 6 }}
           wrapperCol={{ span: 10 }}
         >
           <Row gutter={[16, 24]}>
@@ -242,15 +236,26 @@ const OrderQueryPage: React.FC = () => {
         <Button 
           type="primary" 
           disabled={selectedRowKeys.length === 0}
-          onClick={() => {
-            const selectedOrders = orderTasks.filter(order => 
-              selectedRowKeys.includes(order.orderNo)
-            );
-            message.success(`已选择 ${selectedOrders.length} 条订单`);
-            console.log('选中的订单数据:', selectedOrders);
+          loading={loading}
+          onClick={async () => {
+            try {
+              setLoading(true);
+              // 提取选中任务的taskNo数组
+              const selectedTaskNos = selectedRowKeys.map(key => key.toString());
+              console.log('准备同步的任务编号:', selectedTaskNos);
+              
+              // 调用同步接口
+              await syncOrderData(selectedTaskNos);
+              message.success(`成功同步 ${selectedTaskNos.length} 条数据到MES系统`);
+            } catch (error) {
+              message.error('同步数据失败，请稍后重试');
+              console.error('同步数据错误:', error);
+            } finally {
+              setLoading(false);
+            }
           }}
         >
-          批量操作
+          同步数据
         </Button>
       </Space>
       <Table

@@ -3,6 +3,7 @@ package com.upec.factoryscheduling.utils;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.data.domain.Page;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,6 +19,7 @@ public class ApiResponse<T> {
     private T rows;
     private String reqId;
     private Long total;
+
 
     public static <T> ApiResponse<T> success(T data) {
         return ApiResponse.success(data, "success");
@@ -44,6 +46,10 @@ public class ApiResponse<T> {
             if (data instanceof Collection) {
                 List<T> list = (List<T>) data;
                 apiResponse.setTotal((long) list.size());
+            }
+            if (data instanceof Page) {
+                Page<T> page = (Page<T>) data;
+                apiResponse.setTotal(page.getTotalElements());
             }
         }
         return apiResponse;
@@ -76,5 +82,9 @@ public class ApiResponse<T> {
             }
         }
         return apiResponse;
+    }
+
+    public static <T> ApiResponse<T> ok(T data) {
+        return ApiResponse.success(data);
     }
 }

@@ -102,7 +102,8 @@ public class MesOrderService {
     public List<Timeslot> mergePlannerData(List<String> taskNos) {
 
         List<MesJjOrderTask> mesOrderTasks = getOrderTasks(taskNos);
-        List<MesJjOrder> mesOrders = getMesOrders(taskNos);
+        List<MesJjOrder> mesOrders =
+                getMesOrders(mesOrderTasks.stream().map(MesJjOrderTask::getOrderNo).distinct().collect(Collectors.toList()));
         List<MesJjProcedure> mesProcedures = getProcedures(mesOrderTasks);
         List<String> workCenterCodes =
                 mesProcedures.stream().map(MesJjProcedure::getWorkCenterSeq).distinct().collect(Collectors.toList());
