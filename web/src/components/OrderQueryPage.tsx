@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Table, Pagination, Button, Space, Typography, message, Form, Input, DatePicker, Select, Row, Col, Card } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import {queryOrderTasksWithPagination, syncOrderData} from '../services/orderService';
-import type { OrderTask, OrderTaskQueryParams } from '../services/orderService';
+import {queryOrderTasksWithPagination, syncOrderData} from '../services/api.ts';
+import type { OrderTask, OrderTaskQueryParams } from '../services/model.ts';
 
 const { Title } = Typography;
 const { RangePicker } = DatePicker;
@@ -15,7 +15,7 @@ const OrderQueryPage: React.FC = () => {
   const [total, setTotal] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [pageSize, setPageSize] = useState<number>(20);
-  const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+  const [selectedRowKeys] = useState<React.Key[]>([]);
   
   // 状态选项
   const statusOptions = [
@@ -28,13 +28,9 @@ const OrderQueryPage: React.FC = () => {
   // 行选择配置
   const rowSelection = {
     selectedRowKeys,
-    onChange: (newSelectedRowKeys: React.Key[]) => {
-      console.log('选中的行:', newSelectedRowKeys);
-      setSelectedRowKeys(newSelectedRowKeys);
-    },
   };
-  
-  // 分页变化处理
+
+    // 分页变化处理
   const handlePageChange = (page: number, size: number) => {
     setCurrentPage(page);
     setPageSize(size);

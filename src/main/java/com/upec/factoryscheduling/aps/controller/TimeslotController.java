@@ -2,7 +2,7 @@ package com.upec.factoryscheduling.aps.controller;
 
 import com.upec.factoryscheduling.aps.service.TimeslotService;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
-import com.upec.factoryscheduling.utils.ApiResponse;
+import com.upec.factoryscheduling.common.utils.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;

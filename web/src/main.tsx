@@ -1,4 +1,5 @@
 // 导入polyfill以支持Chrome 75等旧版浏览器
+// 使用标准导入方式
 import 'core-js/stable';
 import 'regenerator-runtime/runtime';
 

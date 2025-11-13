@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.utils;
+package com.upec.factoryscheduling.common.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;

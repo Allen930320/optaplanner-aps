@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.utils;
+package com.upec.factoryscheduling.common.utils;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;

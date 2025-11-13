@@ -3,7 +3,7 @@ package com.upec.factoryscheduling.aps.controller;
 import com.upec.factoryscheduling.aps.entity.WorkCenter;
 import com.upec.factoryscheduling.aps.service.WorkCenterService;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.upec.factoryscheduling.utils.ApiResponse;
+import com.upec.factoryscheduling.common.utils.ApiResponse;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

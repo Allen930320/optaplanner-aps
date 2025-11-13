@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.configuration;
+package com.upec.factoryscheduling.common.configuration;
 
 
 import org.springframework.context.annotation.Bean;

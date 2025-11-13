@@ -5,7 +5,7 @@ import com.upec.factoryscheduling.aps.resquest.ProcedureRequest;
 import com.upec.factoryscheduling.aps.service.SchedulingService;
 import com.upec.factoryscheduling.aps.service.TimeslotService;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
-import com.upec.factoryscheduling.utils.ApiResponse;
+import com.upec.factoryscheduling.common.utils.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.optaplanner.core.api.score.ScoreExplanation;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
