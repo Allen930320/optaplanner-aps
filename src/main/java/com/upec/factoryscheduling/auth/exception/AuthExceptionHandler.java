@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.common.auth.exception;
+package com.upec.factoryscheduling.auth.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

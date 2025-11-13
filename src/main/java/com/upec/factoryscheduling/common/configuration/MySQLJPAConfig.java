@@ -25,7 +25,7 @@ import java.util.Properties;
 @EnableJpaRepositories(
         transactionManagerRef = "mysqlTransactionManager",
         entityManagerFactoryRef = "mySqlSessionFactory",
-        basePackages = {"com.upec.factoryscheduling.mes"}  // 确保扫描所有存储库
+        basePackages = {"com.upec.factoryscheduling.mes","com.upec.factoryscheduling.auth"}  // 确保扫描所有存储库
 )
 public class MySQLJPAConfig {
 
@@ -47,7 +47,7 @@ public class MySQLJPAConfig {
         LocalContainerEntityManagerFactoryBean managerFactoryBean = new LocalContainerEntityManagerFactoryBean();
         managerFactoryBean.setDataSource(mysqlDataSource);
         managerFactoryBean.setJpaVendorAdapter(jpaVendorAdapter);
-        managerFactoryBean.setPackagesToScan("com.upec.factoryscheduling.mes");
+        managerFactoryBean.setPackagesToScan("com.upec.factoryscheduling.mes", "com.upec.factoryscheduling.auth");
         managerFactoryBean.setPersistenceUnitName("mysqlPersistenceUnit");
         Properties jpaProperties = getProperties();
         managerFactoryBean.setJpaProperties(jpaProperties);

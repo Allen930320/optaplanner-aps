@@ -1,7 +1,7 @@
-package com.upec.factoryscheduling.common.auth.config;
+package com.upec.factoryscheduling.auth.config;
 
-import com.upec.factoryscheduling.common.auth.filter.JwtAuthenticationFilter;
-import com.upec.factoryscheduling.common.auth.service.UserDetailsServiceImpl;
+import com.upec.factoryscheduling.auth.filter.JwtAuthenticationFilter;
+import com.upec.factoryscheduling.auth.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/h2-console/**", "/api/test/public").permitAll()
+                        .antMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/h2-console/**", "/api/test/public").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.common.auth.dto;
+package com.upec.factoryscheduling.auth.dto;
 
 import lombok.Data;
 

@@ -1,6 +1,6 @@
-package com.upec.factoryscheduling.common.auth.repository;
+package com.upec.factoryscheduling.auth.repository;
 
-import com.upec.factoryscheduling.common.auth.entity.User;
+import com.upec.factoryscheduling.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

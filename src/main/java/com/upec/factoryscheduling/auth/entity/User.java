@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.common.auth.entity;
+package com.upec.factoryscheduling.auth.entity;
 
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

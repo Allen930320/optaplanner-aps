@@ -1,4 +1,4 @@
-package com.upec.factoryscheduling.common.auth.utils;
+package com.upec.factoryscheduling.auth.utils;
 
 import io.jsonwebtoken.*;
 import org.springframework.beans.factory.annotation.Value;

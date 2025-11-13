@@ -1,7 +1,6 @@
-package com.upec.factoryscheduling.common.auth.service;
+package com.upec.factoryscheduling.auth.service;
 
-import com.upec.factoryscheduling.common.auth.entity.User;
-import com.upec.factoryscheduling.common.auth.repository.UserRepository;
+import com.upec.factoryscheduling.auth.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

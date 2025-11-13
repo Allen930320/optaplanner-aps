@@ -1,10 +1,10 @@
 package com.upec.factoryscheduling.common.auth;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.upec.factoryscheduling.common.auth.dto.LoginRequest;
-import com.upec.factoryscheduling.common.auth.dto.RegisterRequest;
-import com.upec.factoryscheduling.common.auth.entity.User;
-import com.upec.factoryscheduling.common.auth.repository.UserRepository;
+import com.upec.factoryscheduling.auth.dto.LoginRequest;
+import com.upec.factoryscheduling.auth.dto.RegisterRequest;
+import com.upec.factoryscheduling.auth.entity.User;
+import com.upec.factoryscheduling.auth.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

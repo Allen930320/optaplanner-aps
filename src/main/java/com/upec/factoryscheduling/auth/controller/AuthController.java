@@ -1,13 +1,12 @@
-package com.upec.factoryscheduling.common.auth.controller;
+package com.upec.factoryscheduling.auth.controller;
 
-import com.upec.factoryscheduling.common.auth.dto.LoginRequest;
-import com.upec.factoryscheduling.common.auth.dto.LoginResponse;
-import com.upec.factoryscheduling.common.auth.dto.RegisterRequest;
-import com.upec.factoryscheduling.common.auth.service.AuthService;
+import com.upec.factoryscheduling.auth.dto.LoginRequest;
+import com.upec.factoryscheduling.auth.dto.LoginResponse;
+import com.upec.factoryscheduling.auth.dto.RegisterRequest;
+import com.upec.factoryscheduling.auth.service.AuthService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;

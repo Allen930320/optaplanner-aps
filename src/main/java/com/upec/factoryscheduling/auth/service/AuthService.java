@@ -1,9 +1,9 @@
-package com.upec.factoryscheduling.common.auth.service;
+package com.upec.factoryscheduling.auth.service;
 
-import com.upec.factoryscheduling.common.auth.dto.LoginRequest;
-import com.upec.factoryscheduling.common.auth.dto.LoginResponse;
-import com.upec.factoryscheduling.common.auth.dto.RegisterRequest;
-import com.upec.factoryscheduling.common.auth.entity.User;
+import com.upec.factoryscheduling.auth.dto.LoginRequest;
+import com.upec.factoryscheduling.auth.dto.LoginResponse;
+import com.upec.factoryscheduling.auth.dto.RegisterRequest;
+import com.upec.factoryscheduling.auth.entity.User;
 
 /**
  * 认证服务接口

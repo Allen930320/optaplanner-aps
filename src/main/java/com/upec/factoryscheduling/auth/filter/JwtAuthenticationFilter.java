@@ -1,7 +1,7 @@
-package com.upec.factoryscheduling.common.auth.filter;
+package com.upec.factoryscheduling.auth.filter;
 
-import com.upec.factoryscheduling.common.auth.service.UserDetailsServiceImpl;
-import com.upec.factoryscheduling.common.auth.utils.JwtUtils;
+import com.upec.factoryscheduling.auth.service.UserDetailsServiceImpl;
+import com.upec.factoryscheduling.auth.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
