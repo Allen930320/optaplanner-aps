@@ -1,3 +1,15 @@
+import axios from 'axios';
+
+// 创建axios实例
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8082',
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true // 允许跨域请求携带cookies
+});
+
 // 登录响应接口
 export interface LoginResponse {
   success: boolean;
@@ -10,6 +22,27 @@ export interface LoginResponse {
   };
 }
 
+// 注册请求接口
+export interface RegisterRequest {
+  username: string;
+  password: string;
+  email: string;
+  phone: string;
+}
+
+// 注册响应接口
+export interface RegisterResponse {
+  code: number;
+  msg: string;
+  data: string;
+}
+
+// 登录请求接口
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
 // 用户信息接口
 export interface UserInfo {
   username: string;
@@ -18,39 +51,35 @@ export interface UserInfo {
   isLoggedIn: boolean;
 }
 
-// 模拟登录API函数
+// 登录API函数
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
   try {
-    // 预留真实API调用接口，但目前使用本地验证
-    // const response = await apiClient.post('/api/auth/login', { username, password });
-    // return response;
+    // 调用真实API
+    const response = await apiClient.post('/api/auth/login', { username, password });
     
-    // 模拟API响应延迟
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // 本地验证逻辑（写死的admin/123456）
-    if (username === 'admin' && password === '123456') {
+    if (response.data.code === 200) {
       const userInfo: UserInfo = {
-        username: 'admin',
-        name: '管理员',
-        permissions: ['admin'],
+        username: response.data.data.username,
+        name: response.data.data.username,
+        permissions: ['user'],
         isLoggedIn: true
       };
       
       // 保存用户信息到localStorage
       localStorage.setItem('userInfo', JSON.stringify(userInfo));
       localStorage.setItem('isLoggedIn', 'true');
+      localStorage.setItem('token', response.data.data.token);
       
       return {
         success: true,
-        message: '登录成功',
-        token: 'mock-token-' + Date.now(),
+        message: response.data.msg,
+        token: response.data.data.token,
         user: userInfo
       };
     } else {
       return {
         success: false,
-        message: '用户名或密码错误'
+        message: response.data.msg || '登录失败'
       };
     }
   } catch (error) {
@@ -62,15 +91,27 @@ export const login = async (username: string, password: string): Promise<LoginRe
   }
 };
 
+// 注册API函数
+export const register = async (registerData: RegisterRequest): Promise<RegisterResponse> => {
+  try {
+    const response = await apiClient.post('/api/auth/register', registerData);
+    return response.data;
+  } catch (error) {
+    console.error('注册错误:', error);
+    throw new Error('注册失败，请重试');
+  }
+};
+
 // 登出函数
 export const logout = async (): Promise<void> => {
   try {
-    // 预留真实API调用接口
-    // await apiClient.post('/api/auth/logout');
+    // 调用真实API
+    await apiClient.post('/api/auth/logout');
     
     // 清除本地存储的用户信息
     localStorage.removeItem('userInfo');
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('token');
     
     // 刷新页面或跳转到登录页
     window.location.href = '/login';
@@ -79,6 +120,7 @@ export const logout = async (): Promise<void> => {
     // 即使API调用失败，也清除本地状态
     localStorage.removeItem('userInfo');
     localStorage.removeItem('isLoggedIn');
+    localStorage.removeItem('token');
     window.location.href = '/login';
   }
 };

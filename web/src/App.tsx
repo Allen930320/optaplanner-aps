@@ -7,6 +7,7 @@ import HomePage from './components/HomePage';
 import OrderQueryPage from './components/OrderQueryPage';
 import OrderTasksPage from './components/OrderTasksPage';
 import LoginPage from './components/LoginPage';
+import RegisterPage from './components/RegisterPage';
 import { isLoggedIn, logout } from './services/authService';
 import 'antd/dist/reset.css';
 import './App.css';
@@ -107,6 +108,7 @@ const AppContent = () => {
           <Content className="login-content">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
               <Route path="*" element={<Navigate to="/login" replace />} />
             </Routes>
           </Content>

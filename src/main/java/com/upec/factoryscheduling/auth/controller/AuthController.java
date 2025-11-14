@@ -4,6 +4,7 @@ import com.upec.factoryscheduling.auth.dto.LoginRequest;
 import com.upec.factoryscheduling.auth.dto.LoginResponse;
 import com.upec.factoryscheduling.auth.dto.RegisterRequest;
 import com.upec.factoryscheduling.auth.service.AuthService;
+import com.upec.factoryscheduling.common.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,13 +32,12 @@ public class AuthController {
      * @return 登录响应
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ApiResponse<?> login(@Valid @RequestBody LoginRequest loginRequest) {
         try {
             LoginResponse response = authService.login(loginRequest);
-            return ResponseEntity.ok(response);
+            return ApiResponse.ok(response);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body("登录失败: " + e.getMessage());
+            return ApiResponse.error(e.getMessage());
         }
     }
 
@@ -47,14 +47,12 @@ public class AuthController {
      * @return 注册结果
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
+    public ApiResponse<?> register(@Valid @RequestBody RegisterRequest registerRequest) {
         try {
             authService.register(registerRequest);
-            return ResponseEntity.status(HttpStatus.CREATED)
-                    .body("注册成功");
+            return ApiResponse.ok("注册成功");
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body("注册失败: " + e.getMessage());
+            return ApiResponse.error("注册失败: " + e.getMessage());
         }
     }
 
@@ -63,8 +61,8 @@ public class AuthController {
      * @return 登出结果
      */
     @PostMapping("/logout")
-    public ResponseEntity<?> logout() {
+    public ApiResponse<?> logout() {
         authService.logout();
-        return ResponseEntity.ok("登出成功");
+        return ApiResponse.ok("登出成功");
     }
 }

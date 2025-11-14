@@ -37,12 +37,14 @@ spring:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: true
 server:
-  port: 8081
+  port: 8082
 
 # JWT 配置
 jwt:
-  secret: your-secret-key-change-in-production  # 在生产环境中请修改为强密钥
+  secret: "tWgVv0IDPl9WP24e17lbDkuMoqUwSPhTKcTz+VnylztDI+gERCeOQiu0p+Cc3z/ohceEED6d8vQDJVgmS4e1sw=="  # 在生产环境中请修改为强密钥
   expiration: 86400000  # 24小时，单位毫秒
   issuer: aps-system  # 签发者
 optaplanner:

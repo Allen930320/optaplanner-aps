@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, Typography, message, Layout } from 'antd';
+import { Form, Input, Button, Card, Typography, message, Layout, Divider } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
+import { Link } from 'react-router-dom';
 import { login } from '../services/authService';
 
-const { Title } = Typography;
+const { Title, Text } = Typography;
 const { Content } = Layout;
 
 const LoginPage: React.FC = () => {
@@ -95,6 +96,15 @@ const LoginPage: React.FC = () => {
                 登录
               </Button>
             </Form.Item>
+            
+            <Divider />
+            
+            <div style={{ textAlign: 'center' }}>
+              <Text type="secondary">还没有账户？</Text>
+              <Link to="/register" style={{ marginLeft: '8px' }}>
+                立即注册
+              </Link>
+            </div>
             
             <div style={{ textAlign: 'center', color: '#999', marginTop: '16px' }}>
               <p>提示：用户名：admin，密码：123456</p>

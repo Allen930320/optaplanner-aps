@@ -4,12 +4,27 @@ import type { OrderTaskQueryParams, Task, OrderTask, PageResponse, ApiResponse, 
 
 // 创建axios实例
 const apiClient = axios.create({
-  baseURL: 'http://localhost:8081',
+  baseURL: 'http://localhost:8082',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true // 允许跨域请求携带cookies
 });
+
+// 请求拦截器 - 添加JWT令牌
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // 响应拦截器
 apiClient.interceptors.response.use(
@@ -18,6 +33,13 @@ apiClient.interceptors.response.use(
   },
   (error) => {
     console.error('API请求错误:', error);
+    // 如果返回401未授权，清除本地存储并跳转到登录页
+    if (error.response?.status === 401) {
+      localStorage.removeItem('userInfo');
+      localStorage.removeItem('isLoggedIn');
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
     return Promise.reject(error);
   }
 );
