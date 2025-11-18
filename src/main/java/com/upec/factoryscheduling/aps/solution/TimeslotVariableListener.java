@@ -40,9 +40,9 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
             scoreDirector.afterVariableChanged(timeslot, "dateTime");
             
             // 如果手动设置了startTime，也需要更新endTime
-            if (timeslot.getDuration() > 0) {
+            if (timeslot.getDuration().doubleValue() > 0) {
                 scoreDirector.beforeVariableChanged(timeslot, "endTime");
-                timeslot.setEndTime(timeslot.getStartTime().plusMinutes((long) (timeslot.getDuration() * 60)));
+                timeslot.setEndTime(timeslot.getStartTime().plusMinutes((long) (timeslot.getDuration().doubleValue() * 60)));
                 scoreDirector.afterVariableChanged(timeslot, "endTime");
             }
         } else {
@@ -72,9 +72,9 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         }
         
         // 计算并更新endTime字段
-        if (timeslot.getStartTime() != null && timeslot.getDuration() > 0) {
+        if (timeslot.getStartTime() != null && timeslot.getDuration().doubleValue() > 0) {
             scoreDirector.beforeVariableChanged(timeslot, "endTime");
-            timeslot.setEndTime(timeslot.getStartTime().plusMinutes((long) (timeslot.getDuration() * 60)));
+            timeslot.setEndTime(timeslot.getStartTime().plusMinutes((long) (timeslot.getDuration().doubleValue() * 60)));
             scoreDirector.afterVariableChanged(timeslot, "endTime");
         } else if (timeslot.getStartTime() == null) {
             // 如果startTime为null，重置endTime

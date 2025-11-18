@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -636,7 +637,7 @@ public class SchedulingService {
             
             // 计算当日累计使用工时
             double countDailyHours = timeslotList.stream()
-                    .mapToDouble(Timeslot::getDuration)
+                    .mapToDouble(t->t.getDuration().doubleValue())
                     .sum();
             
             // 获取时间和设备信息
@@ -662,7 +663,7 @@ public class SchedulingService {
             long overlapTime = timeslotList.stream()
                     .mapToLong(t -> DateTimeCalculatorUtil.overlapTime(
                             timeslot.getStartTime().getMinute(),
-                            timeslot.getStartTime().plusMinutes((int)(timeslot.getDuration()*60)).getMinute(),
+                            timeslot.getStartTime().plusMinutes((int)(timeslot.getDuration().doubleValue()*60)).getMinute(),
                             t.getStartTime().getMinute(),
                             t.getStartTime().plusMinutes(t.getStartTime().getMinute()).getMinute()))
                     .sum();

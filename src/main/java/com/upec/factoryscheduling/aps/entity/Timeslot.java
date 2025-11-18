@@ -14,6 +14,7 @@ import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToOne;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -34,7 +35,7 @@ public class Timeslot implements Serializable {
     private Task task;
     @OneToOne(fetch = FetchType.EAGER)
     private WorkCenter workCenter; // 从procedure中继承工作中心，不需要作为规划变量
-    private double duration; // 改为double类型，支持0.5小时的颗粒度
+    private BigDecimal duration; // 改为double类型，支持0.5小时的颗粒度
     private Integer priority; // 优先级，直接存储计算好的优先级值
 
     @PlanningVariable(valueRangeProviderRefs = "timeslotRange")

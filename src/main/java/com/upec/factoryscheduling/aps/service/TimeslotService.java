@@ -8,12 +8,15 @@ import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import io.micrometer.core.instrument.util.TimeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.task.TaskService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 
+import java.math.BigDecimal;
+import java.nio.Buffer;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,13 +25,10 @@ import java.util.stream.Collectors;
 @Slf4j
 public class TimeslotService {
 
-    private WorkCenterMaintenanceService maintenanceService;
     private TimeslotRepository timeslotRepository;
 
     @Autowired
-    public TimeslotService(WorkCenterMaintenanceService maintenanceService,
-                           TimeslotRepository timeslotRepository) {
-        this.maintenanceService = maintenanceService;
+    private void setTimeslotRepository(TimeslotRepository timeslotRepository) {
         this.timeslotRepository = timeslotRepository;
     }
 
@@ -102,156 +102,75 @@ public class TimeslotService {
     }
 
 
-    public void createTimeslot(List<String> taskNos, List<String> procedureIds, int time, int slice) {
-        List<Procedure> procedures = new ArrayList<>();
-        List<Task> tasks = new ArrayList<>();
-        List<Order> orders = new ArrayList<>();
-        List<String> orderNos = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(procedureIds)) {
-            procedures = procedureService.findAllByIdIsIn(procedureIds);
-        }
-        if (!CollectionUtils.isEmpty(taskNos)) {
-            procedures = procedureService.findAllByTaskNoIsIn(taskNos);
-        }
-        taskNos = procedures.stream().map(Procedure::getTaskNo).collect(Collectors.toList());
-        if (!CollectionUtils.isEmpty(taskNos)) {
-            tasks = orderTaskService.findAllByTaskNoIsIn(taskNos);
-            orderNos = tasks.stream().map(Task::getOrderNo).collect(Collectors.toList());
-        }
-        if (CollectionUtils.isEmpty(orderNos)) {
-            orders = orderService.queryByOrderNoIn(orderNos);
-        }
-        Map<String, Order> orderMap = orders.stream().collect(Collectors.toMap(Order::getOrderNo, m -> m));
-        Map<String, Task> taskMap = tasks.stream().collect(Collectors.toMap(Task::getTaskNo, m -> m));
+    @Transactional("h2TransactionManager")
+    public void createTimeslot(List<String> taskNos, List<String> procedureIds, double time, int slice) {
         List<Timeslot> timeslots = new ArrayList<>();
+        if (!CollectionUtils.isEmpty(taskNos)) {
+            timeslots = timeslotRepository.findAllByTask_TaskNoIn(taskNos);
+        }
+        if (!CollectionUtils.isEmpty(procedureIds)) {
+            timeslots = timeslotRepository.findAllByProcedureIdIn(procedureIds);
+        }
         // 为每个工序创建分片Timeslot
-        for (Procedure procedure : procedures) {
-            Order order = orderMap.get(procedure.getOrderNo());
-            Task task = taskMap.get(procedure.getTaskNo());
-            double duration = 0d;
-            // 跳过没有绑定工作中心的工序
-            if (procedure.getWorkCenterId() == null) {
-                log.info("跳过未绑定工作中心的工序: {}", procedure.getId());
+        for (Timeslot timeslot : timeslots) {
+            if (timeslot.getProcedure().getWorkCenterId() == null) {
+                log.info("跳过未绑定工作中心的工序: {}", timeslot.getProcedure().getId());
                 continue;
             }
-            // 检查是否有固定的开始时间和结束时间
-            if (procedure.getStartTime() != null && procedure.getEndTime() != null) {
-                // 情况1：工序有固定的开始时间和结束时间
-                // 只创建一个分片
-                Timeslot timeslot = createSingleTimeslot(procedure, task, order, procedure.getMachineHours(), 0, 1);
-                timeslot.setStartTime(procedure.getStartTime()); // 设置固定的开始时间
-                timeslot.setEndTime(procedure.getEndTime()); // 设置固定的结束时间
-                timeslot.setManual(true); // 标记为手动设置，不需要参与规划
-                timeslots.add(timeslot);
+            if (timeslot.getStartTime() != null && timeslot.getEndTime() != null) {
+                continue;
             }
-            if (procedure.getStartTime() != null && procedure.getEndTime() == null) {
-                // 情况2：工序只有固定的开始时间
-                // 对于machineHours=0的工序，特殊处理
-                if (procedure.getMachineHours() < 1.0) {
-                    Timeslot timeslot = createSingleTimeslot(procedure, task, order, procedure.getMachineHours(), 0, 1);
-                    timeslot.setDuration(procedure.getMachineHours());
-                    timeslot.setStartTime(procedure.getStartTime());
-                    timeslot.setEndTime(procedure.getStartTime()); // 开始时间和结束时间相同
-                    timeslot.setManual(true);
-                    timeslots.add(timeslot);
-                }
-                if (procedure.getMachineHours() >= 1.0) {
-                    // 计算工序持续时间（小时）
-                    duration = calculateProcedureDuration(procedure);
-                    int total = 0;
-                    if (slice > 0) {
-
-                    }
-                    if (duration <= 1.0) {
-                        // 持续时间小于等于1小时的工序不需要分片
-                        Timeslot timeslot = createSingleTimeslot(procedure, task, order, duration, 0, 1);
-                        timeslot.setStartTime(procedure.getStartTime()); // 设置固定的开始时间
-                        timeslot.setManual(true); // 标记为手动设置，开始时间必须以此为准
-                        timeslots.add(timeslot);
-                    } else {
-                        // 持续时间大于1小时的工序需要分片
-                        int totalSlices = (int) Math.ceil(duration); // 按小时分片
-                        for (int i = 0; i < totalSlices; i++) {
-                            Timeslot timeslot = createSingleTimeslot(procedure, task, order, duration, i, totalSlices);
-                            // 设置当前分片的持续时间，最后一个分片可能不足1小时
-                            timeslot.setDuration(i == totalSlices - 1 ? duration - i : 1.0);
-                            // 只有第一个分片需要设置固定的开始时间
-                            if (i == 0) {
-                                timeslot.setStartTime(procedure.getStartTime()); // 设置固定的开始时间
-                                timeslot.setManual(true); // 标记为手动设置
-                            }
-                            timeslots.add(timeslot);
-                        }
-                    }
-                }
-            } else {
-                // 情况3：工序没有固定时间，按原逻辑处理
-                // 对于machineHours=0的工序，特殊处理
-                if (procedure.getMachineHours() == 0) {
-                    Timeslot timeslot = createSingleTimeslot(procedure, task, order, duration, 0, 1);
-                    timeslot.setDuration(0.0);
-                    timeslot.setManual(true);
-                    timeslots.add(timeslot);
-                } else {
-                    // 计算工序持续时间（小时）
-                    duration = calculateProcedureDuration(procedure);
-                    if (duration <= 1.0) {
-                        // 持续时间小于等于1小时的工序不需要分片
-                        Timeslot timeslot = createSingleTimeslot(procedure, task, order, duration, 0, 1);
-                        timeslots.add(timeslot);
-                    } else {
-                        // 持续时间大于1小时的工序需要分片
-                        int totalSlices = (int) Math.ceil(duration); // 按小时分片
-                        for (int i = 0; i < totalSlices; i++) {
-                            Timeslot timeslot = createSingleTimeslot(procedure, task, order, duration, i, totalSlices);
-                            // 设置当前分片的持续时间，最后一个分片可能不足1小时
-                            timeslot.setDuration(i == totalSlices - 1 ? duration - i : 1.0);
-                            timeslots.add(timeslot);
-                        }
-                    }
-                }
+            if (time >= 0.5&&slice<=1) {
+                timeslotRepository.saveAll(splitTimeslot(timeslot, time));
+            }
+            if (slice > 1) {
+                timeslotRepository.saveAll(splitTimeslot(timeslot, slice));
             }
         }
-        saveTimeslot(timeslots);
     }
 
-
-    /**
-     * 创建单个时间槽
-     */
-    private Timeslot createSingleTimeslot(Procedure procedure,
-                                          Task task,
-                                          Order order,
-                                          double duration,
-                                          int sliceIndex,
-                                          int totalSlices) {
-        Timeslot timeslot = new Timeslot();
-        // 使用工序ID加分片索引作为时间槽ID
-        timeslot.setId(procedure.getTaskNo() + "_" + procedure.getProcedureNo() + "_" + sliceIndex);
-        timeslot.setProcedure(procedure);
-        timeslot.setWorkCenter(procedure.getWorkCenterId());
-        timeslot.setOrder(order);
-        timeslot.setTask(task);
-        if (task != null) {
-            timeslot.setPriority(timeslot.getTask().getPriority());
+    private List<Timeslot> splitTimeslot(Timeslot timeslot, double time) {
+        List<Timeslot> timeslots = new ArrayList<>();
+        double duration = timeslot.getProcedure().getMachineHours();
+        int index = timeslot.getIndex();
+        if (time >= duration) {
+            timeslots.add(timeslot);
+            return timeslots;
         }
-        timeslot.setIndex(sliceIndex);
-        timeslot.setTotal(totalSlices);
-        timeslot.setDuration(duration);
-        return timeslot;
-    }
-
-    /**
-     * 计算工序持续时间（小时）
-     */
-    private double calculateProcedureDuration(Procedure procedure) {
-        // 优先使用machineHours字段的值
-        if (procedure.getMachineHours() > 0) {
-            return procedure.getMachineHours();
+        duration = duration - time;
+        timeslot.setDuration(new BigDecimal(Double.toString(time)));
+        timeslots.add(timeslot);
+        while (duration > 0) {
+            Timeslot newTimeslot = new Timeslot();
+            BeanUtils.copyProperties(timeslot, newTimeslot);
+            index++;
+            newTimeslot.setId(timeslot.getTask().getTaskNo() + "_" + timeslot.getProcedure().getProcedureNo() + "_" + index);
+            newTimeslot.setDuration(new BigDecimal(Double.toString(Math.min(duration, time))));
+            newTimeslot.setIndex(index);
+            timeslots.add(newTimeslot);
+            duration = duration - time;
         }
-        // 如果没有machineHours，使用默认值1小时
-        return 1.0;
+        int total = timeslots.size();
+        return timeslots.stream().peek(t -> t.setTotal(total)).collect(Collectors.toList());
     }
 
-
+    private List<Timeslot> splitTimeslot(Timeslot timeslot, int slice) {
+        List<Timeslot> timeslots = new ArrayList<>();
+        double duration = timeslot.getProcedure().getMachineHours();
+        int index = timeslot.getIndex();
+        double interval = Math.round(duration / slice * 100) / 100.00;
+        timeslot.setDuration(new BigDecimal(Double.toString(interval)));
+        timeslots.add(timeslot);
+        for (int i = 1; i < slice; i++) {
+            Timeslot newTimeslot = new Timeslot();
+            BeanUtils.copyProperties(timeslot, newTimeslot);
+            index++;
+            newTimeslot.setId(timeslot.getTask().getTaskNo() + "_" + timeslot.getProcedure().getProcedureNo() + "_" + index);
+            newTimeslot.setIndex(index);
+            newTimeslot.setDuration(new BigDecimal(Double.toString(Math.min(duration - (interval * i), interval))));
+            timeslots.add(newTimeslot);
+        }
+        int total = timeslots.size();
+        return timeslots.stream().peek(t -> t.setTotal(total)).collect(Collectors.toList());
+    }
 }

@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +139,7 @@ public class MesOrderService {
         timeslot.setIndex(1);
         timeslot.setTotal(1);
         timeslot.setParallel(procedure.isParallel());
-        timeslot.setDuration(procedure.getMachineHours());
+        timeslot.setDuration(new BigDecimal(Double.toString(procedure.getMachineHours())));
         if (procedure.getStartTime() != null && procedure.getEndTime() != null) {
             timeslot.setManual(true);
         }

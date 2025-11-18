@@ -306,7 +306,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
                         ConstraintCollectors.sum((maintenance, timeslot) -> {
                             // 显式类型转换避免类型推断问题
                             Timeslot ts = (Timeslot) timeslot;
-                            return (int) (ts.getDuration() * 60);
+                            return (int) (ts.getDuration().doubleValue() * 60);
                         }) // 计算当天实际使用的分钟数
                 )
                 // 奖励函数：基于实际利用率给予奖励
