@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @Getter
 public class Order {
 
-
     @Id
     private String orderNo;
 

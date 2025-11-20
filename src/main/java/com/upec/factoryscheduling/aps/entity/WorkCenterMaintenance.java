@@ -1,10 +1,12 @@
 package com.upec.factoryscheduling.aps.entity;
 
+import com.upec.factoryscheduling.aps.solution.WorkCenterMaintenanceVariableListener;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
+import org.optaplanner.core.api.domain.variable.ShadowVariable;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -13,10 +15,10 @@ import java.time.LocalTime;
 
 @Entity
 @Table(name = "work_center_maintenance")
-@PlanningEntity
 @Data
 @Getter
 @Setter
+@PlanningEntity
 public class WorkCenterMaintenance {
 
     @Id
@@ -40,6 +42,8 @@ public class WorkCenterMaintenance {
 
     private LocalTime endTime;
 
+    @ShadowVariable(variableListenerClass = WorkCenterMaintenanceVariableListener.class,sourceVariableName =
+            "maintenance",sourceEntityClass = Timeslot.class)
     private BigDecimal usageTime;
 
     /**
@@ -68,6 +72,7 @@ public class WorkCenterMaintenance {
             this.usageTime = BigDecimal.ZERO;
         }
         if (duration != null) {
+            duration = duration.multiply(BigDecimal.valueOf(60));
             this.usageTime = this.usageTime.add(duration);
         }
     }
@@ -77,6 +82,7 @@ public class WorkCenterMaintenance {
      */
     public void subtractUsageTime(BigDecimal duration) {
         if (this.usageTime != null && duration != null) {
+            duration = duration.multiply(BigDecimal.valueOf(60));
             this.usageTime = this.usageTime.subtract(duration);
             if (this.usageTime.compareTo(BigDecimal.ZERO) < 0) {
                 this.usageTime = BigDecimal.ZERO;

@@ -35,10 +35,9 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         // 变量变更后的处理
         if (timeslot.getMaintenance() != null) {
             updateTimeslotStartTime(scoreDirector, timeslot);
-            
             if (timeslot.getDuration() != null) {
                 // 分配新的容量
-                allocateCapacity(scoreDirector, timeslot, timeslot.getMaintenance(), timeslot.getDuration());
+                allocateCapacity(scoreDirector, timeslot.getMaintenance(), timeslot.getDuration());
             }
         } else {
             // 如果没有维护计划，清除开始时间
@@ -58,9 +57,8 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         // 实体添加后的处理
         if (timeslot.getMaintenance() != null) {
             updateTimeslotStartTime(scoreDirector, timeslot);
-            
             if (timeslot.getDuration() != null) {
-                allocateCapacity(scoreDirector, timeslot, timeslot.getMaintenance(), timeslot.getDuration());
+                allocateCapacity(scoreDirector, timeslot.getMaintenance(), timeslot.getDuration());
             }
         }
     }
@@ -86,10 +84,8 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         if (maintenance == null || maintenance.getDate() == null || maintenance.getStartTime() == null) {
             return;
         }
-
         // 计算开始时间：维护计划日期 + 开始时间
         LocalDateTime startTime = LocalDateTime.of(maintenance.getDate(), maintenance.getStartTime());
-        
         scoreDirector.beforeVariableChanged(timeslot, "startTime");
         timeslot.setStartTime(startTime);
         scoreDirector.afterVariableChanged(timeslot, "startTime");
@@ -98,12 +94,10 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
     /**
      * 分配工作中心容量
      */
-    private void allocateCapacity(ScoreDirector<FactorySchedulingSolution> scoreDirector, 
-                                  Timeslot timeslot, WorkCenterMaintenance maintenance, BigDecimal duration) {
+    private void allocateCapacity(ScoreDirector<FactorySchedulingSolution> scoreDirector,WorkCenterMaintenance maintenance, BigDecimal duration) {
         if (maintenance == null || duration == null) {
             return;
         }
-
         // 检查是否有足够容量
         if (!maintenance.hasAvailableCapacity()) {
             System.out.println("警告：工作中心 " + maintenance.getWorkCenter().getId() + 
@@ -124,9 +118,8 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         scoreDirector.beforeVariableChanged(maintenance, "usageTime");
         maintenance.addUsageTime(duration);
         scoreDirector.afterVariableChanged(maintenance, "usageTime");
-        
-        System.out.println("工作中心 " + maintenance.getWorkCenter().getId() + 
-                          " 在日期 " + maintenance.getDate() + " 分配容量 " + duration + 
+        System.out.println("工作中心 " + maintenance.getWorkCenter().getId() +
+                          " 在日期 " + maintenance.getDate() + " 分配容量 " + duration +
                           " 小时，当前使用容量：" + maintenance.getUsageTime() + "/" + maintenance.getCapacity());
     }
 
@@ -137,12 +130,10 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         if (maintenance == null || duration == null) {
             return;
         }
-
         // 减少使用时间
         scoreDirector.beforeVariableChanged(maintenance, "usageTime");
         maintenance.subtractUsageTime(duration);
         scoreDirector.afterVariableChanged(maintenance, "usageTime");
-        
         System.out.println("工作中心 " + maintenance.getWorkCenter().getId() + 
                           " 在日期 " + maintenance.getDate() + " 释放容量 " + duration + 
                           " 小时，当前使用容量：" + maintenance.getUsageTime() + "/" + maintenance.getCapacity());

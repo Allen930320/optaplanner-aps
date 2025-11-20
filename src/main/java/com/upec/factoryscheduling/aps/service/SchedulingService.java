@@ -32,28 +32,44 @@ import java.util.stream.Collectors;
 @Slf4j
 public class SchedulingService {
 
-    /** 订单服务 - 负责订单相关的数据访问和业务逻辑 */
+    /**
+     * 订单服务 - 负责订单相关的数据访问和业务逻辑
+     */
     private OrderService orderService;
-    
-    /** 工序服务 - 负责工序相关的数据访问和业务逻辑 */
+
+    /**
+     * 工序服务 - 负责工序相关的数据访问和业务逻辑
+     */
     private ProcedureService processService;
-    
-    /** 工作中心服务 - 负责工作中心(设备/机器)相关的数据访问和业务逻辑 */
+
+    /**
+     * 工作中心服务 - 负责工作中心(设备/机器)相关的数据访问和业务逻辑
+     */
     private WorkCenterService workCenterService;
-    
-    /** 设备维护服务 - 负责设备维护计划相关的数据访问和业务逻辑 */
+
+    /**
+     * 设备维护服务 - 负责设备维护计划相关的数据访问和业务逻辑
+     */
     private WorkCenterMaintenanceService maintenanceService;
-    
-    /** OptaPlanner求解器管理器 - 用于创建和管理求解作业 */
+
+    /**
+     * OptaPlanner求解器管理器 - 用于创建和管理求解作业
+     */
     private SolverManager<FactorySchedulingSolution, Long> solverManager;
-    
-    /** 解决方案管理器 - 用于更新和解释解决方案 */
+
+    /**
+     * 解决方案管理器 - 用于更新和解释解决方案
+     */
     private SolutionManager<FactorySchedulingSolution, HardSoftScore> solutionManager;
-    
-    /** 时间槽服务 - 负责时间槽相关的数据访问和业务逻辑 */
+
+    /**
+     * 时间槽服务 - 负责时间槽相关的数据访问和业务逻辑
+     */
     private TimeslotService timeslotService;
-    
-    /** 时间槽仓库 - 直接操作时间槽数据 */
+
+    /**
+     * 时间槽仓库 - 直接操作时间槽数据
+     */
     private TimeslotRepository timeslotRepository;
 
 
@@ -61,7 +77,7 @@ public class SchedulingService {
     public void setTimeslotService(TimeslotService timeslotService) {
         this.timeslotService = timeslotService;
     }
-    
+
     @Autowired
     public void setTimeslotRepository(TimeslotRepository timeslotRepository) {
         this.timeslotRepository = timeslotRepository;
@@ -103,24 +119,24 @@ public class SchedulingService {
      * 求解过程采用异步监听模式，实时获取并记录求解进度和结果。</p>
      *
      * @param problemId 问题ID - 用于标识和管理不同的调度问题实例
-     * @param orderNos 订单编号列表 - 指定需要参与调度的订单，如果为空则调度所有订单
+     * @param orderNos  订单编号列表 - 指定需要参与调度的订单，如果为空则调度所有订单
      */
     public void startScheduling(Long problemId, List<String> orderNos) {
         // 加载调度问题数据，包括订单、工序、时间槽等信息
         FactorySchedulingSolution problem = loadProblemWithSlices(orderNos, problemId);
-        
+
         // 使用求解器管理器创建求解作业并监听进度
         SolverJob<FactorySchedulingSolution, Long> solverJob = solverManager.solveAndListen(
                 problemId,  // 问题标识
                 id -> problem,  // 提供问题数据的函数
-                
+
                 // 每次找到更好的解决方案时的回调函数
                 solution -> {
                     // 记录新的最佳解决方案分数
                     log.info("New best solution found: {}", solution.getScore());
                     // 此处可以扩展，例如更新UI或临时保存中间结果
                 },
-                
+
                 // 求解完成时的回调函数
                 finalBestSolution -> {
                     // 记录最终最佳解决方案分数
@@ -128,7 +144,7 @@ public class SchedulingService {
                     // 保存最终调度结果到数据库
                     saveSolution(finalBestSolution);
                 },
-                
+
                 // 求解出错时的回调函数
                 (id, throwable) -> {
                     log.error("Scheduling error: {}", throwable.getMessage());
@@ -159,11 +175,11 @@ public class SchedulingService {
     public FactorySchedulingSolution getBestSolution(Long problemId) {
         // 获取最终最佳解决方案
         FactorySchedulingSolution solution = getFinalBestSolution();
-        
+
         // 获取并设置当前求解状态
         SolverStatus solverStatus = solverManager.getSolverStatus(problemId);
         solution.setSolverStatus(solverStatus);
-        
+
         return solution;
     }
 
@@ -202,7 +218,7 @@ public class SchedulingService {
      * <p>根据指定的订单编号列表加载调度所需的所有数据，包括订单、工序、时间槽和设备维护计划等。
      * 此方法是调度问题求解的基础，负责构建初始的问题空间。</p>
      *
-     * @param orderNos 订单编号列表 - 指定需要加载的订单，如果为空则加载所有订单
+     * @param orderNos  订单编号列表 - 指定需要加载的订单，如果为空则加载所有订单
      * @param problemId 问题ID - 用于标识当前调度问题实例
      * @return FactorySchedulingSolution - 包含所有调度所需数据的问题实例
      */
@@ -216,67 +232,43 @@ public class SchedulingService {
             // 否则获取所有订单
             orders = orderService.getAllOrders();
         }
-        
         // 确定时间范围（基于订单的计划开始和结束日期）
         LocalDate start = orders.stream()
                 .map(Order::getPlanStartDate)
                 .min(LocalDate::compareTo)
                 .orElse(LocalDate.now());
-        
         LocalDate end = orders.stream()
                 .map(Order::getPlanEndDate)
                 .max(LocalDate::compareTo)
                 .orElse(LocalDate.now());
-        
         // 不再使用时间槽范围列表，startTime将通过maintenance自动计算
-        
         // 获取工作中心列表
         List<WorkCenter> workCenters = new ArrayList<>();
         if (workCenterService != null) {
             workCenters = workCenterService.getAllMachines();
         }
-        
+
         // 获取时间槽数据
         List<Timeslot> timeslots = new ArrayList<>();
         if (timeslotService != null) {
             // 查找与订单相关的所有时间槽并设置问题ID
             timeslots = timeslotService.findAllByOrderIn(orders).stream()
-                .peek(timeslot -> timeslot.setProblemId(problemId))
-                .collect(Collectors.toList());
+                    .peek(timeslot -> timeslot.setProblemId(problemId))
+                    .collect(Collectors.toList());
         }
-        
         // 获取设备维护计划
         List<WorkCenterMaintenance> maintenances = new ArrayList<>();
         if (maintenanceService != null) {
-            maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters,start,end);
+            maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters, start, end);
         }
-        
         // 使用正确的构造函数创建解决方案实例
         // 参数依次为：时间槽列表、工作中心列表、维护计划列表
         FactorySchedulingSolution solution = new FactorySchedulingSolution(timeslots, maintenances);
-        
-        // 构建按WorkCenter分组的维护计划映射，用于优化搜索空间
-        solution.buildWorkCenterMaintenanceMap();
-        
-        // 为每个Timeslot设置个性化的维护计划取值范围，减少搜索空间
-        if (solution.getTimeslots() != null && !solution.getTimeslots().isEmpty()) {
-            for (Timeslot timeslot : solution.getTimeslots()) {
-                if (timeslot.getWorkCenter() != null) {
-                    // 获取与当前Timeslot的WorkCenter匹配的维护计划
-                    List<WorkCenterMaintenance> availableMaintenances = solution.getMaintenancesByWorkCenter(timeslot.getWorkCenter());
-                    timeslot.setAvailableMaintenances(availableMaintenances);
-                    
-                    log.debug("Timeslot {} (WorkCenter: {}) has {} available maintenances", 
-                             timeslot.getId(), timeslot.getWorkCenter().getName(), availableMaintenances.size());
-                }
-            }
-        }
-        
+
         return solution;
     }
-    
 
-    
+
     /**
      * 加载包含工序分片的问题数据
      * <p>此方法是对loadProblem的包装，为了向后兼容而保留。
@@ -290,65 +282,65 @@ public class SchedulingService {
      * 加载带有工序分片的调度问题数据
      * <p>该方法专门处理已分片的工序数据，确保分片之间的连续性和约束关系。</p>
      *
-     * @param orderNos 订单编号列表
+     * @param orderNos  订单编号列表
      * @param problemId 问题ID
      * @return FactorySchedulingSolution - 包含所有调度所需数据的问题实例
      */
     private FactorySchedulingSolution loadProblemWithSlices(List<String> orderNos, Long problemId) {
         // 首先加载基础问题数据
         FactorySchedulingSolution solution = loadProblem(orderNos, problemId);
-        
+
         // 如果有时间槽数据，对分片数据进行额外处理
         if (solution != null && !CollectionUtils.isEmpty(solution.getTimeslots())) {
             // 按工序ID和分片索引对时间槽进行排序，确保分片顺序正确
             List<Timeslot> sortedTimeslots = solution.getTimeslots().stream()
-                .sorted((t1, t2) -> {
-                    // 首先按工序ID排序
-                    int procCompare = t1.getProcedure() != null && t2.getProcedure() != null ? 
-                        t1.getProcedure().getId().compareTo(t2.getProcedure().getId()) : 0;
-                    if (procCompare != 0) return procCompare;
-                    
-                    // 然后按分片索引排序
-                    return Integer.compare(t1.getIndex() != null ? t1.getIndex() : 0,
-                                          t2.getIndex() != null ? t2.getIndex() : 0);
-                })
-                .collect(Collectors.toList());
-            
+                    .sorted((t1, t2) -> {
+                        // 首先按工序ID排序
+                        int procCompare = t1.getProcedure() != null && t2.getProcedure() != null ?
+                                t1.getProcedure().getId().compareTo(t2.getProcedure().getId()) : 0;
+                        if (procCompare != 0) return procCompare;
+
+                        // 然后按分片索引排序
+                        return Integer.compare(t1.getIndex() != null ? t1.getIndex() : 0,
+                                t2.getIndex() != null ? t2.getIndex() : 0);
+                    })
+                    .collect(Collectors.toList());
+
             // 设置分片之间的连接关系
             setupSliceRelationships(sortedTimeslots);
-            
+
             // 更新解决方案中的时间槽列表
             solution.setTimeslots(sortedTimeslots);
         }
-        
+
         return solution;
     }
-    
+
     /**
      * 设置分片之间的关系，确保同一工序的分片按顺序连接
      */
     private void setupSliceRelationships(List<Timeslot> sortedTimeslots) {
         // 按工序ID分组
         Map<String, List<Timeslot>> timeslotsByProcedure = sortedTimeslots.stream()
-            .filter(t -> t.getProcedure() != null)
-            .collect(Collectors.groupingBy(t -> t.getProcedure().getId()));
-        
+                .filter(t -> t.getProcedure() != null)
+                .collect(Collectors.groupingBy(t -> t.getProcedure().getId()));
+
         // 处理每个工序的分片关系
         timeslotsByProcedure.forEach((procedureId, procedureSlices) -> {
             if (procedureSlices.size() > 1) {
                 // 对分片按索引排序
                 procedureSlices.sort(Comparator.comparing(Timeslot::getIndex));
-                
+
                 // 设置前一个分片和后一个分片的关系
                 for (int i = 0; i < procedureSlices.size(); i++) {
                     Timeslot currentSlice = procedureSlices.get(i);
-                    
+
                     // 设置前一个分片（如果有）
                     if (i > 0) {
                         Timeslot previousSlice = procedureSlices.get(i - 1);
                         // 这里可以添加额外的约束标记，表示前一个分片必须在当前分片之前完成
                     }
-                    
+
                     // 设置后一个分片（如果有）
                     if (i < procedureSlices.size() - 1) {
                         Timeslot nextSlice = procedureSlices.get(i + 1);
@@ -370,65 +362,38 @@ public class SchedulingService {
     @Transactional("h2TransactionManager")
     public void saveSolution(FactorySchedulingSolution solution) {
         log.info("开始保存调度解决方案");
-        
+
         if (solution == null) {
             log.warn("保存失败：解决方案对象为null");
             return;
         }
-        
         if (CollectionUtils.isEmpty(solution.getTimeslots())) {
             log.warn("保存失败：解决方案中没有时间槽数据");
             return;
         }
-        
-        if (timeslotService == null) {
-            log.error("保存失败：TimeslotService未初始化");
-            return;
-        }
-        
         try {
             // 首先保存所有时间槽到数据库
             int savedCount = solution.getTimeslots().size();
             timeslotService.saveAll(solution.getTimeslots());
             log.info("已保存 {} 个时间槽到数据库", savedCount);
-            
             // 根据工序ID对时间槽进行分组
             Map<String, List<Timeslot>> timeslotsByProcedure = solution.getTimeslots().stream()
                     .filter(t -> t.getProcedure() != null)  // 过滤出关联了工序的时间槽
                     .collect(Collectors.groupingBy(t -> t.getProcedure().getId()));
-            
             log.info("找到 {} 个关联了工序的时间槽组", timeslotsByProcedure.size());
-            
-            // 遍历每个工序的时间槽，更新工序的整体时间信息
-            timeslotsByProcedure.forEach((procedureId, timeslotList) -> {
-                // 获取工序对象
-                if (!timeslotList.isEmpty() && timeslotList.get(0).getProcedure() != null) {
-                    Procedure procedure = timeslotList.get(0).getProcedure();
-                    // 更新工序的时间信息
-                    updateProcedureTimes(procedure, timeslotList);
-                    // 保存更新后的工序
-                    if (processService != null) {
-                        processService.saveProcedure(procedure);
-                        log.debug("已更新并保存工序：{}", procedureId);
-                    } else {
-                        log.warn("无法保存工序 {}：ProcessService未初始化", procedureId);
-                    }
-                }
-            });
-            
             log.info("调度解决方案保存完成");
         } catch (Exception e) {
             log.error("保存调度解决方案时发生错误：", e);
             throw e; // 重新抛出异常，让事务回滚
         }
     }
-    
+
     /**
      * 根据时间槽信息更新工序的整体时间
      * <p>分析工序相关的所有时间槽，确定工序的实际开始时间和结束时间，并更新工序对象。
      * 工序的开始时间为其所有时间槽中的最早开始时间，结束时间为最晚结束时间。</p>
      *
-     * @param procedure 工序对象 - 需要更新时间信息的工序
+     * @param procedure    工序对象 - 需要更新时间信息的工序
      * @param allTimeslots 时间槽列表 - 包含所有时间槽，需要筛选出与当前工序相关的
      */
     private void updateProcedureTimes(Procedure procedure, List<Timeslot> allTimeslots) {
@@ -436,13 +401,13 @@ public class SchedulingService {
         if (procedure == null || allTimeslots == null) {
             return;
         }
-        
+
         // 筛选出与当前工序相关且有开始时间的时间槽
         List<Timeslot> procedureTimeslots = allTimeslots.stream()
                 .filter(timeslot -> timeslot.getProcedure() != null && timeslot.getProcedure().equals(procedure))
                 .filter(timeslot -> timeslot.getStartTime() != null)
                 .collect(Collectors.toList());
-        
+
         // 只有当存在相关时间槽时才更新工序时间
         if (!procedureTimeslots.isEmpty()) {
             // 找出最早的开始时间
@@ -450,20 +415,20 @@ public class SchedulingService {
                     .map(Timeslot::getStartTime)
                     .min(LocalDateTime::compareTo)
                     .orElse(null);
-            
+
             // 找出最晚的结束时间
             LocalDateTime latestEnd = procedureTimeslots.stream()
                     .map(Timeslot::getEndTime)
                     .filter(Objects::nonNull)  // 过滤掉空的结束时间
                     .max(LocalDateTime::compareTo)
                     .orElse(null);
-            
+
             // 更新工序的开始时间和开始日期
             if (earliestStart != null && processService != null) {
                 procedure.setStartTime(earliestStart);
                 procedure.setPlanStartDate(earliestStart.toLocalDate());
             }
-            
+
             // 更新工序的结束时间和结束日期
             if (latestEnd != null && processService != null) {
                 procedure.setEndTime(latestEnd);
@@ -471,7 +436,7 @@ public class SchedulingService {
             }
         }
     }
-    
+
     /**
      * 保存调度结果（兼容方法）
      * <p>与saveSolution方法功能相同，为了向后兼容而保留。
@@ -483,12 +448,12 @@ public class SchedulingService {
         if (solution != null && solution.getTimeslots() != null) {
             // 保存所有时间槽
             timeslotService.saveAll(solution.getTimeslots());
-            
+
             // 更新工序的开始和结束时间
             Map<String, List<Timeslot>> timeslotsByProcedure = solution.getTimeslots().stream()
                     .filter(t -> t.getProcedure() != null)
                     .collect(Collectors.groupingBy(t -> t.getProcedure().getId()));
-            
+
             timeslotsByProcedure.forEach((procedureId, timeslotList) -> {
                 Procedure procedure = timeslotList.get(0).getProcedure();
                 if (procedure != null) {
@@ -512,13 +477,13 @@ public class SchedulingService {
         // 初始化数据容器
         List<Timeslot> timeslots = new ArrayList<>();
         List<WorkCenterMaintenance> maintenances = new ArrayList<>();
-        
+
         // 获取所有时间槽数据
         if (timeslotService != null) {
             // 直接从时间槽服务获取所有时间槽
             timeslots = timeslotService.findAll().getTimeslots();
         }
-        
+
         // 获取所有维护记录
         if (maintenanceService != null) {
             maintenances = maintenanceService.getAllMaintenances();
@@ -545,7 +510,7 @@ public class SchedulingService {
      * <p>当已有解决方案需要调整时，使用此方法更新问题数据。
      * 这允许在不重新开始整个求解过程的情况下，对当前解决方案进行修改。</p>
      *
-     * @param problemId 问题ID - 标识需要更新的调度问题实例
+     * @param problemId       问题ID - 标识需要更新的调度问题实例
      * @param updatedSolution 更新后的解决方案 - 包含最新的问题数据
      */
     public void updateProblem(Long problemId, FactorySchedulingSolution updatedSolution) {
@@ -601,73 +566,73 @@ public class SchedulingService {
         // 初始化验证结果列表
         List<ValidateSolution> validateSolutions = new ArrayList<>();
         List<Timeslot> timeslots = solution.getTimeslots();
-        
+
         // 按设备和日期分组时间槽
         Map<String, List<Timeslot>> map = timeslots.stream()
-                .collect(Collectors.groupingBy(timeslot -> 
-                        timeslot.getProcedure().getWorkCenterId().getWorkCenterCode() + "-" + 
-                        timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
-        
+                .collect(Collectors.groupingBy(timeslot ->
+                        timeslot.getProcedure().getWorkCenterId().getWorkCenterCode() + "-" +
+                                timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
+
         // 遍历每个时间槽进行验证
         for (Timeslot timeslot : timeslots) {
             // 只验证手动设置的时间槽
             if (!timeslot.isManual()) {
                 continue;
             }
-            
+
             // 构建当前时间槽的设备-日期键
-            String key = timeslot.getProcedure().getWorkCenterId().getWorkCenterCode() + "-" + 
-                         timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            
+            String key = timeslot.getProcedure().getWorkCenterId().getWorkCenterCode() + "-" +
+                    timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+
             // 获取同一天同一设备的所有时间槽
             List<Timeslot> timeslotList = map.get(key);
-            
+
             // 计算当日累计使用工时
             double countDailyHours = timeslotList.stream()
-                    .mapToDouble(t->t.getDuration().doubleValue())
+                    .mapToDouble(t -> t.getDuration().doubleValue())
                     .sum();
-            
+
             // 获取时间和设备信息
             LocalDateTime dateTime = timeslot.getStartTime();
             WorkCenter workCenter = timeslot.getProcedure().getWorkCenterId();
-            
+
             // 获取设备当日的维护计划（包含容量信息）
             WorkCenterMaintenance maintenance = maintenanceService.findFirstByMachineAndDate(workCenter, dateTime.toLocalDate());
-            
+
             // 创建验证结果对象
             ValidateSolution validateSolution = new ValidateSolution(
-                    timeslot.getProcedure(), 
-                    timeslot.getOrder(), 
-                    timeslot.getMaintenance().getWorkCenter(), 
+                    timeslot.getProcedure(),
+                    timeslot.getOrder(),
+                    timeslot.getMaintenance().getWorkCenter(),
                     maintenance);
-            
+
             // 检查是否超出设备容量
             if (BigDecimal.valueOf(countDailyHours).compareTo(maintenance.getCapacity()) > 0) {
                 validateSolution.setMessage("超出当日机器容量!");
             }
-            
+
             // 检查时间重叠
             long overlapTime = timeslotList.stream()
                     .mapToLong(t -> DateTimeCalculatorUtil.overlapTime(
                             timeslot.getStartTime().getMinute(),
-                            timeslot.getStartTime().plusMinutes((int)(timeslot.getDuration().doubleValue()*60)).getMinute(),
+                            timeslot.getStartTime().plusMinutes((int) (timeslot.getDuration().doubleValue() * 60)).getMinute(),
                             t.getStartTime().getMinute(),
                             t.getStartTime().plusMinutes(t.getStartTime().getMinute()).getMinute()))
                     .sum();
-            
+
             if (overlapTime > 0) {
                 validateSolution.setMessage("当日机器使用时间有重叠部分");
             }
-            
+
             // 添加到验证结果列表
             validateSolutions.add(validateSolution);
             // 更新时间槽的维护计划信息
             timeslot.setMaintenance(maintenance);
         }
-        
+
         // 更新解决方案对象
         solution.setTimeslots(timeslots);
-        
+
         return solution;
     }
 }
