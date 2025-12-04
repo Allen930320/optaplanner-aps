@@ -13,7 +13,6 @@ import java.math.BigDecimal;
  * 
  * 负责根据维护计划的变化自动更新时间槽的开始时间，
  * 并管理工作中心的使用容量（usageTime）。
- * 
  * 当Timeslot的maintenance变量发生变化时：
  * 1. 根据维护计划的日期和开始时间计算时间槽的开始时间
  * 2. 累加或释放工作中心的使用容量

@@ -52,7 +52,7 @@ optaplanner:
     termination:
       spent-limit: 2m
       unimproved-spent-limit: 1m
-      best-score-limit: 0hard/0soft
+#      best-score-limit: 0hard/0soft
 
 
 

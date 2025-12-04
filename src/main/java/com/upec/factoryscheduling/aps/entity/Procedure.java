@@ -1,10 +1,8 @@
 package com.upec.factoryscheduling.aps.entity;
 
-import com.upec.factoryscheduling.aps.solution.ProcedureVariableListener;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.optaplanner.core.api.domain.variable.ShadowVariable;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -46,10 +44,8 @@ public class Procedure implements Serializable {
 
     private LocalDateTime endTime;
 
-    //    @ShadowVariable(variableListenerClass = ProcedureVariableListener.class, sourceVariableName = "timeslots")
     private LocalDate planStartDate;
 
-    //    @ShadowVariable(variableListenerClass = ProcedureVariableListener.class, sourceVariableName = "timeslots")
     private LocalDate planEndDate;
 
     private String status;

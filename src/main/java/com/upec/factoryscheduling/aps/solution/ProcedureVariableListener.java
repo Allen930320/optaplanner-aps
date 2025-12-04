@@ -95,8 +95,8 @@ public class ProcedureVariableListener implements VariableListener<FactorySchedu
             .orElse(null);
 
         // 转换为LocalDate（只取日期部分）
-        LocalDate planStartDate = minStartTime != null ? minStartTime.toLocalDate() : null;
-        LocalDate planEndDate = maxEndTime != null ? maxEndTime.toLocalDate() : null;
+        LocalDate planStartDate = minStartTime.toLocalDate();
+        LocalDate planEndDate = maxEndTime.toLocalDate();
 
         // 更新工序的计划日期
         updatePlanDates(scoreDirector, procedure, planStartDate, planEndDate);
