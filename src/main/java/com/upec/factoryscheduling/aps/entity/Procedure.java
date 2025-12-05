@@ -1,5 +1,6 @@
 package com.upec.factoryscheduling.aps.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +39,7 @@ public class Procedure implements Serializable {
     private List<Integer> nextProcedureNo;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JsonIgnore
     private List<Procedure> nextProcedure;
 
     private LocalDateTime startTime;

@@ -146,3 +146,76 @@ export interface UserInfo {
   permissions?: string[];
   isLoggedIn: boolean;
 }
+
+// 工作中心类型定义
+export interface WorkCenter {
+  id: string;
+  workCenterCode: string;
+  name: string;
+  status: string;
+}
+
+// 工序类型定义
+export interface Procedure {
+  id: string;
+  taskNo: string;
+  orderNo: string;
+  workCenterId: WorkCenter;
+  procedureName: string;
+  procedureNo: number;
+  machineHours: number;
+  nextProcedureNo: number[];
+  startTime: string;
+  endTime: string;
+  planStartDate: string | null;
+  planEndDate: string | null;
+  status: string;
+  parallel: boolean;
+  index: number;
+}
+
+// 订单类型定义
+export interface Order {
+  orderNo: string;
+  erpStatus: string;
+  orderStatus: string;
+  planStartDate: string;
+  planEndDate: string;
+  factStartDate: string | null;
+  factEndDate: string | null;
+}
+
+// 维护计划类型定义
+export interface Maintenance {
+  id: string;
+  workCenter: WorkCenter;
+  year: number;
+  date: string;
+  capacity: number;
+  status: string;
+  description: string | null;
+  startTime: string;
+  endTime: string;
+  usageTime: number;
+  remainingCapacity: number;
+}
+
+// 时间槽类型定义
+export interface Timeslot {
+  id: string;
+  problemId: number;
+  procedure: Procedure;
+  order: Order;
+  task: Task;
+  workCenter: WorkCenter;
+  duration: number;
+  priority: number;
+  startTime: string;
+  endTime: string;
+  maintenance: Maintenance;
+  parallel: boolean;
+  manual: boolean;
+  index: number;
+  total: number;
+  procedureIndex: number;
+}

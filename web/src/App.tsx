@@ -2,10 +2,11 @@
 
 import { Layout, Menu, Button } from 'antd';
 import { Routes, Route, Link, BrowserRouter, Navigate } from 'react-router-dom';
-import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, LogoutOutlined } from '@ant-design/icons';
+import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import HomePage from './components/HomePage';
 import OrderQueryPage from './components/OrderQueryPage';
 import OrderTasksPage from './components/OrderTasksPage';
+import SchedulingTimelinePage from './components/SchedulingTimelinePage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import { isLoggedIn, logout } from './services/orderService';
@@ -30,6 +31,11 @@ const menuItems = [
     key: '5',
     icon: <FileTextOutlined />,
     label: <Link to="/order-tasks">任务列表</Link>,
+  },
+  {
+    key: '6',
+    icon: <ClockCircleOutlined />,
+    label: <Link to="/scheduling-timeline">调度时序图</Link>,
   },
   {
     key: '3',
@@ -96,6 +102,7 @@ const AppContent = () => {
                 <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
                 <Route path="/order-query" element={<ProtectedRoute><OrderQueryPage /></ProtectedRoute>} />
                 <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
+                <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
                 {/* 其他受保护的路由可以在这里添加 */}
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

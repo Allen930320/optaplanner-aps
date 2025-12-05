@@ -16,7 +16,7 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
      * 工序时间槽缓存 - 优化性能，避免重复遍历
      * Key: 工序ID, Value: 该工序的所有时间槽列表
      */
-    private Map<String, List<Timeslot>> procedureTimeslotCache = new HashMap<>();
+    private final Map<String, List<Timeslot>> procedureTimeslotCache = new HashMap<>();
 
     @Override
     public void beforeVariableChanged(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {

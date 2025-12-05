@@ -251,3 +251,14 @@ export const createTimeslot = async (taskNos: string[], procedureIds: string[], 
     throw error;
   }
 };
+
+// 获取时间槽列表
+export const getTimeslotList = async () => {
+  try {
+    const response = await apiClient.get<any>('/api/timeslot/list');
+    return response;
+  } catch (error) {
+    console.error('获取时间槽列表失败:', error);
+    throw error;
+  }
+};

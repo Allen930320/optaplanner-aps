@@ -95,25 +95,17 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         }
         // 检查是否有足够容量
         if (!maintenance.hasAvailableCapacity()) {
-            System.out.println("警告：工作中心 " + maintenance.getWorkCenter().getId() +
-                             " 在日期 " + maintenance.getDate() + " 容量不足");
             return;
         }
         // 检查是否会超出容量限制
         double remainingCapacity = maintenance.getRemainingCapacity().doubleValue();
         if (duration > remainingCapacity) {
-            System.out.println("警告：工作中心 " + maintenance.getWorkCenter().getId() +
-                             " 在日期 " + maintenance.getDate() + " 剩余容量不足，需要 " + duration +
-                             " 但只剩 " + remainingCapacity);
             return;
         }
         // 累加使用时间
         scoreDirector.beforeVariableChanged(maintenance, "usageTime");
         maintenance.addUsageTime(BigDecimal.valueOf(duration));
         scoreDirector.afterVariableChanged(maintenance, "usageTime");
-//        System.out.println("工作中心 " + maintenance.getWorkCenter().getId() +
-//                          " 在日期 " + maintenance.getDate() + " 分配容量 " + duration +
-//                          " 小时，当前使用容量：" + maintenance.getUsageTime() + "/" + maintenance.getCapacity());
     }
 
     /**
@@ -127,8 +119,5 @@ public class WorkCenterMaintenanceVariableListener implements VariableListener<F
         scoreDirector.beforeVariableChanged(maintenance, "usageTime");
         maintenance.subtractUsageTime(BigDecimal.valueOf(duration));
         scoreDirector.afterVariableChanged(maintenance, "usageTime");
-//        System.out.println("工作中心 " + maintenance.getWorkCenter().getId() +
-//                          " 在日期 " + maintenance.getDate() + " 释放容量 " + duration +
-//                          " 小时，当前使用容量：" + maintenance.getUsageTime() + "/" + maintenance.getCapacity());
     }
 }
