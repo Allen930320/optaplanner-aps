@@ -152,7 +152,7 @@ public class MesOrderService {
     private List<MesJjOrderTask> getOrderTasks(List<String> taskNos) {
         List<MesJjOrderTask> orderTasks = new ArrayList<>();
         Lists.partition(taskNos, 999).forEach(taskNo -> {
-            orderTasks.addAll(mesJjOrderTaskService.queryAllByTaskNoInAndTaskStatusIn(taskNo, List.of("生产中")));
+            orderTasks.addAll(mesJjOrderTaskService.queryAllByTaskNoInAndTaskStatusIn(taskNo, List.of("生产中","待生产")));
         });
         return orderTasks;
     }

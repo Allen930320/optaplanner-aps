@@ -8,6 +8,7 @@ import org.optaplanner.core.api.score.director.ScoreDirector;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 public class TimeslotVariableListener implements VariableListener<FactorySchedulingSolution, Timeslot> {
@@ -15,8 +16,9 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
     /**
      * 工序时间槽缓存 - 优化性能，避免重复遍历
      * Key: 工序ID, Value: 该工序的所有时间槽列表
+     * 使用ConcurrentHashMap确保线程安全
      */
-    private final Map<String, List<Timeslot>> procedureTimeslotCache = new HashMap<>();
+    private final Map<String, List<Timeslot>> procedureTimeslotCache = new ConcurrentHashMap<>();
 
     @Override
     public void beforeVariableChanged(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
@@ -35,10 +37,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
                      scoreDirector != null, timeslot != null);
             return;
         }
-        
-        // 统一处理时间槽更新逻辑
-        updateTimeslotTiming(scoreDirector, timeslot);
-        updateProcedureTimes(scoreDirector, timeslot);
     }
 
     /**
@@ -224,22 +222,24 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         }
         
         // 检查缓存
-        if (procedureTimeslotCache.containsKey(procedureId)) {
-            return new ArrayList<>(procedureTimeslotCache.get(procedureId));
-        }
-        
-        // 重新构建工序时间槽列表
-        List<Timeslot> procedureTimeslots = new ArrayList<>();
-        for (Timeslot t : scoreDirector.getWorkingSolution().getTimeslots()) {
-            if (t != null && t.getProcedure() != null && 
-                procedureId.equals(t.getProcedure().getId())) {
-                procedureTimeslots.add(t);
+        synchronized (procedureTimeslotCache) {
+            if (procedureTimeslotCache.containsKey(procedureId)) {
+                return new ArrayList<>(procedureTimeslotCache.get(procedureId));
             }
+            
+            // 重新构建工序时间槽列表
+            List<Timeslot> procedureTimeslots = new ArrayList<>();
+            for (Timeslot t : scoreDirector.getWorkingSolution().getTimeslots()) {
+                if (t != null && t.getProcedure() != null && 
+                    procedureId.equals(t.getProcedure().getId())) {
+                    procedureTimeslots.add(t);
+                }
+            }
+            
+            // 缓存结果
+            procedureTimeslotCache.put(procedureId, Collections.synchronizedList(new ArrayList<>(procedureTimeslots)));
+            return procedureTimeslots;
         }
-        
-        // 缓存结果
-        procedureTimeslotCache.put(procedureId, new ArrayList<>(procedureTimeslots));
-        return procedureTimeslots;
     }
     
     /**
@@ -256,14 +256,16 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         
         if (isAdd) {
             // 添加时间槽到缓存
-            procedureTimeslotCache.computeIfAbsent(procedureId, k -> new ArrayList<>()).add(timeslot);
+            procedureTimeslotCache.computeIfAbsent(procedureId, k -> Collections.synchronizedList(new ArrayList<>())).add(timeslot);
         } else {
             // 从缓存中移除时间槽
-            if (procedureTimeslotCache.containsKey(procedureId)) {
-                procedureTimeslotCache.get(procedureId).remove(timeslot);
-                // 如果该工序没有剩余时间槽，移除缓存条目
-                if (procedureTimeslotCache.get(procedureId).isEmpty()) {
-                    procedureTimeslotCache.remove(procedureId);
+            synchronized (procedureTimeslotCache) {
+                if (procedureTimeslotCache.containsKey(procedureId)) {
+                    procedureTimeslotCache.get(procedureId).remove(timeslot);
+                    // 如果该工序没有剩余时间槽，移除缓存条目
+                    if (procedureTimeslotCache.get(procedureId).isEmpty()) {
+                        procedureTimeslotCache.remove(procedureId);
+                    }
                 }
             }
         }

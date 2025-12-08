@@ -1,6 +1,5 @@
 package com.upec.factoryscheduling.aps.solver;
 
-import com.upec.factoryscheduling.aps.entity.Procedure;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.entity.WorkCenterMaintenance;
 import lombok.Getter;
@@ -13,7 +12,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
-import java.util.List;
 
 /**
  * 工厂调度约束提供器
@@ -45,12 +43,12 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
         return new Constraint[]{
                 // 硬约束 - 必须满足
                 workCenterMaintenanceAllocationConstraint(constraintFactory),
-                procedureSequenceConstraint(constraintFactory),
-                procedureSliceSequenceConstraint(constraintFactory), // 合并了timeslotIndexOrderConstraint和procedureSliceSequence的功能
-                workCenterConflict(constraintFactory),
-                workCenterMaintenanceConflict(constraintFactory),
-                fixedStartTimeConstraint(constraintFactory),
-                sameDayOrderProcedureMachineConflict(constraintFactory), // 硬约束3: 同天同订单同工序同机器不能同时被安排两次
+//                procedureSequenceConstraint(constraintFactory),
+//                procedureSliceSequenceConstraint(constraintFactory),
+//                workCenterConflict(constraintFactory),
+//                workCenterMaintenanceConflict(constraintFactory),
+//                fixedStartTimeConstraint(constraintFactory),
+//                sameDayOrderProcedureMachineConflict(constraintFactory),
                 // 软约束 - 优化目标
 //                maximizeOrderPriority(constraintFactory),
 //                maximizeMachineUtilization(constraintFactory),
@@ -66,6 +64,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
      */
     private Constraint workCenterMaintenanceAllocationConstraint(ConstraintFactory constraintFactory) {
         return constraintFactory.forEach(Timeslot.class)
+                .filter(timeslot ->  timeslot.getWorkCenter() != null)
                 .filter(this::workCenterProximity)
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Work Center Maintenance Allocation Constraint");
@@ -73,7 +72,10 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
 
 
     private boolean workCenterProximity(Timeslot timeslot) {
-        return (timeslot.getMaintenance() != null && timeslot.getWorkCenter() != null)
+        return (timeslot.getMaintenance() != null && timeslot.getWorkCenter() != null
+                && timeslot.getMaintenance().getWorkCenter() != null
+                && timeslot.getMaintenance().getCapacity() != null
+                && timeslot.getMaintenance().getUsageTime() != null)
                 && (!timeslot.getWorkCenter().getWorkCenterCode().equals(timeslot.getMaintenance().getWorkCenter().getWorkCenterCode()))
                 && (timeslot.getMaintenance().getCapacity().compareTo(timeslot.getMaintenance().getUsageTime()) >= 0);
     }
@@ -84,12 +86,12 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
      */
     private Constraint procedureSequenceConstraint(ConstraintFactory constraintFactory) {
         // 确保两个时间槽都有有效的开始时间
-        return constraintFactory.forEachUniquePair(Timeslot.class,
-                        // 按任务号分组
-                        Joiners.equal(timeslot -> timeslot.getTask() != null ? timeslot.getTask().getTaskNo() : null),
-                        // 按工序索引比较，确保只检查一次
-                        Joiners.lessThan(Timeslot::getProcedureIndex))
-                .filter(this::procedureStartDateProximity)
+        return constraintFactory.forEachUniquePair(Timeslot.class)
+                .filter((timeslot1, timeslot2) -> timeslot1.getTask() != null && timeslot2.getTask() != null
+                        && timeslot1.getStartTime() != null && timeslot2.getStartTime() != null
+                        && timeslot1.getTask().getTaskNo().equals(timeslot2.getTask().getTaskNo())
+                        && timeslot1.getProcedureIndex() < timeslot2.getProcedureIndex()
+                        && procedureStartDateProximity(timeslot1, timeslot2))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Procedure sequence constraint");
     }
@@ -105,10 +107,11 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
      * 合并了timeslotIndexOrderConstraint和procedureSliceSequence的功能
      */
     private Constraint procedureSliceSequenceConstraint(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEachUniquePair(Timeslot.class,
-                        Joiners.equal(timeslot -> timeslot.getProcedure().getId()),
-                        Joiners.lessThan(timeslot -> timeslot.getProcedure().getProcedureNo()))
-                .filter(this::procedureStartDateProximity)
+        return constraintFactory.forEachUniquePair(Timeslot.class)
+                .filter((timeslot1, timeslot2) -> timeslot1.getProcedure() != null && timeslot2.getProcedure() != null
+                        && timeslot1.getStartTime() != null && timeslot2.getStartTime() != null
+                        && timeslot1.getProcedure().getId().equals(timeslot2.getProcedure().getId())
+                        && procedureStartDateProximity(timeslot1, timeslot2))
                 .penalize(HardSoftScore.ONE_HARD)
                 .asConstraint("Procedure slice sequence constraint");
     }
@@ -120,9 +123,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
      */
     private Constraint workCenterConflict(ConstraintFactory constraintFactory) {
         // 合并两个约束逻辑：基本工作中心冲突检查 + 同一天Maintenance限制
-        return constraintFactory.forEachUniquePair(Timeslot.class,
-                        Joiners.equal(timeslot -> timeslot.getProcedure().getId()),
-                        Joiners.lessThan(timeslot -> timeslot.getProcedure().getProcedureNo()))
+        return constraintFactory.forEachUniquePair(Timeslot.class)
                 .filter((timeslot1, timeslot2) -> {
                     // 确保两个时间槽都有有效的工作中心和开始时间
                     if (timeslot1.getWorkCenter() == null || timeslot2.getWorkCenter() == null
@@ -201,11 +202,15 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
                 .join(WorkCenterMaintenance.class)
                 .filter((timeslot, maintenance) -> {
                     // 检查工作中心是否相同
-                    if (!maintenance.getWorkCenter().getId().equals(timeslot.getWorkCenter().getId())) {
+                    if (maintenance.getWorkCenter() == null || !maintenance.getWorkCenter().getId().equals(timeslot.getWorkCenter().getId())) {
                         return false;
                     }
                     // 检查维护状态是否为不可用
                     if (maintenance.getStatus() == null || !maintenance.getStatus().equals("n")) {
+                        return false;
+                    }
+                    // 检查维护日期是否有效
+                    if (maintenance.getDate() == null) {
                         return false;
                     }
 
@@ -299,18 +304,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
     /**
      * 同天同订单同工序同机器约束 - 硬约束
      * 确保同天同订单同工序同机器不能同时被安排两次
-     * 优化：使用Joiners.equal分组，减少需要检查的时间槽对数量
      */
     private Constraint sameDayOrderProcedureMachineConflict(ConstraintFactory constraintFactory) {
-        return constraintFactory.forEachUniquePair(Timeslot.class,
-                // 按订单分组
-                Joiners.equal(timeslot -> timeslot.getOrder() != null ? timeslot.getOrder().getOrderNo() : null),
-                // 按工序分组
-                Joiners.equal(timeslot -> timeslot.getProcedure() != null ? timeslot.getProcedure().getId() : null),
-                // 按工作中心（机器）分组
-                Joiners.equal(timeslot -> timeslot.getWorkCenter() != null ? timeslot.getWorkCenter().getId() : null),
-                // 按日期分组
-                Joiners.equal(timeslot -> timeslot.getStartTime() != null ? timeslot.getStartTime().toLocalDate() : null))
+        return constraintFactory.forEachUniquePair(Timeslot.class)
                 .filter((timeslot1, timeslot2) -> {
                     // 确保两个时间槽都有有效的订单、工序、工作中心和开始时间
                     if (timeslot1.getOrder() == null || timeslot2.getOrder() == null
@@ -319,14 +315,20 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider {
                             || timeslot1.getStartTime() == null || timeslot2.getStartTime() == null) {
                         return false;
                     }
-
+                    
+                    // 检查是否为同天、同订单、同工序、同机器
+                    boolean sameDay = timeslot1.getStartTime().toLocalDate().equals(timeslot2.getStartTime().toLocalDate());
+                    boolean sameOrder = timeslot1.getOrder().getOrderNo().equals(timeslot2.getOrder().getOrderNo());
+                    boolean sameProcedure = timeslot1.getProcedure().getId().equals(timeslot2.getProcedure().getId());
+                    boolean sameMachine = timeslot1.getWorkCenter().getId().equals(timeslot2.getWorkCenter().getId());
+                    
                     // 检查时间是否重叠
                     LocalDateTime end1 = timeslot1.getEndTime() != null ? timeslot1.getEndTime() : timeslot1.getStartTime().plusMinutes((long) (timeslot1.getDuration() * 60));
                     LocalDateTime end2 = timeslot2.getEndTime() != null ? timeslot2.getEndTime() : timeslot2.getStartTime().plusMinutes((long) (timeslot2.getDuration() * 60));
                     boolean timeOverlap = !(timeslot1.getStartTime().isAfter(end2) || timeslot2.getStartTime().isAfter(end1));
 
                     // 条件：同天、同订单、同工序、同机器，且时间重叠
-                    return timeOverlap;
+                    return sameDay && sameOrder && sameProcedure && sameMachine && timeOverlap;
                 })
                 .penalize(HardSoftScore.ONE_HARD, (timeslot1, timeslot2) -> {
                     // 对于硬约束，只要有重叠就给予固定惩罚

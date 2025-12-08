@@ -65,4 +65,31 @@ public class MesJjOrderTask {
     @Column(name = "MARK", length = 20)
     private String mark;
 
+    public String getTaskNo() {
+        return taskNo;
+    }
+
+    public String getTaskStatus() {
+        return taskStatus;
+    }
+
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    public String getPlanStartDate() {
+        return planStartDate;
+    }
+
+    public String getPlanEndDate() {
+        return planEndDate;
+    }
+
+    public String getFactStartDate() {
+        return factStartDate;
+    }
+
+    public String getFactEndDate() {
+        return factEndDate;
+    }
 }

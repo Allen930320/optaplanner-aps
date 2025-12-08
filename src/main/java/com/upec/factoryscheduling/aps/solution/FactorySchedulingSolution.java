@@ -9,6 +9,7 @@ import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import org.optaplanner.core.api.solver.SolverStatus;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
 
 /**
@@ -21,6 +22,7 @@ import java.util.List;
  */
 @PlanningSolution  // 标记此类为OptaPlanner规划解决方案
 @Data  // Lombok注解，自动生成getter、setter、equals、hashCode和toString方法
+@XmlRootElement // 支持多线程规划所需的根元素注解
 public class FactorySchedulingSolution {
 
     /**
@@ -37,7 +39,7 @@ public class FactorySchedulingSolution {
      */
     @JsonIgnore
     @ValueRangeProvider(id = "maintenanceRange")
-    @PlanningEntityCollectionProperty
+    @ProblemFactCollectionProperty
     private List<WorkCenterMaintenance> maintenances;
 
     /**

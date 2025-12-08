@@ -1,12 +1,8 @@
 package com.upec.factoryscheduling.aps.entity;
 
-import com.upec.factoryscheduling.aps.solution.WorkCenterMaintenanceVariableListener;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.optaplanner.core.api.domain.entity.PlanningEntity;
-import org.optaplanner.core.api.domain.lookup.PlanningId;
-import org.optaplanner.core.api.domain.variable.ShadowVariable;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
@@ -18,16 +14,15 @@ import java.time.LocalTime;
 @Data
 @Getter
 @Setter
-@PlanningEntity
 public class WorkCenterMaintenance {
 
     @Id
-    @PlanningId
     private String id;
 
     @OneToOne(fetch = FetchType.EAGER)
     private WorkCenter workCenter;
 
+    @Column(name = "calendar_year")
     private int year;
 
     private LocalDate date;
@@ -42,8 +37,6 @@ public class WorkCenterMaintenance {
 
     private LocalTime endTime;
 
-    @ShadowVariable(variableListenerClass = WorkCenterMaintenanceVariableListener.class,sourceVariableName =
-            "maintenance",sourceEntityClass = Timeslot.class)
     private BigDecimal usageTime;
 
     /**

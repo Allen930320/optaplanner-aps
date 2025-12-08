@@ -45,14 +45,18 @@ server:
 # JWT 配置
 jwt:
   secret: "tWgVv0IDPl9WP24e17lbDkuMoqUwSPhTKcTz+VnylztDI+gERCeOQiu0p+Cc3z/ohceEED6d8vQDJVgmS4e1sw=="  # 在生产环境中请修改为强密钥
-  expiration: 86400000  # 24小时，单位毫秒
+  expiration: 986400000  # 24小时，单位毫秒
   issuer: aps-system  # 签发者
 optaplanner:
   solver:
+    # 终止条件
     termination:
-      spent-limit: 2m
-      unimproved-spent-limit: 1m
-#      best-score-limit: 0hard/0soft
+      # 总体时间限制
+      spent-limit: ${SOLVER_TIME_LIMIT:2m}
+      # 最佳分数限制
+      best-score-limit: "0hard/*soft"
+      # 无改进时间限制
+      unimproved-spent-limit: 2m
 
 
 

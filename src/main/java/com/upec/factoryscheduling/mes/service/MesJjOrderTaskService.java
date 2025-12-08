@@ -63,7 +63,7 @@ public class MesJjOrderTaskService {
             sqlBuilder.append("AND t.PLAN_STARTDATE >= '").append(startTime).append("' ");
         }
         if (endTime != null && !endTime.isEmpty()) {
-            sqlBuilder.append("AND t.PLAN_ENDDATE <= '").append(endTime).append("' ");
+            sqlBuilder.append("AND t.PLAN_STARTDATE <= '").append(endTime).append("' ");
         }
         
         // 任务状态查询条件

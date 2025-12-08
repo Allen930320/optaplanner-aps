@@ -1,7 +1,6 @@
 package com.upec.factoryscheduling.aps.entity;
 
 import com.upec.factoryscheduling.aps.solution.TimeslotVariableListener;
-import com.upec.factoryscheduling.aps.solution.WorkCenterMaintenanceVariableListener;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,7 +11,6 @@ import org.optaplanner.core.api.domain.variable.ShadowVariable;
 
 import javax.persistence.*;
 import java.io.Serializable;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -43,11 +41,12 @@ public class Timeslot implements Serializable {
 
     private Integer priority; // 优先级，直接存储计算好的优先级值
 
-    @ShadowVariable(variableListenerClass = WorkCenterMaintenanceVariableListener.class, sourceVariableName =
-            "maintenance")
+    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName =
+            "maintenance",sourceEntityClass = Timeslot.class)
     private LocalDateTime startTime; // 基于维护计划自动计算的开始时间
 
-    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName = "startTime")
+    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName = "maintenance",
+            sourceEntityClass = Timeslot.class)
     private LocalDateTime endTime; // 自动计算的结束时间
 
     @PlanningVariable(valueRangeProviderRefs = "maintenanceRange")
@@ -63,6 +62,5 @@ public class Timeslot implements Serializable {
     private Integer total; // 总分片数量
 
     private int procedureIndex;
-
 
 }
