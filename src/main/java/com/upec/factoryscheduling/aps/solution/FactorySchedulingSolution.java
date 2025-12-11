@@ -12,11 +12,8 @@ import org.optaplanner.core.api.domain.solution.ProblemFactCollectionProperty;
 import org.optaplanner.core.api.domain.valuerange.ValueRangeProvider;
 import org.optaplanner.core.api.score.buildin.hardsoft.HardSoftScore;
 import org.optaplanner.core.api.solver.SolverStatus;
-import org.optaplanner.core.api.solver.change.ProblemChange;
 
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -29,7 +26,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * </p>
  */
 @PlanningSolution  // 标记此类为OptaPlanner规划解决方案
-public class FactorySchedulingSolution implements IncrementalSolution<FactorySchedulingSolution>,  Serializable {
+public class FactorySchedulingSolution implements  Serializable {
     private static final long serialVersionUID = 1L;
 
     @Getter
@@ -177,35 +174,6 @@ public class FactorySchedulingSolution implements IncrementalSolution<FactorySch
      */
     public synchronized boolean removeMaintenance(WorkCenterMaintenance maintenance) {
         return maintenance != null && this.maintenances.remove(maintenance);
-    }
-
-    /**
-     * 获取不可修改的时间槽列表视图，防止外部修改
-     * @return 不可修改的时间槽列表
-     */
-    public List<Timeslot> getUnmodifiableTimeslots() {
-        return Collections.unmodifiableList(this.timeslots);
-    }
-
-    /**
-     * 获取不可修改的维护计划列表视图，防止外部修改
-     * @return 不可修改的维护计划列表
-     */
-    public List<WorkCenterMaintenance> getUnmodifiableMaintenances() {
-        return Collections.unmodifiableList(this.maintenances);
-    }
-
-    // 增量求解支持
-    private List<ProblemChange<FactorySchedulingSolution>> pendingChanges = new ArrayList<>();
-
-    @Override
-    public void addProblemChange(ProblemChange<FactorySchedulingSolution> problemChange) {
-        pendingChanges.add(problemChange);
-    }
-
-    @Override
-    public void clearProcessedChanges() {
-        pendingChanges.clear();
     }
 
 

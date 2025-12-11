@@ -24,12 +24,16 @@ public class Task implements Serializable {
 
     private String status;
 
+    //实际开始时间
     private LocalDateTime factStartDate;
 
+    //实际结束时间
     private LocalDateTime factEndDate;
 
+    //计划开始时间
     private LocalDate planStartDate;
 
+    //计划结束时间
     private LocalDate planEndDate;
 
     private int priority;

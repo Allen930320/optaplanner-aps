@@ -30,7 +30,16 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
     public void afterVariableChanged(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
         // 当maintenance变量变更时，更新时间槽的开始和结束时间
         if (timeslot.getMaintenance() != null) {
-            updateStartTimeAndEndTime(scoreDirector, timeslot);
+            WorkCenterMaintenance maintenance = timeslot.getMaintenance();
+            // 使用ScoreDirector通知变量变更
+            scoreDirector.beforeVariableChanged(timeslot, "startTime");
+            scoreDirector.beforeVariableChanged(timeslot, "endTime");
+            // 使用线程安全的方式更新时间槽的时间
+            timeslot.setStartTime(maintenance.getDate().atTime(maintenance.getStartTime()));
+            timeslot.setEndTime(maintenance.getDate().atTime(maintenance.getEndTime()));
+            // 通知ScoreDirector变量已变更
+            scoreDirector.afterVariableChanged(timeslot, "startTime");
+            scoreDirector.afterVariableChanged(timeslot, "endTime");
         }
     }
 

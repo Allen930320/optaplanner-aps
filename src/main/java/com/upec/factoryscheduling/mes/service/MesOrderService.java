@@ -4,16 +4,19 @@ import com.google.common.collect.Lists;
 import com.upec.factoryscheduling.aps.entity.*;
 import com.upec.factoryscheduling.aps.service.*;
 import com.upec.factoryscheduling.common.utils.DateUtils;
+import com.upec.factoryscheduling.common.utils.NodeLevelManager;
 import com.upec.factoryscheduling.common.utils.RandomFun;
 import com.upec.factoryscheduling.mes.entity.*;
 import com.upec.factoryscheduling.mes.repository.MesOrderRepository;
 import com.xkzhangsan.time.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -150,7 +153,7 @@ public class MesOrderService {
     private List<MesJjOrderTask> getOrderTasks(List<String> taskNos) {
         List<MesJjOrderTask> orderTasks = new ArrayList<>();
         Lists.partition(taskNos, 999).forEach(taskNo -> {
-            orderTasks.addAll(mesJjOrderTaskService.queryAllByTaskNoInAndTaskStatusIn(taskNo, List.of("生产中","待生产")));
+            orderTasks.addAll(mesJjOrderTaskService.queryAllByTaskNoInAndTaskStatusIn(taskNo, List.of("生产中", "待生产")));
         });
         return orderTasks;
     }
@@ -290,7 +293,7 @@ public class MesOrderService {
                 procedure.setEndTime(DateUtils.parseDateTime(mesProcedure.getFactEndDate()));
             }
             if (routeProcedure != null && routeProcedure.getMachineHours() != null) {
-                procedure.setMachineMinutes((int) (Double.parseDouble(routeProcedure.getMachineHours())*60));
+                procedure.setMachineMinutes((int) (Double.parseDouble(routeProcedure.getMachineHours()) * 60));
             }
             procedures.add(procedure);
         }
@@ -302,17 +305,21 @@ public class MesOrderService {
             if (CollectionUtil.isEmpty(numbers)) {
                 continue;
             }
-            List<Procedure> nextProcedures = new ArrayList<>();
             for (Integer number : numbers) {
                 Procedure nextProcedure = map.get(procedure.getTaskNo() + "_" + number);
                 if (nextProcedure != null) {
                     if (numbers.size() >= 2) {
                         nextProcedure.setParallel(true);
                     }
-                    nextProcedures.add(nextProcedure);
+                    procedure.addNextProcedure(nextProcedure);
                 }
-                procedure.addNextProcedure(nextProcedure);
             }
+        }
+        Map<String, List<Procedure>> maps = procedures.stream().collect(Collectors.groupingBy(Procedure::getTaskNo));
+        for (List<Procedure> value : maps.values()) {
+            Procedure procedure = value.stream().min(Comparator.comparing(Procedure::getProcedureNo)).orElse(null);
+            NodeLevelManager.calculateLevels(procedure);
+            System.out.println(procedure);
         }
         return procedureService.saveProcedures(procedures);
     }

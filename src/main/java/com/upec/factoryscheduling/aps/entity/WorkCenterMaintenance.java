@@ -26,6 +26,7 @@ public class WorkCenterMaintenance implements Serializable {
 
     private LocalDate date;
 
+    //机器容量(分钟)
     private int capacity;
 
     private String status;

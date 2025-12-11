@@ -53,16 +53,15 @@ public class Procedure implements Serializable {
 
     private boolean parallel;
 
-    private int index = 1;
+    private int index;
+
+    private Integer level;
 
     public void addNextProcedure(Procedure procedure) {
         if (this.nextProcedure == null) {
             this.nextProcedure = new ArrayList<>();
         }
         this.nextProcedure.add(procedure);
-        if (this.index < this.index + 1) {
-            procedure.setIndex(this.index + 1);
-        }
     }
 
 }
