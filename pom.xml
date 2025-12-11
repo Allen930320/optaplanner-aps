@@ -13,8 +13,8 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>2.7.18</spring-boot.version>
-        <version.org.optaplanner>8.44.0.Final</version.org.optaplanner>
+        <spring-boot.version>2.7.12</spring-boot.version>
+        <version.org.optaplanner>8.45.0-SNAPSHOT</version.org.optaplanner>
         <guava.version>32.0.1-android</guava.version>
     </properties>
     <dependencies>
