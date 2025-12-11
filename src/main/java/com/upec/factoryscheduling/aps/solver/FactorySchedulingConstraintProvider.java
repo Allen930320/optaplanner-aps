@@ -33,15 +33,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
      * 工作中心和工作中心日历必须匹配
      * 工作中心状态为N则表示该机器当前不可用
      */
-    private Constraint machineModelMatch(ConstraintFactory factory) {
-        return factory.forEach(Timeslot.class)
-                .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getWorkCenter() != null
-                        && !timeslot.getWorkCenter().getId().equals(
-                        timeslot.getMaintenance().getWorkCenter().getId()))
-                .penalize(HardSoftScore.ONE_HARD)
-                .asConstraint("Machine model must match");
-    }
 
 
     /**
@@ -57,30 +48,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
      * 同一个订单的同一个任务,每个工序都可以被分为一个或多个时间槽,最小一个(Timeslot),当一个工序被分为一个或多个时间槽时,该工序每天只能被同一个工作中心加工一次
      *
      */
-    private Constraint sequentialProcesses(ConstraintFactory factory) {
-        return factory.forEach(Timeslot.class)
-                .filter(t1 -> t1.getStartTime() != null && !CollectionUtils.isEmpty(t1.getProcedure().getNextProcedureNo()))
-                .join(Timeslot.class,
-                        Joiners.equal(
-                                t1 -> t1.getTask().getTaskNo(),
-                                t2 -> t2.getTask().getTaskNo()),
-                        Joiners.filtering((t1, t2) ->
-                                t2.getStartTime() != null
-                                        && t1.getProcedure().getNextProcedureNo()
-                                        .contains(t2.getProcedure().getProcedureNo())))
-                .filter((t1, t2) -> {
-                    LocalDateTime t1End = t1.getStartTime().plusMinutes(t1.getDuration());
-                    return t1End.isAfter(t2.getStartTime());
-                })
-                .penalize(HardSoftScore.ONE_HARD, (t1, t2) -> {
-                    LocalDateTime t1End = t1.getStartTime().plusMinutes(t1.getDuration());
-                    return (int) Duration.between(t2.getStartTime(), t1End).toMinutes();
-                })
-                .asConstraint("Sequential processes must follow order");
-    }
 
     /**
-     * 硬约束5: 订单日期约束
+     * 硬约束4: 订单日期约束
      * 当订单,任务实体中存在factStartDate不为空时,工序中的startTime不为空时,该规划必须按照此订单的实际开始时间为
      * 初始工序的开时间,当工序中的startTime不为空时,此工序必须按照此时间为开始时间,endTime也不为空时则该工序不用继续规划,尊重现实条件
      */
