@@ -226,32 +226,32 @@ public class SchedulingService {
                 .map(Order::getPlanEndDate)
                 .max(LocalDate::compareTo)
                 .orElse(LocalDate.now());
-        // 不再使用时间槽范围列表，startTime将通过maintenance自动计算
-        // 获取工作中心列表
-        List<WorkCenter> workCenters = new ArrayList<>();
-        if (workCenterService != null) {
-            workCenters = workCenterService.getAllMachines();
-        }
-
         // 获取时间槽数据
         List<Timeslot> timeslots = new ArrayList<>();
+        List<WorkCenter> workCenters = new ArrayList<>();
         if (timeslotService != null) {
             // 查找与订单相关的所有时间槽并设置问题ID
             timeslots = timeslotService.findAllByOrderIn(orders).stream()
-                    .peek(timeslot -> timeslot.setProblemId(problemId))
-                    .filter(timeslot -> timeslot.getWorkCenter()!=null)
-                    .collect(Collectors.toList());
+                    .peek(timeslot -> {
+                        if (timeslot.getWorkCenter() != null) {
+                            workCenters.add(timeslot.getWorkCenter());
+                        }
+                        timeslot.setProblemId(problemId);
+                        if (timeslot.getProcedure().getStartTime() != null) {
+                            timeslot.setStartTime(timeslot.getProcedure().getStartTime());
+                        }
+                        if (timeslot.getProcedure().getEndTime() != null) {
+                            timeslot.setEndTime(timeslot.getProcedure().getEndTime());
+                            timeslot.setManual(true);
+                        }
+                    }).filter(timeslot -> timeslot.getWorkCenter() != null).collect(Collectors.toList());
         }
         // 获取设备维护计划
         List<WorkCenterMaintenance> maintenances = new ArrayList<>();
         if (maintenanceService != null) {
-            maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters, start, end);
+            maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters, start, end.plusDays(10));
         }
-        // 使用正确的构造函数创建解决方案实例
-        // 参数依次为：时间槽列表、工作中心列表、维护计划列表
-        FactorySchedulingSolution solution = new FactorySchedulingSolution(timeslots, maintenances);
-
-        return solution;
+        return new FactorySchedulingSolution(timeslots, maintenances);
     }
 
 
@@ -275,7 +275,6 @@ public class SchedulingService {
     private FactorySchedulingSolution loadProblemWithSlices(List<String> orderNos, Long problemId) {
         // 首先加载基础问题数据
         FactorySchedulingSolution solution = loadProblem(orderNos, problemId);
-
         // 如果有时间槽数据，对分片数据进行额外处理
         if (!CollectionUtils.isEmpty(solution.getTimeslots())) {
             // 按工序ID和分片索引对时间槽进行排序，确保分片顺序正确
@@ -288,8 +287,7 @@ public class SchedulingService {
 
                         // 然后按分片索引排序
                         return Integer.compare(t1.getIndex(), t2.getIndex());
-                    })
-                    .collect(Collectors.toList());
+                    }).collect(Collectors.toList());
 
             // 设置分片之间的连接关系
             setupSliceRelationships(sortedTimeslots);

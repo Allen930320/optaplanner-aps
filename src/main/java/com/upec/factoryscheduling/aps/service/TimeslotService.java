@@ -113,7 +113,7 @@ public class TimeslotService {
                 log.info("跳过未绑定工作中心的工序: {}", timeslot.getProcedure().getId());
                 continue;
             }
-            if (timeslot.getStartTime() != null && timeslot.getEndTime() != null) {
+            if (timeslot.isManual()) {
                 continue;
             }
             if (time >= 0.5 && slice <= 1) {

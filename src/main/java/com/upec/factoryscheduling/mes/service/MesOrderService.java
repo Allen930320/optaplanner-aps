@@ -145,6 +145,8 @@ public class MesOrderService {
         timeslot.setDuration(procedure.getMachineMinutes());
         if (procedure.getStartTime() != null && procedure.getEndTime() != null) {
             timeslot.setManual(true);
+            timeslot.setStartTime(procedure.getStartTime());
+            timeslot.setEndTime(procedure.getEndTime());
         }
         return timeslot;
     }

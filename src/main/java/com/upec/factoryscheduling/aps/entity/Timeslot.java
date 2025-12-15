@@ -67,6 +67,7 @@ public class Timeslot implements Serializable {
     //当前工序是否为并行工序
     private boolean parallel;
 
+    //当天工序已完成或者手动排序,该时间槽不可动
     private boolean manual;
 
     //当前工序的时间槽索引
@@ -79,7 +80,6 @@ public class Timeslot implements Serializable {
     private int procedureIndex;
 
     public synchronized void updateTimeRange() {
-
         lock.lock();
         try {
             if (maintenance == null || workCenter == null) {
@@ -119,25 +119,20 @@ public class Timeslot implements Serializable {
         if (other == null || workCenter == null || other.getWorkCenter() == null) {
             return false;
         }
-
         boolean workCentersMatch = workCenter.equals(other.getWorkCenter());
-
         if (!workCentersMatch) {
             return false;
         }
-
         lock.lock();
         try {
             LocalDateTime thisStart = startTime;
             LocalDateTime thisEnd = endTime;
             LocalDateTime otherStart = other.getStartTime();
             LocalDateTime otherEnd = other.getEndTime();
-
             // 两个时间槽都有开始和结束时间才能检查重叠
             if (thisStart == null || thisEnd == null || otherStart == null || otherEnd == null) {
                 return false;
             }
-
             // 检查是否有重叠
             return !thisEnd.isBefore(otherStart) && !thisStart.isAfter(otherEnd);
         } finally {

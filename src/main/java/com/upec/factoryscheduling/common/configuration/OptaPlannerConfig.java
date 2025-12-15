@@ -51,7 +51,7 @@ public class OptaPlannerConfig {
 
         // 设置环境模式 - 在多线程环境中使用REPRODUCIBLE确保结果可重现
         // 注意：在生产环境中可考虑使用FASTEST，但会牺牲结果可重现性
-        solverConfig.setEnvironmentMode(EnvironmentMode.REPRODUCIBLE);
+        solverConfig.setEnvironmentMode(EnvironmentMode.FAST_ASSERT);
         
         // 多线程配置 - 启用并行移动生成和评估
         // 使用自动设置以充分利用多核CPU
