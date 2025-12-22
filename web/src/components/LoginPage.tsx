@@ -22,7 +22,7 @@ const LoginPage: React.FC = () => {
       } else {
         message.error('登录失败，请重试');
       }
-    } catch (error) {
+    } catch {
       message.error('登录失败，请重试');
     } finally {
       setLoading(false);

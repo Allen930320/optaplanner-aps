@@ -5,7 +5,20 @@ import 'regenerator-runtime/runtime';
 
 // 添加date-fns v3 isValid方法的polyfill，解决rc-picker依赖问题
 import * as dateFns from 'date-fns';
-if (typeof (dateFns as any).isValid !== 'function') {
+
+// React相关导入
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+
+// 导入Ant Design React 19兼容性包
+import '@ant-design/v5-patch-for-react-19';
+
+// 本地导入
+import './index.css';
+import App from './App.tsx';
+
+// 添加date-fns的isValid方法polyfill
+if (typeof (dateFns as typeof dateFns & { isValid?: (date: Date) => boolean }).isValid !== 'function') {
   Object.defineProperty(dateFns, 'isValid', {
     value: (date: Date) => {
       return date instanceof Date && !Number.isNaN(date.getTime());
@@ -16,17 +29,8 @@ if (typeof (dateFns as any).isValid !== 'function') {
   });
 }
 
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-// 导入Ant Design React 19兼容性包
-import '@ant-design/v5-patch-for-react-19';
-import './index.css'
-import App from './App.tsx'
-
-
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
-  </StrictMode>,
-)
+  </StrictMode>
+);

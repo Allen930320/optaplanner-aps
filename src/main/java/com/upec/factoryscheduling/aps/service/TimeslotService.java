@@ -14,7 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Service
@@ -97,7 +99,6 @@ public class TimeslotService {
         return timeslotRepository.findAllByOrderIn(orders, sort);
     }
 
-
     public List<Timeslot> findAllByTaskIn(List<String> taskNos) {
         Sort sort = Sort.by(Sort.Direction.DESC, "order", "procedureIndex", "index").ascending();
         return timeslotRepository.findAllByTask_TaskNoIn(taskNos, sort);
@@ -105,13 +106,13 @@ public class TimeslotService {
 
 
     @Transactional("h2TransactionManager")
-    public void createTimeslot(List<String> taskNos, List<String> procedureIds, double time, int slice) {
+    public void createTimeslot(List<String> taskNos, List<String> timeslotIds, double time, int slice) {
         List<Timeslot> timeslots = new ArrayList<>();
         if (!CollectionUtils.isEmpty(taskNos)) {
             timeslots = timeslotRepository.findAllByTask_TaskNoIn(taskNos);
         }
-        if (!CollectionUtils.isEmpty(procedureIds)) {
-            timeslots = timeslotRepository.findAllByProcedureIdIn(procedureIds);
+        if (!CollectionUtils.isEmpty(timeslotIds)) {
+            timeslots = timeslotRepository.findAllByIdIsIn(timeslotIds);
         }
         // 为每个工序创建分片Timeslot
         for (Timeslot timeslot : timeslots) {
@@ -122,20 +123,34 @@ public class TimeslotService {
             if (timeslot.isManual()) {
                 continue;
             }
+            List<Timeslot> newTimeslots = new ArrayList<>();
+            List<Timeslot> list = timeslotRepository.findAllByProcedureAndIdNot(timeslot.getProcedure(), timeslot.getId());
             if (time >= 0.5 && slice <= 1) {
-                timeslotRepository.saveAll(splitTimeslot(timeslot, time));
+                newTimeslots.addAll(splitTimeslot(timeslot, list, time));
             }
             if (slice > 1) {
-                timeslotRepository.saveAll(splitTimeslot(timeslot, slice));
+                newTimeslots.addAll(splitTimeslot(timeslot, list, slice));
             }
+            timeslotRepository.saveAll(newTimeslots);
         }
     }
 
-    private List<Timeslot> splitTimeslot(Timeslot timeslot, double time) {
+
+    private void convertTimeslot(List<Timeslot> timeslots, int maxIndex, String skipId) {
+        AtomicInteger index = new AtomicInteger(maxIndex);
+        timeslots.stream().sorted(Comparator.comparing(Timeslot::getDuration)).forEach(timeslot -> {
+            if (!timeslot.getId().equals(skipId)) {
+                timeslot.setIndex(index.getAndIncrement());
+                timeslot.setId(timeslot.getTask().getTaskNo() + "_" + timeslot.getProcedure().getProcedureNo() + "_" + index);
+            }
+        });
+    }
+
+    private List<Timeslot> splitTimeslot(Timeslot timeslot, List<Timeslot> others, double time) {
         time = time * 60;
         List<Timeslot> timeslots = new ArrayList<>();
-        int duration = timeslot.getProcedure().getMachineMinutes();
-        int index = timeslot.getIndex();
+        int duration = timeslot.getDuration();
+        int index = timeslot.getTotal();
         if (time >= duration) {
             timeslots.add(timeslot);
             return timeslots;
@@ -143,6 +158,7 @@ public class TimeslotService {
         duration = duration - (int) time;
         timeslot.setDuration((int) time);
         timeslots.add(timeslot);
+        timeslots.addAll(others);
         while (duration > 0) {
             Timeslot newTimeslot = new Timeslot();
             BeanUtils.copyProperties(timeslot, newTimeslot);
@@ -157,13 +173,14 @@ public class TimeslotService {
         return timeslots.stream().peek(t -> t.setTotal(total)).collect(Collectors.toList());
     }
 
-    private List<Timeslot> splitTimeslot(Timeslot timeslot, int slice) {
+    private List<Timeslot> splitTimeslot(Timeslot timeslot, List<Timeslot> others, int slice) {
         List<Timeslot> timeslots = new ArrayList<>();
-        int duration = timeslot.getProcedure().getMachineMinutes();
-        int index = timeslot.getIndex();
+        int duration = timeslot.getDuration();
+        int index = timeslot.getTotal();
         int interval = Math.round((float) duration / slice * 100) / 100;
         timeslot.setDuration(interval);
         timeslots.add(timeslot);
+        timeslots.addAll(others);
         for (int i = 1; i < slice; i++) {
             Timeslot newTimeslot = new Timeslot();
             BeanUtils.copyProperties(timeslot, newTimeslot);

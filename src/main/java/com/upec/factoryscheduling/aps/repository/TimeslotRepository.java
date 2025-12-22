@@ -1,6 +1,7 @@
 package com.upec.factoryscheduling.aps.repository;
 
 import com.upec.factoryscheduling.aps.entity.Order;
+import com.upec.factoryscheduling.aps.entity.Procedure;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,10 +15,14 @@ public interface TimeslotRepository extends JpaRepository<Timeslot, String> {
 
     List<Timeslot> findAllByOrderIn(List<Order> orders, Sort sort);
 
-    List<Timeslot> findAllByProcedureIdIn(Collection<String> procedureIds);
-
     List<Timeslot> findAllByTask_TaskNoIn(List<String> taskNos);
 
-    List<Timeslot> findAllByTask_TaskNoIn(List<String> taskNos,Sort sort);
+    List<Timeslot> findAllByTask_TaskNoIn(List<String> taskNos, Sort sort);
+
+    List<Timeslot> findAllByProcedure(Procedure procedure);
+
+    List<Timeslot> findAllByIdIsIn(Collection<String> ids);
+
+    List<Timeslot> findAllByProcedureAndIdNot(Procedure procedure, String id);
 
 }

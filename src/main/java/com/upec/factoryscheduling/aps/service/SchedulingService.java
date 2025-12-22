@@ -240,10 +240,6 @@ public class SchedulingService {
             }
             timeslot.setProblemId(problemId);
             if (timeslot.getProcedure().getStartTime() != null) {
-                timeslot.setStartTime(timeslot.getProcedure().getStartTime());
-            }
-            if (timeslot.getProcedure().getEndTime() != null) {
-                timeslot.setEndTime(timeslot.getProcedure().getEndTime());
                 timeslot.setManual(true);
             }
         }).filter(timeslot -> timeslot.getWorkCenter() != null).collect(Collectors.toList());

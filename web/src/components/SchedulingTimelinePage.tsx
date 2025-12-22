@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Card, Spin, message, Tag, Tooltip } from 'antd';
-import type { ColumnType } from 'antd/es/table';
-import { getTimeslotList } from '../services/api';
-import type { Timeslot, Procedure } from '../services/model';
+import React, {useEffect, useState} from 'react';
+import {Card, message, Spin, Table, Tag, Tooltip} from 'antd';
+import type {ColumnType} from 'antd/es/table';
+import {getTimeslotList} from '../services/api';
+import type {Procedure, Timeslot} from '../services/model';
+import moment from 'moment';
 
 interface TaskData {
   [key: string]: { timeslots: Timeslot[]; dateMap: Map<string, Timeslot[]> };
@@ -161,10 +162,7 @@ const SchedulingTimelinePage: React.FC = () => {
   // 格式化日期显示
   const formatDate = (dateStr: string) => {
     // 将YYYY-MM-DD格式转换为更友好的显示
-    const date = new Date(dateStr);
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-    return `${month}月${day}日`;
+    return moment(dateStr).format('M月D日');
   };
 
   // 动态生成表格列
@@ -203,14 +201,14 @@ const SchedulingTimelinePage: React.FC = () => {
   useEffect(() => {
     // 获取时间槽跨越的所有日期
     const getDatesInRange = (startTime: string, endTime: string): string[] => {
-      const startDate = new Date(startTime.substring(0, 10));
-      const endDate = new Date(endTime.substring(0, 10));
+      const startDate = moment(startTime.substring(0, 10));
+      const endDate = moment(endTime.substring(0, 10));
       const dates: string[] = [];
       
-      const currentDate = new Date(startDate);
-      while (currentDate <= endDate) {
-        dates.push(currentDate.toISOString().split('T')[0]);
-        currentDate.setDate(currentDate.getDate() + 1);
+      const currentDate = moment(startDate);
+      while (currentDate.isSameOrBefore(endDate, 'day')) {
+        dates.push(currentDate.format('YYYY-MM-DD'));
+        currentDate.add(1, 'day');
       }
       
       return dates;
@@ -275,8 +273,7 @@ const SchedulingTimelinePage: React.FC = () => {
         
         // 为每个日期添加列数据
         dates.forEach(date => {
-          const dayTimeslots = data.dateMap.get(date) || [];
-          row[date] = dayTimeslots;
+            row[date] = data.dateMap.get(date) || [];
         });
         
         return row;
@@ -303,7 +300,7 @@ const SchedulingTimelinePage: React.FC = () => {
         } else {
           message.error('获取数据失败: ' + apiResponse.msg);
         }
-      } catch (error) {
+      } catch {
       message.error('网络请求失败');
     } finally {
         setLoading(false);

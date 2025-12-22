@@ -1,10 +1,13 @@
 package com.upec.factoryscheduling.aps.controller;
 
 import com.upec.factoryscheduling.aps.entity.Procedure;
+import com.upec.factoryscheduling.aps.entity.TaskExt;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
+import com.upec.factoryscheduling.aps.resquest.ProcedureRequest;
 import com.upec.factoryscheduling.aps.service.ProcedureService;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -22,7 +25,6 @@ public class ProcedureController {
     public void setProcedureService(ProcedureService procedureService) {
         this.procedureService = procedureService;
     }
-    
 
 
     @PostMapping
@@ -34,5 +36,16 @@ public class ProcedureController {
     @PostMapping("/list")
     public ApiResponse<List<Timeslot>> createProcedure(@RequestBody List<Procedure> procedures) {
         return ApiResponse.success(new ArrayList<>());
+    }
+
+    /**
+     * 分页查询工序列表
+     *
+     * @param request 查询参数
+     * @return 分页结果
+     */
+    @GetMapping("/page")
+    public ApiResponse<Page<TaskExt>> findProceduresByPage(ProcedureRequest request) {
+        return ApiResponse.success(procedureService.findProceduresByPage(request));
     }
 }

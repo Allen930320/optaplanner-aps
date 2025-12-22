@@ -12,7 +12,9 @@ export type {
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
-  UserInfo
+  UserInfo,
+  Procedure,
+  ProcedureQueryParams
 } from './model';
 
 // 重新导出所有API函数
@@ -23,6 +25,8 @@ export {
   queryTasks,
   startTasks,
   createTimeslot,
+  getTimeslotByTaskNo,
+  queryProceduresWithPagination,
   // 认证相关API
   login,
   register,

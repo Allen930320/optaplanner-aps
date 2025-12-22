@@ -1,3 +1,6 @@
+// 导入需要在文件内部使用的类型
+import type { UserInfo } from './model';
+
 // 重新导出所有认证相关类型定义
 export type {
   LoginRequest,
@@ -15,15 +18,14 @@ export {
 } from './api';
 
 // 获取当前用户信息
-export const getCurrentUser = (): any | null => {
+export const getCurrentUser = (): UserInfo | null => {
   try {
     const userInfoStr = localStorage.getItem('userInfo');
     if (userInfoStr) {
       return JSON.parse(userInfoStr);
     }
     return null;
-  } catch (error) {
-
+  } catch {
     return null;
   }
 };
@@ -33,8 +35,7 @@ export const isLoggedIn = (): boolean => {
   try {
     const loggedIn = localStorage.getItem('isLoggedIn');
     return loggedIn === 'true';
-  } catch (error) {
-
+  } catch {
     return false;
   }
 };
@@ -47,7 +48,7 @@ export const clearUserSession = (): void => {
 };
 
 // 保存用户登录状态
-export const saveUserSession = (userInfo: any, token: string): void => {
+export const saveUserSession = (userInfo: UserInfo, token: string): void => {
   localStorage.setItem('userInfo', JSON.stringify(userInfo));
   localStorage.setItem('isLoggedIn', 'true');
   localStorage.setItem('token', token);

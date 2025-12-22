@@ -8,7 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,6 +125,9 @@ public class ApsWorkCenterMaintenanceService {
 
 
     public void update(ApsWorkCenterMaintenance workCenterMaintenance) {
+        LocalDateTime start = LocalDateTime.parse(workCenterMaintenance.getStartTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        LocalDateTime end = LocalDateTime.parse(workCenterMaintenance.getEndTime(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+        workCenterMaintenance.setCapacity((int) Duration.between(start, end).toMinutes()-30);
         repository.save(workCenterMaintenance);
 
     }

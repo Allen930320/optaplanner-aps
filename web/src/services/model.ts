@@ -48,6 +48,15 @@ export interface OrderTaskQueryParams {
     taskStatus?: string;
 }
 
+// 工序查询参数接口
+export interface ProcedureQueryParams {
+    taskNo?: string;
+    orderNo?: string;
+    status?: string;
+    pageNum?: number;
+    pageSize?: number;
+}
+
 // ====================================
 // 分页相关接口定义
 // ====================================
@@ -85,9 +94,9 @@ export interface SpringDataPage<T> {
 }
 
 // 前端分页响应接口
-export interface PageResponse {
+export interface PageResponse<T = unknown> {
     total: number;
-    records: OrderTask[];
+    records: T[];
     totalPages: number;
     pageSize: number;
     pageNum: number;
@@ -160,18 +169,19 @@ export interface Procedure {
     id: string;
     taskNo: string;
     orderNo: string;
-    workCenterId: WorkCenter;
+    workCenterId: WorkCenter | null;
     procedureName: string;
     procedureNo: number;
     machineMinutes: number;
     nextProcedureNo: number[];
-    startTime: string;
-    endTime: string;
+    startTime: string | null;
+    endTime: string | null;
     planStartDate: string | null;
     planEndDate: string | null;
     status: string;
     parallel: boolean;
     index: number;
+    level: number;
 }
 
 // 订单类型定义

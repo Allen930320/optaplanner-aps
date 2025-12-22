@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import {
     Table,
     Pagination,
@@ -15,8 +15,8 @@ import {
     Card
 } from 'antd';
 import type {ColumnsType} from 'antd/es/table';
-import {queryOrderTasksWithPagination, syncOrderData} from '../services/orderService';
-import type {OrderTask, OrderTaskQueryParams} from '../services/orderService';
+import {queryOrderTasksWithPagination, syncOrderData} from '../services/api.ts';
+import type {OrderTask, OrderTaskQueryParams} from '../services/model.ts';
 
 const {Title} = Typography;
 const {RangePicker} = DatePicker;
@@ -58,20 +58,20 @@ const OrderQueryPage: React.FC = () => {
     };
 
     // 查询订单任务数据
-    const fetchOrders = async (params: OrderTaskQueryParams) => {
+    const fetchOrders = useCallback(async (params: OrderTaskQueryParams) => {
         setLoading(true);
         try {
             const response = await queryOrderTasksWithPagination(params);
             setOrderTasks(response.records || []);
             setTotal(response.total || 0);
-        } catch (error) {
+        } catch {
             message.error('网络错误，获取订单任务数据失败');
             setOrderTasks([]);
             setTotal(0);
         } finally {
             setLoading(false);
         }
-    };
+    }, [setOrderTasks, setTotal, setLoading]);
 
     // 初始加载和分页变化时获取数据
     useEffect(() => {
@@ -81,7 +81,7 @@ const OrderQueryPage: React.FC = () => {
             ...form.getFieldsValue(),
         };
         fetchOrders(params);
-    }, [currentPage, pageSize]);
+    }, [currentPage, pageSize, form, fetchOrders]);
 
     // 处理搜索
     const handleSearch = async () => {
@@ -263,7 +263,7 @@ const OrderQueryPage: React.FC = () => {
                         try {
                             await syncOrderData(selectedTaskNos);
                             message.success(`成功同步 ${selectedTaskNos.length} 条数据到MES系统`);
-                        } catch (error) {
+                        } catch {
                             message.error('操作处理失败，请稍后重试');
                         } finally {
                             setLoading(false);

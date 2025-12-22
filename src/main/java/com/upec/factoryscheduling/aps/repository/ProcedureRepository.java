@@ -14,4 +14,6 @@ public interface ProcedureRepository extends JpaRepository<Procedure, String> , 
     List<Procedure> findAllByIdIsIn(List<String> ids);
 
     List<Procedure> findAllByTaskNoIsIn(List<String> taskNos);
+
+    List<Procedure> findAllByTaskNo(String taskNo);
 }

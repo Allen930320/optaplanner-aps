@@ -32,13 +32,13 @@ public class Timeslot implements Serializable {
 
     private Long problemId;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     private Procedure procedure;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     private Order order;
 
-    @OneToOne(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REFRESH})
     private Task task;
 
     @OneToOne(fetch = FetchType.EAGER)
@@ -50,14 +50,10 @@ public class Timeslot implements Serializable {
     //优先级
     private Integer priority;
 
-    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName =
-            "maintenance", sourceEntityClass = Timeslot.class)
+    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName = "maintenance", sourceEntityClass = Timeslot.class)
     //规划开始时间
     private LocalDateTime startTime;
 
-    @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName = "maintenance",
-            sourceEntityClass = Timeslot.class)
-    //规划结束时间
     private LocalDateTime endTime;
 
     @PlanningVariable(valueRangeProviderRefs = "maintenanceRange")
@@ -79,6 +75,20 @@ public class Timeslot implements Serializable {
 
     //当前工序索引
     private int procedureIndex;
+
+    public LocalDateTime getEndTime() {
+        if (this.endTime == null && this.startTime != null) {
+            return this.startTime.plusMinutes(this.duration);
+        }
+        return this.endTime;
+    }
+
+    public void setStartTime(LocalDateTime startTime) {
+        this.startTime = startTime;
+        if (this.startTime != null) {
+            this.endTime = this.startTime.plusMinutes(this.duration);
+        }
+    }
 
     public synchronized void updateTimeRange() {
         lock.lock();
@@ -142,7 +152,6 @@ public class Timeslot implements Serializable {
     }
 
 
-
     /**
      * 优化的重叠检查方法
      */
@@ -166,6 +175,7 @@ public class Timeslot implements Serializable {
         return !(endTime.isBefore(other.getStartTime()) ||
                 startTime.isAfter(other.getEndTime()));
     }
+
     /**
      * 计算与另一个时间槽的重叠分钟数
      */

@@ -1,23 +1,22 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Card, List, Table, Spin, Tag, Select, Modal, Form, InputNumber, Button, message, TimePicker } from 'antd';
-import type { ColumnType } from 'antd/es/table';
-import { CalendarOutlined, LoadingOutlined } from '@ant-design/icons';
-import type { WorkCenterDetail, WorkCenterMaintenance } from '../services/model';
-import { getWorkCenterList, getWorkCenterMaintenance, updateWorkCenterMaintenance } from '../services/api';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {Button, Card, Form, InputNumber, List, message, Modal, Select, Spin, Table, Tag, TimePicker} from 'antd';
+import type {ColumnType} from 'antd/es/table';
+import {CalendarOutlined, LoadingOutlined} from '@ant-design/icons';
+import type {WorkCenterDetail, WorkCenterMaintenance} from '../services/model';
+import {getWorkCenterList, getWorkCenterMaintenance, updateWorkCenterMaintenance} from '../services/api';
 import moment from 'moment';
-
 
 
 // 日期验证函数
 const parseValidDate = (dateString?: string | null): Date | null => {
-  if (!dateString || typeof dateString !== 'string') return null;
+  if (!dateString) return null;
   try {
     const momentDate = moment(dateString);
     if (momentDate.isValid()) {
       return momentDate.toDate();
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };
@@ -72,7 +71,8 @@ const WorkCenterCalendarPage: React.FC = () => {
         if (data.length > 0) {
           setSelectedWorkCenter(data[0].workCenterCode);
         }
-      } catch (error) {
+      } catch {
+        message.error('获取工作中心列表失败');
       } finally {
         setWorkCenterLoading(false);
       }
@@ -95,7 +95,7 @@ const WorkCenterCalendarPage: React.FC = () => {
         const formattedData = Array.isArray(data) ? data : [];
         
         setMaintenanceData(formattedData);
-      } catch (error) {
+      } catch {
         // 发生错误时设置为空数组
         setMaintenanceData([]);
       } finally {
@@ -124,7 +124,7 @@ const WorkCenterCalendarPage: React.FC = () => {
   };
 
   // 处理维护记录点击
-  const handleMaintenanceClick = (item: WorkCenterMaintenance) => {
+  const handleMaintenanceClick = useCallback((item: WorkCenterMaintenance) => {
     // 移除id检查，即使没有id也允许弹出模态框
     // 为没有id的记录生成临时id以便更新操作
     const maintenanceItem = {
@@ -141,7 +141,7 @@ const WorkCenterCalendarPage: React.FC = () => {
     });
     
     setIsModalVisible(true);
-  };
+  }, [setSelectedMaintenance, form, setIsModalVisible]);
 
   // 关闭模态框
   const handleModalCancel = () => {
@@ -277,22 +277,20 @@ const WorkCenterCalendarPage: React.FC = () => {
     });
     
     // 生成表格行数据
-    const tableData: TableData[] = weeks.map((week, weekIndex) => {
-      const row: TableData = {
-        key: `week_${weekIndex + 1}`,
-        weekNumber: weekIndex + 1
-      };
-      
-      // 为每周的每一天添加数据
-      week.forEach(day => {
-        const dateKey = moment(day).format('YYYY-MM-DD');
-        row[dateKey] = maintenanceByDate[dateKey] || [];
-      });
-      
-      return row;
+      return weeks.map((week, weekIndex) => {
+        const row: TableData = {
+            key: `week_${weekIndex + 1}`,
+            weekNumber: weekIndex + 1
+        };
+
+        // 为每周的每一天添加数据
+        week.forEach(day => {
+            const dateKey = moment(day).format('YYYY-MM-DD');
+            row[dateKey] = maintenanceByDate[dateKey] || [];
+        });
+
+        return row;
     });
-    
-    return tableData;
   }, [selectedWorkCenter, selectedMonth, maintenanceData]);
   
   // 生成表格列配置
@@ -399,9 +397,8 @@ const WorkCenterCalendarPage: React.FC = () => {
         }
       });
     });
-
     return columns;
-  }, [selectedWorkCenter, selectedMonth]);
+  }, [selectedWorkCenter, selectedMonth, handleMaintenanceClick]);
 
   // 获取当前月份的日期范围
   const getMonthRange = () => {
@@ -499,7 +496,7 @@ const WorkCenterCalendarPage: React.FC = () => {
             </div>
             <Form form={form} layout="horizontal" labelAlign="left" labelCol={{ span: 7 }} wrapperCol={{ span: 17 }} style={{ marginLeft: '8px' }}>
               <Form.Item label="容量" name="capacity" rules={[{ required: true, message: '请输入容量' }]}>
-                <InputNumber min={0} step={1} />
+                <InputNumber disabled  min={0} step={1} />
               </Form.Item>
               <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
                 <Select

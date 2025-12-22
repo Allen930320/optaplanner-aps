@@ -1,5 +1,6 @@
 package com.upec.factoryscheduling.aps.controller;
 
+import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.service.TimeslotService;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
@@ -27,13 +28,20 @@ public class TimeslotController {
         return ApiResponse.success(timeslotService.findAll());
     }
 
-    @PostMapping("create")
-    public ApiResponse<Void> createTimeslot(@RequestParam("taskNos") List<String> taskNos,
-                                            @RequestParam("procedureIds") List<String> procedureIds,
-                                            @RequestParam(value = "time", defaultValue = "0.5") double time,
-                                            @RequestParam(value = "slice", defaultValue = "0") int slice) {
-        timeslotService.createTimeslot(taskNos, procedureIds, time, slice);
+    @PostMapping("/create")
+    public ApiResponse<Void> createTimeslot(
+            @RequestParam("taskNos") List<String> taskNos,
+            @RequestParam("timeslotIds") List<String> timeslotIds,
+            @RequestParam(value = "time", defaultValue = "0.5") double time,
+            @RequestParam(value = "slice", defaultValue = "0") int slice) {
+        timeslotService.createTimeslot(taskNos, timeslotIds, time, slice);
         return ApiResponse.success();
+    }
+
+
+    @GetMapping("/{taskNo}/list")
+    public ApiResponse<List<Timeslot>> findAllTimeslotByTaskNoIn(@PathVariable("taskNo") String taskNo) {
+        return ApiResponse.success(timeslotService.findAllByTaskIn(List.of(taskNo)));
     }
 
 }

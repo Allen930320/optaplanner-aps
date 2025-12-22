@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Form, Input, Button, Card, Typography, message, Layout, Divider } from 'antd';
 import { UserOutlined, LockOutlined, MailOutlined, PhoneOutlined } from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
-import { register } from '../services/orderService';
+import { register } from '../services/api.ts';
 
 const { Title, Text } = Typography;
 const { Content } = Layout;
@@ -22,7 +22,8 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
     try {
       // 移除确认密码字段，不发送到后端
-      const { confirmPassword, ...registerData } = values;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { confirmPassword: _, ...registerData } = values;
       
       const response = await register(registerData);
       if (response.code === 200) {
@@ -34,7 +35,7 @@ const RegisterPage: React.FC = () => {
       } else {
         message.error(response.msg || '注册失败');
       }
-    } catch (error) {
+    } catch {
       message.error('注册失败，请重试');
     } finally {
       setLoading(false);
@@ -42,7 +43,7 @@ const RegisterPage: React.FC = () => {
   };
 
   // 自定义密码验证规则
-  const validatePassword = (_rule: any, value: string) => {
+  const validatePassword = (_rule: unknown, value: string) => {
     if (value && value.length < 6) {
       return Promise.reject(new Error('密码长度至少为6位'));
     }
@@ -50,7 +51,7 @@ const RegisterPage: React.FC = () => {
   };
 
   // 确认密码验证规则
-  const validateConfirmPassword = (_rule: any, value: string) => {
+  const validateConfirmPassword = (_rule: unknown, value: string) => {
     const password = form.getFieldValue('password');
     if (value && value !== password) {
       return Promise.reject(new Error('两次输入的密码不一致'));
