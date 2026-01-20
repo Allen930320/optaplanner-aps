@@ -1,39 +1,42 @@
 package com.upec.factoryscheduling.common.utils;
 
+import org.intellij.lang.annotations.Language;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.jdbc.core.ConnectionCallback;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.lang.Nullable;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
  * JdbcTemplate分页查询扩展工具类
  * 精简版：提供基本的JdbcTemplate分页查询功能，所有查询信息都包含在SQL语句中
  */
-public class JdbcTemplatePaginationUtils {
+public class JdbcTemplatePagination {
+
+
+    @Autowired
+    @Qualifier("oracleTemplate")
+    private JdbcTemplate jdbcTemplate;
 
     /**
      * 基本分页查询方法
-     * 
-     * @param jdbcTemplate JdbcTemplate实例
-     * @param sql 查询SQL（包含WHERE条件和排序，但不包含分页）
+     *
+     * @param sql       查询SQL（包含WHERE条件和排序，但不包含分页）
      * @param rowMapper 结果映射器
-     * @param pageNum 页码（从1开始）
-     * @param pageSize 每页数量
-     * @param <T> 返回类型
+     * @param pageNum   页码（从1开始）
+     * @param pageSize  每页数量
+     * @param <T>       返回类型
      * @return 分页结果
      */
-    public static <T> Page<T> queryForPage(
-            JdbcTemplate jdbcTemplate,
-            String sql,
+    @Nullable
+    protected <T> Page<T> queryForPage(
+            @Language("sql") final String sql,
             RowMapper<T> rowMapper,
             Integer pageNum,
             Integer pageSize) {
@@ -58,7 +61,7 @@ public class JdbcTemplatePaginationUtils {
         return new PageImpl<>(resultList, pageable, total);
     }
 
-    private static String getString(String sql, Integer pageNum, Integer pageSize) {
+    private static String getString(@Language("sql") String sql, Integer pageNum, Integer pageSize) {
         int startRow = (pageNum - 1) * pageSize + 1;
         int endRow = pageNum * pageSize;
         // 提取原始SQL中的ORDER BY子句
@@ -67,18 +70,18 @@ public class JdbcTemplatePaginationUtils {
         if (orderByIndex != -1) {
             orderByClause = sql.substring(orderByIndex);
             String pattern = "\\w*\\.";
-            orderByClause = orderByClause.replaceAll(pattern,"temp.");
+            orderByClause = orderByClause.replaceAll(pattern, "temp.");
         }
         // 如果原始SQL中没有ORDER BY子句，则添加默认排序（按行的自然顺序）
         if (orderByClause.isEmpty()) {
             orderByClause = " ORDER BY 1 ";
         }
         // 构建Oracle分页查询SQL（使用ROW_NUMBER()函数，包含ORDER BY子句）
-        String pageSql = "SELECT * FROM ( " +
-                         " SELECT temp.*, ROW_NUMBER() OVER ( " + orderByClause + " ) AS rn FROM ( " +
-                          sql +
-                         " ) temp" +
-                         " ) WHERE rn BETWEEN " + startRow + " AND " + endRow;
+        @Language("sql") String pageSql = "SELECT * FROM ( " +
+                " SELECT temp.*, ROW_NUMBER() OVER ( " + orderByClause + " ) AS rn FROM ( " +
+                sql +
+                " ) temp" +
+                " ) WHERE rn BETWEEN " + startRow + " AND " + endRow;
         return pageSql;
     }
 }

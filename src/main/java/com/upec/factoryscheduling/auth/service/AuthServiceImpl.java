@@ -6,6 +6,7 @@ import com.upec.factoryscheduling.auth.dto.RegisterRequest;
 import com.upec.factoryscheduling.auth.entity.User;
 import com.upec.factoryscheduling.auth.repository.UserRepository;
 import com.upec.factoryscheduling.auth.utils.JwtUtils;
+import com.upec.factoryscheduling.common.utils.RandomFun;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -85,6 +86,7 @@ public class AuthServiceImpl implements AuthService {
 
         // 创建新用户
         User user = new User();
+        user.setId(Long.parseLong(RandomFun.getInstance().getRandom()));
         user.setUsername(registerRequest.getUsername());
         user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
         user.setEmail(registerRequest.getEmail());

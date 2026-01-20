@@ -1,16 +1,14 @@
 package com.upec.factoryscheduling.mes.service;
 
 
-import com.upec.factoryscheduling.common.utils.JdbcTemplatePaginationUtils;
+import com.upec.factoryscheduling.mes.dto.OrderTaskDTO;
 import com.upec.factoryscheduling.mes.entity.MesJjOrderTask;
 import com.upec.factoryscheduling.mes.repository.MesJjOrderTaskRepository;
 import com.upec.factoryscheduling.mes.response.OrderTaskQueryResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
-import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -43,7 +41,7 @@ public class MesJjOrderTaskService {
      * @param statusList 状态列表
      * @param pageNum    页码，从1开始
      * @param pageSize   每页数量
-     * @return 返回分页结果Page<OrderTaskQueryResponse>
+     * @return 返回分页结果  Page<OrderTaskQueryResponse>
      */
     public Page<OrderTaskQueryResponse> findOrderTasksByConditionsWithPagination(String orderName, String startTime, String endTime,
                                                                                  List<String> statusList, Integer pageNum, Integer pageSize) {
@@ -86,12 +84,25 @@ public class MesJjOrderTaskService {
         sqlBuilder.append("ORDER BY  T.ORDERNO DESC, TO_NUMBER(SUBSTR(T.TASKNO,INSTR(T.TASKNO,'_')+1,LENGTH(T.TASKNO))), " +
                 "T.PLAN_STARTDATE DESC");
         // 使用简化的分页工具类执行查询
-        return JdbcTemplatePaginationUtils.queryForPage(
-                oracleTemplate,
-                sqlBuilder.toString(),
-                new BeanPropertyRowMapper<>(OrderTaskQueryResponse.class),
+        return null;
+    }
+
+    public Page<OrderTaskDTO> queryOrderTaskForPage(String orderName,
+                                                    String orderNo,
+                                                    String contractNum,
+                                                    String startTime,
+                                                    String endTime,
+                                                    List<String> statusList,
+                                                    Integer pageNum,
+                                                    Integer pageSize) {
+        return mesJjOrderTaskRepository.queryOrderTaskForPage(
+                orderName,
+                orderNo,
+                contractNum,
+                startTime,
+                endTime,
+                statusList,
                 pageNum,
-                pageSize
-        );
+                pageSize);
     }
 }
