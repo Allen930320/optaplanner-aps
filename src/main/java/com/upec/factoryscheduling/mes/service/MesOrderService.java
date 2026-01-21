@@ -5,8 +5,9 @@ import com.upec.factoryscheduling.aps.entity.*;
 import com.upec.factoryscheduling.aps.service.*;
 import com.upec.factoryscheduling.common.utils.DateUtils;
 import com.upec.factoryscheduling.common.utils.NodeLevelManager;
-import com.upec.factoryscheduling.mes.entity.MesJjOrderTask;
-import com.upec.factoryscheduling.mes.entity.MesJjProcedure;
+import com.upec.factoryscheduling.mes.entity.MesOrderTask;
+import com.upec.factoryscheduling.mes.entity.MesProcedure;
+import com.upec.factoryscheduling.mes.repository.MesOrderRepository;
 import com.xkzhangsan.time.utils.CollectionUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,27 +22,22 @@ import java.util.stream.Collectors;
 public class MesOrderService {
 
 
-    private MesJjOrderTaskService mesJjOrderTaskService;
-    private MesJjProcedureService mesJjProcedureService;
-    private OrderService orderService;
+    private MesOrderTaskService mesJjOrderTaskService;
+    private MesProcedureService mesJjProcedureService;
     private OrderTaskService orderTaskService;
     private ProcedureService procedureService;
     private WorkCenterService workCenterService;
     private TimeslotService timeslotService;
+    private MesOrderRepository mesOrderRepository;
 
     @Autowired
-    private void setMesJjOrderTaskService(MesJjOrderTaskService mesJjOrderTaskService) {
+    private void setMesJjOrderTaskService(MesOrderTaskService mesJjOrderTaskService) {
         this.mesJjOrderTaskService = mesJjOrderTaskService;
     }
 
     @Autowired
-    private void setMesJjProcedureService(MesJjProcedureService mesJjProcedureService) {
+    private void setMesJjProcedureService(MesProcedureService mesJjProcedureService) {
         this.mesJjProcedureService = mesJjProcedureService;
-    }
-
-    @Autowired
-    public void setOrderService(OrderService orderService) {
-        this.orderService = orderService;
     }
 
     @Autowired
@@ -64,9 +60,20 @@ public class MesOrderService {
         this.workCenterService = workCenterService;
     }
 
+    @Autowired
+    public void setMesOrderRepository(MesOrderRepository mesOrderRepository) {
+        this.mesOrderRepository = mesOrderRepository;
+    }
+
+    public void syncOrderData(List<String> taskNos) {
+        List<Order> orders = queryOrderListNotInApsOrder(taskNos);
+        List<Task> tasks = mesJjOrderTaskService.queryTaskListNotInApsTask(taskNos);
+
+    }
+
     public List<Timeslot> mergePlannerData(List<Order> orders) {
-        List<MesJjOrderTask> mesOrderTasks = getOrderTasks(orders);
-        List<MesJjProcedure> mesProcedures = getProcedures(mesOrderTasks);
+        List<MesOrderTask> mesOrderTasks = getOrderTasks(orders);
+        List<MesProcedure> mesProcedures = getProcedures(mesOrderTasks);
         List<WorkCenter> workCenters = workCenterService.getAllMachines();
         List<Task> tasks = convertTasks(mesOrderTasks);
         Map<String, Order> orderMap = orders.stream().collect(Collectors.toMap(Order::getOrderNo, order -> order));
@@ -104,8 +111,8 @@ public class MesOrderService {
     }
 
 
-    private List<MesJjOrderTask> getOrderTasks(List<Order> orders) {
-        List<MesJjOrderTask> orderTasks = new ArrayList<>();
+    private List<MesOrderTask> getOrderTasks(List<Order> orders) {
+        List<MesOrderTask> orderTasks = new ArrayList<>();
         Lists.partition(orders, 999).forEach(taskNo -> {
             List<String> orderNos = taskNo.stream().filter(Objects::nonNull).map(Order::getOrderNo).collect(Collectors.toList());
             orderTasks.addAll(mesJjOrderTaskService.queryAllByOrderNoInAndTaskStatusIn(orderNos, List.of("生产中", "待生产")));
@@ -113,17 +120,17 @@ public class MesOrderService {
         return orderTasks;
     }
 
-    private List<MesJjProcedure> getProcedures(List<MesJjOrderTask> orderTasks) {
+    private List<MesProcedure> getProcedures(List<MesOrderTask> orderTasks) {
         List<String> taskNos =
-                orderTasks.stream().map(MesJjOrderTask::getTaskNo).distinct().collect(Collectors.toList());
-        List<MesJjProcedure> procedures = new ArrayList<>();
+                orderTasks.stream().map(MesOrderTask::getTaskNo).distinct().collect(Collectors.toList());
+        List<MesProcedure> procedures = new ArrayList<>();
         Lists.partition(taskNos, 999).forEach(taskNo -> procedures.addAll(mesJjProcedureService.findAllByTaskNo(taskNo)));
         return procedures;
     }
 
-    private List<Task> convertTasks(List<MesJjOrderTask> mesOrderTasks) {
+    private List<Task> convertTasks(List<MesOrderTask> mesOrderTasks) {
         List<Task> tasks = new ArrayList<>();
-        for (MesJjOrderTask orderTask : mesOrderTasks) {
+        for (MesOrderTask orderTask : mesOrderTasks) {
             Task task = new Task();
             task.setOrderNo(orderTask.getOrderNo());
             task.setTaskNo(orderTask.getTaskNo());
@@ -158,11 +165,11 @@ public class MesOrderService {
         return orderTaskService.saveAll(tasks);
     }
 
-    private List<Procedure> convertProcedures(List<MesJjProcedure> mesProcedures, List<WorkCenter> workCenters,
+    private List<Procedure> convertProcedures(List<MesProcedure> mesProcedures, List<WorkCenter> workCenters,
                                               Map<String, Order> orders, Map<String, Task> tasks) {
         Map<String, WorkCenter> workCenterMap = workCenters.stream().collect(Collectors.toMap(WorkCenter::getId, workCenter -> workCenter));
         List<Procedure> procedures = new ArrayList<>();
-        for (MesJjProcedure mesProcedure : mesProcedures) {
+        for (MesProcedure mesProcedure : mesProcedures) {
             if (mesProcedure.getProcedureNo().equals("15")) {
                 continue;
             }
@@ -233,5 +240,10 @@ public class MesOrderService {
 
         }
         return procedureService.saveProcedures(procedures);
+    }
+
+
+    public List<Order> queryOrderListNotInApsOrder(List<String> taskNos) {
+        return mesOrderRepository.queryOrderListNotInApsOrder(taskNos);
     }
 }

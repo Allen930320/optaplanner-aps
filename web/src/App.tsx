@@ -4,7 +4,6 @@ import { Layout, Menu, Button } from 'antd';
 import { Routes, Route, Link, BrowserRouter, Navigate } from 'react-router-dom';
 import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import HomePage from './components/HomePage';
-import OrderQueryPage from './components/OrderQueryPage';
 import OrderTasksPage from './components/OrderTasksPage';
 import SchedulingTimelinePage from './components/SchedulingTimelinePage';
 import WorkCenterCalendarPage from './components/WorkCenterCalendarPage';
@@ -23,11 +22,6 @@ const menuItems = [
     key: '1',
     icon: <HomeOutlined />,
     label: <Link to="/">首页</Link>,
-  },
-  {
-    key: '2',
-    icon: <FileTextOutlined />,
-    label: <Link to="/order-query">订单查询</Link>,
   },
   {
     key: '5',
@@ -112,7 +106,6 @@ const AppContent = () => {
             <Content className="content">
               <Routes>
               <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-              <Route path="/order-query" element={<ProtectedRoute><OrderQueryPage /></ProtectedRoute>} />
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />

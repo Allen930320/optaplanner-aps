@@ -41,12 +41,14 @@ public class MesProcedureQueryImpl extends JdbcTemplatePagination implements Mes
                 "       p.start_time, " +
                 "       p.end_time, " +
                 "       t2.plan_startdate as plan_start_date, " +
-                "       t2.plan_enddate as plan_end_date " +
+                "       t2.plan_enddate as plan_end_date, " +
+                "       wc.name as work_center_name " +
                 " from mes_jj_order t1 " +
                 "         inner join mes_jj_order_task t2 on t1.orderno = t2.orderno and t2.route_seq is not null " +
                 "         inner join mes_jj_order_product_info t3 on t2.orderno = t3.orderno " +
                 "         inner join aps_procedure p on p.task_no = t2.taskno " +
                 "         inner join aps_task t4 on t4.task_no = t2.taskno " +
+                "         left join aps_work_center wc on wc.id=p.work_center_id " +
                 " where t4.task_no is not null ";
         if (StringUtils.hasLength(orderName)) {
             querySQL = querySQL + " and t3.product_name like   '%" + orderName + "%' ";

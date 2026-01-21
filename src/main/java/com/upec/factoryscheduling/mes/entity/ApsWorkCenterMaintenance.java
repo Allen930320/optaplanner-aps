@@ -7,11 +7,13 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
+
 @Setter
 @Getter
 @Entity
 @Table(name = "APS_MACHINE_MAINTENANCE")
-public class ApsWorkCenterMaintenance {
+public class ApsWorkCenterMaintenance implements Serializable {
     // 手动添加getter和setter方法
     @Id
     @Column(name = "ID", nullable = false, length = 30)

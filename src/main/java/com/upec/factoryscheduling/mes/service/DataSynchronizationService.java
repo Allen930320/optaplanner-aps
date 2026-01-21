@@ -6,8 +6,8 @@ import com.upec.factoryscheduling.aps.entity.Task;
 import com.upec.factoryscheduling.aps.service.OrderService;
 import com.upec.factoryscheduling.aps.service.OrderTaskService;
 import com.upec.factoryscheduling.common.utils.DateUtils;
-import com.upec.factoryscheduling.mes.entity.MesJjOrder;
-import com.upec.factoryscheduling.mes.entity.MesJjOrderTask;
+import com.upec.factoryscheduling.mes.entity.MesOrder;
+import com.upec.factoryscheduling.mes.entity.MesOrderTask;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -15,7 +15,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -86,8 +85,8 @@ public class DataSynchronizationService {
                 "   OR TO_DATE(T1.FACT_STARTDATE, 'YYYY-MM-DD HH24:MI:SS')!= T2.FACT_START_DATE " +
                 "   OR TO_DATE(T1.FACT_ENDDATE, 'YYYY-MM-DD HH24:MI:SS') != T2.FACT_END_DATE )" +
                 " AND T1.CREATEDATE >= '2025-01-01 00:00:00' AND T1.ORDERNO LIKE '00400%' ";
-        List<MesJjOrder> mesJjOrders = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MesJjOrder.class));
-        for (MesJjOrder mesJjOrder : mesJjOrders) {
+        List<MesOrder> mesJjOrders = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MesOrder.class));
+        for (MesOrder mesJjOrder : mesJjOrders) {
             Order order = orderService.getOrderById(mesJjOrder.getOrderNo()).orElse(null);
             if (order != null) {
                 order.setOrderStatus(mesJjOrder.getOrderStatus());
@@ -113,8 +112,8 @@ public class DataSynchronizationService {
                 "   OR TO_DATE(T1.FACT_STARTDATE, 'YYYY-MM-DD HH24:MI:SS')!= T2.FACT_START_DATE " +
                 "   OR TO_DATE(T1.FACT_ENDDATE, 'YYYY-MM-DD HH24:MI:SS') != T2.FACT_END_DATE )" +
                 "  AND T1.CREATEDATE >= '2025-01-01 00:00:00' AND t1.ORDERNO like '00400%'  ";
-        List<MesJjOrderTask> orderTasks = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MesJjOrderTask.class));
-        for (MesJjOrderTask orderTask : orderTasks) {
+        List<MesOrderTask> orderTasks = jdbcTemplate.query(sql, new BeanPropertyRowMapper<>(MesOrderTask.class));
+        for (MesOrderTask orderTask : orderTasks) {
             Task task = orderTaskService.findById(orderTask.getTaskNo());
             if (task != null) {
                 task.setStatus(orderTask.getTaskStatus());

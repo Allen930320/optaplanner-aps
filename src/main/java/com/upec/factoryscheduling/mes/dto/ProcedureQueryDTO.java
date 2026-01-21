@@ -37,4 +37,5 @@ public class ProcedureQueryDTO implements Serializable {
     private LocalDate planStartDate;
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate planEndDate;
+    private String workCenterName;
 }

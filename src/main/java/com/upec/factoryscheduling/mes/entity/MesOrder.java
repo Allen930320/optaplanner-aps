@@ -7,12 +7,13 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "MES_JJ_ORDER")
-public class MesJjOrder {
+public class MesOrder implements Serializable {
     @Id
     @Column(name = "ORDERNO", nullable = false, length = 20)
     private String orderNo;

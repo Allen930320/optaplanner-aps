@@ -1,6 +1,7 @@
 package com.upec.factoryscheduling.mes.repository.query;
 
 
+import com.upec.factoryscheduling.aps.entity.Task;
 import com.upec.factoryscheduling.mes.dto.OrderTaskDTO;
 import org.springframework.data.domain.Page;
 
@@ -16,4 +17,6 @@ public interface MesOrderTaskQuery {
                                              List<String> statusList,
                                              Integer pageNum,
                                              Integer pageSize);
+
+    List<Task> queryTaskListNotInApsTask(List<String> taskNos);
 }

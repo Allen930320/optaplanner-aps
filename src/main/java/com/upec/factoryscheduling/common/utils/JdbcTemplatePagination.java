@@ -22,7 +22,7 @@ public class JdbcTemplatePagination {
 
     @Autowired
     @Qualifier("oracleTemplate")
-    private JdbcTemplate jdbcTemplate;
+    protected JdbcTemplate jdbcTemplate;
 
     /**
      * 基本分页查询方法

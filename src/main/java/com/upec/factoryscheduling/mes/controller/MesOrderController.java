@@ -3,9 +3,8 @@ package com.upec.factoryscheduling.mes.controller;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
 import com.upec.factoryscheduling.mes.dto.OrderTaskDTO;
 import com.upec.factoryscheduling.mes.dto.ProcedureQueryDTO;
-import com.upec.factoryscheduling.mes.response.OrderTaskQueryResponse;
-import com.upec.factoryscheduling.mes.service.MesJjOrderTaskService;
-import com.upec.factoryscheduling.mes.service.MesJjProcedureService;
+import com.upec.factoryscheduling.mes.service.MesOrderTaskService;
+import com.upec.factoryscheduling.mes.service.MesProcedureService;
 import com.upec.factoryscheduling.mes.service.MesOrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +21,10 @@ public class MesOrderController {
     private MesOrderService mesOrderService;
 
     @Autowired
-    private MesJjOrderTaskService mesJjOrderTaskService;
+    private MesOrderTaskService mesJjOrderTaskService;
 
     @Autowired
-    private MesJjProcedureService mesJjProcedureService;
+    private MesProcedureService mesJjProcedureService;
 
     @PostMapping("/syncData")
     public ApiResponse<Void> syncData(@RequestBody List<String> orderNos) {

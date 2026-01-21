@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {Card, InputNumber, message, Modal, Spin, Table, Tag, Tooltip} from 'antd';
 import type {ColumnType} from 'antd/es/table';
 import {getTimeslotList, splitOutsourcingTimeslot} from '../services/api';
@@ -222,7 +222,7 @@ const SchedulingTimelinePage: React.FC = () => {
   };
 
   // 获取时间槽跨越的所有日期
-  const getDatesInRange = (startTime: string, endTime: string): string[] => {
+  const getDatesInRange = useCallback((startTime: string, endTime: string): string[] => {
     const startDate = moment(startTime.substring(0, 10));
     const endDate = moment(endTime.substring(0, 10));
     const dates: string[] = [];
@@ -234,10 +234,10 @@ const SchedulingTimelinePage: React.FC = () => {
     }
     
     return dates;
-  };
+  }, []);
 
   // 根据任务号分组数据
-  const groupTimeslotsByTask = (timeslots: Timeslot[]): TaskData => {
+  const groupTimeslotsByTask = useCallback((timeslots: Timeslot[]): TaskData => {
     return timeslots.reduce((acc, timeslot) => {
       // 空值检查
       if (!timeslot.task || !timeslot.procedure || !timeslot.startTime || !timeslot.endTime) {
@@ -261,7 +261,7 @@ const SchedulingTimelinePage: React.FC = () => {
       
       return acc;
     }, {} as TaskData);
-  };
+  }, [getDatesInRange]);
 
   // 提取所有日期
   const extractDates = (timeslots: Timeslot[]): string[] => {
@@ -332,7 +332,7 @@ const SchedulingTimelinePage: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [groupTimeslotsByTask]);
 
   // 处理弹窗确认
   const handleOk = async () => {
