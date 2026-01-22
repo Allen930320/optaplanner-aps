@@ -57,8 +57,8 @@ apiClient.interceptors.response.use(
 );
 
 // 同步订单数据到MES系统
-export const syncOrderData = async (orderNos: string[]): Promise<void> => {
-  const response:ApiResponse<string> = await apiClient.post('/api/mesOrders/syncData', orderNos);
+export const syncOrderData = async (taskNos: string[]): Promise<void> => {
+  const response:ApiResponse<string> = await apiClient.post('/api/mesOrders/syncData', taskNos);
   // 检查响应状态，确保同步成功
   if (response.code !== 200) {
     throw new Error(`同步失败: ${response.msg || '未知错误'}`);
@@ -227,6 +227,40 @@ export const getTimeslotList = async () => {
 // 获取时间槽列表
 export const getTimeslotByTaskNo = async (taskNo: string) => {
     return await apiClient.get(`/api/timeslot/${taskNo}/list`);
+};
+
+// 分页查询时间槽列表
+export const queryTimeslots = async (params: {
+  productName?: string;
+  productCode?: string;
+  contractNum?: string;
+  startTime?: string;
+  endTime?: string;
+  taskNo?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<any>>> => {
+  // 构建查询参数
+  const queryParams = {
+    productName: params.productName || '',
+    productCode: params.productCode || '',
+    contractNum: params.contractNum || '',
+    startTime: params.startTime || '',
+    endTime: params.endTime || '',
+    taskNo: params.taskNo || '',
+    pageNum: params.pageNum || 1,
+    pageSize: params.pageSize || 20
+  };
+
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<any>> = await apiClient.get('/api/timeslot/page', {
+    params: queryParams
+  });
+
+  if (!result || result.code !== 200) {
+    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+  }
+  return result;
 };
 
 // 分页查询工序列表（适配新接口 /api/mesOrders/procedure/page）

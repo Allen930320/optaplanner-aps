@@ -75,27 +75,4 @@ public class OrderController {
         return ApiResponse.success();  // 返回成功响应
     }
 
-    /**
-     * 查询任务列表（支持分页和条件过滤）
-     * <p>根据任务编号、时间范围、任务状态等条件查询任务列表，并支持分页。</p>
-     * 
-     * @param taskNo 任务编号（模糊查询）
-     * @param startTime 开始时间
-     * @param endTime 结束时间
-     * @param taskStatus 任务状态
-     * @param pageNum 页码，从1开始
-     * @param pageSize 每页数量
-     * @return 包含任务列表的分页结果
-     */
-    @GetMapping("/tasks")  // HTTP GET请求，路径为/api/orders/tasks
-    public ApiResponse<Page<Task>> queryTasks(
-            @RequestParam(required = false) String taskNo,
-            @RequestParam(required = false) String startTime,
-            @RequestParam(required = false) String endTime,
-            @RequestParam(required = false) String taskStatus,
-            @RequestParam(defaultValue = "1") Integer pageNum,
-            @RequestParam(defaultValue = "20") Integer pageSize) {
-        Page<Task> tasks = orderTaskService.queryTask(taskNo, startTime, endTime, taskStatus, pageNum, pageSize);
-        return ApiResponse.success(tasks);
-    }
 }

@@ -2,6 +2,7 @@ package com.upec.factoryscheduling.mes.repository.query.impl;
 
 import com.upec.factoryscheduling.common.utils.JdbcTemplatePagination;
 import com.upec.factoryscheduling.mes.dto.ProcedureQueryDTO;
+import com.upec.factoryscheduling.mes.entity.MesProcedure;
 import com.upec.factoryscheduling.mes.repository.query.MesProcedureQuery;
 import org.springframework.data.domain.Page;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -76,5 +77,50 @@ public class MesProcedureQueryImpl extends JdbcTemplatePagination implements Mes
                 pageNum,
                 pageSize
         );
+    }
+    
+
+    public List<MesProcedure> queryMesProcedureNotInAps(List<String> taskNos){
+        String querySQL = " select t1.seq, " +
+                "       t1.orderno, " +
+                "       t1.taskno, " +
+                "       t1.procedureno, " +
+                "       t1.procedure_name, " +
+                "       t1.next_procedureno as next_procedure_no, " +
+                "       t1.procedure_type, " +
+                "       t1.prdmanager_seq as prd_manager_seq, " +
+                "       t1.workcenter_code, " +
+                "       t1.prepare_hours, " +
+                "       t1.machine_hours, " +
+                "       t1.human_hours, " +
+                "       t1.procedure_status, " +
+                "       t1.fact_startdate as fact_start_date, " +
+                "       t1.fact_enddate as fact_end_date, " +
+                "       t1.quality_user, " +
+                "       t1.rework_flag, " +
+                "       t1.assist_processinstance as assist_process_instance, " +
+                "       t1.assist_prdmanager_seq as assist_prd_manager_seq, " +
+                "       t1.createuser, " +
+                "       t1.createdate, " +
+                "       t1.produre_hours, " +
+                "       t1.erp_procedureno as erp_procedure_no, " +
+                "       t1.plan_startdate as plan_start_date, " +
+                "       t1.plan_enddate as plan_end_date, " +
+                "       t1.unqualified_processinstance as unqualified_process_instance, " +
+                "       t1.self_check_result, " +
+                "       t1.self_check_remark, " +
+                "       t1.route_seq, " +
+                "       t1.updateuser, " +
+                "       t1.updatedate, " +
+                "       t1.makednumber, " +
+                "       t1.quickprocessinstance as quick_process_instance " +
+                " from mes_jj_procedure t1 " +
+                " left join aps_procedure t2 on t1.seq = t2.id " +
+                " where t2.id is null ";
+        if (!CollectionUtils.isEmpty(taskNos)) {
+            String params = taskNos.stream().map(s -> "'" + s + "'").collect(Collectors.joining(","));
+            querySQL = querySQL + " and t1.taskno in (" + params + " )";
+        }
+        return super.jdbcTemplate.query(querySQL, new BeanPropertyRowMapper<>(MesProcedure.class));
     }
 }

@@ -1,11 +1,13 @@
 package com.upec.factoryscheduling.aps.controller;
 
+import com.upec.factoryscheduling.aps.dto.TaskTimeslotDTO;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.service.TimeslotService;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,6 +52,20 @@ public class TimeslotController {
                                                       @RequestParam("days") int days) {
         timeslotService.splitOutsourcingTimeslot(timeslotId, days);
         return ApiResponse.success();
+    }
+
+
+    @GetMapping("/page")
+    public ApiResponse<Page<TaskTimeslotDTO>> queryTimeslots(@RequestParam(required = false) String productName,
+                                                             @RequestParam(required = false) String productCode,
+                                                             @RequestParam(required = false) String contractNum,
+                                                             @RequestParam(required = false) String startTime,
+                                                             @RequestParam(required = false) String endTime,
+                                                             @RequestParam(required = false) String taskNo,
+                                                             @RequestParam(defaultValue = "1") Integer pageNum,
+                                                             @RequestParam(defaultValue = "20") Integer pageSize) {
+        Page<TaskTimeslotDTO> page = timeslotService.queryTimeslots(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
+        return ApiResponse.success(page);
     }
 
 }

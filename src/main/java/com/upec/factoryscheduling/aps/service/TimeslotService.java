@@ -1,5 +1,6 @@
 package com.upec.factoryscheduling.aps.service;
 
+import com.upec.factoryscheduling.aps.dto.TaskTimeslotDTO;
 import com.upec.factoryscheduling.aps.entity.Procedure;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.repository.TimeslotRepository;
@@ -8,6 +9,8 @@ import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +19,7 @@ import org.springframework.util.CollectionUtils;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +31,14 @@ public class TimeslotService {
     @Autowired
     private void setTimeslotRepository(TimeslotRepository timeslotRepository) {
         this.timeslotRepository = timeslotRepository;
+    }
+
+
+    private OrderTaskService orderTaskService;
+
+    @Autowired
+    public void setOrderTaskService(OrderTaskService orderTaskService) {
+        this.orderTaskService = orderTaskService;
     }
 
     @Transactional("oracleTransactionManager")
@@ -68,7 +80,7 @@ public class TimeslotService {
     }
 
     public List<Timeslot> findAllByTaskIn(List<String> taskNos) {
-        Sort sort = Sort.by(Sort.Direction.DESC,  "procedureIndex", "index").ascending();
+        Sort sort = Sort.by(Sort.Direction.DESC, "procedureIndex", "index").ascending();
         return timeslotRepository.findAllByProcedure_Task_TaskNoIsIn(taskNos, sort);
     }
 
@@ -173,5 +185,26 @@ public class TimeslotService {
             timeslotRepository.save(newTimeslot);
         }
     }
+
+
+    public Page<TaskTimeslotDTO> queryTimeslots(String productName,
+                                                String productCode,
+                                                String taskNo,
+                                                String contractNum,
+                                                String startTime,
+                                                String endTime,
+                                                Integer pageNum,
+                                                Integer pageSize) {
+        Page<TaskTimeslotDTO> page = orderTaskService.queryTaskWithTimeslot(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
+        List<TaskTimeslotDTO> dtos = page.getContent();
+        if (!CollectionUtils.isEmpty(dtos)) {
+            List<String> taskNos = dtos.stream().map(TaskTimeslotDTO::getTaskNo).collect(Collectors.toList());
+            List<Timeslot> timeslots = timeslotRepository.findAllByProcedure_Task_TaskNoIsIn(taskNos);
+            Map<String, List<Timeslot>> map = timeslots.stream().collect(Collectors.groupingBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo()));
+            page.get().peek(m-> m.setTimeslots(map.get(m.getTaskNo()))).collect(Collectors.toList());
+        }
+        return page;
+    }
+
 
 }

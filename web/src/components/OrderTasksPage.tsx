@@ -15,12 +15,13 @@ import {
   Tag,
   Alert,
   Tooltip,
-  Spin
+  Spin,
+  message
 } from 'antd';
 import type {ColumnsType} from 'antd/es/table';
-import {queryTasks} from '../services/api.ts';
+import {queryTasks, syncOrderData} from '../services/api.ts';
 import type {Task, OrderTaskQueryParams} from '../services/model.ts';
-import {SearchOutlined, FilterOutlined, CalendarOutlined} from '@ant-design/icons';
+import {SearchOutlined, FilterOutlined, CalendarOutlined, SyncOutlined} from '@ant-design/icons';
 
 const {Text} = Typography;
 const {RangePicker} = DatePicker;
@@ -36,6 +37,8 @@ const OrderTasksPage: React.FC = () => {
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(20);
     const [total, setTotal] = useState<number>(0);
+    const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
+    const [syncLoading, setSyncLoading] = useState<boolean>(false);
 
     // 状态选项
     const statusOptions = [
@@ -145,6 +148,49 @@ const OrderTasksPage: React.FC = () => {
         };
 
         fetchTasks(params, page, size);
+    };
+
+    // 处理同步订单数据
+    const handleSyncOrderData = async () => {
+        if (selectedRowKeys.length === 0) {
+            message.warning('请至少选择一个订单');
+            return;
+        }
+
+        // 从选中的行中获取任务编号
+        const selectedOrders = orderTasks.filter(task => 
+            selectedRowKeys.includes(task.taskNo)
+        );
+        const taskNos = selectedOrders.map(task => task.taskNo);
+
+        setSyncLoading(true);
+        try {
+            await syncOrderData(taskNos);
+            message.success('同步成功');
+            // 同步成功后清空选择
+            setSelectedRowKeys([]);
+            // 同步成功后刷新订单列表
+            const values = form.getFieldsValue();
+            // 处理日期范围
+            let startTime: string | undefined;
+            let endTime: string | undefined;
+            if (values.dateRange && values.dateRange.length === 2) {
+                startTime = values.dateRange[0].format('YYYY-MM-DD');
+                endTime = values.dateRange[1].format('YYYY-MM-DD');
+            }
+
+            const params: OrderTaskQueryParams = {
+                ...values,
+                startTime,
+                endTime,
+            };
+
+            fetchTasks(params, currentPage, pageSize);
+        } catch (error) {
+            message.error(`同步失败: ${(error as Error).message}`);
+        } finally {
+            setSyncLoading(false);
+        }
     };
 
     // 表格列定义
@@ -342,12 +388,34 @@ const OrderTasksPage: React.FC = () => {
                 )}
                 
                 {/* 任务表格 */}
-                <Card style={{ borderRadius: 8, border: '1px solid #d9d9d9' }}>
+                <Card 
+                    style={{ borderRadius: 8, border: '1px solid #d9d9d9' }}
+                    extra={
+                        <Button 
+                            type="primary" 
+                            icon={<SyncOutlined />}
+                            onClick={handleSyncOrderData}
+                            loading={syncLoading}
+                            disabled={selectedRowKeys.length === 0}
+                        >
+                            同步选中订单
+                        </Button>
+                    }
+                >
                     <Spin spinning={loading} tip="加载中...">
                         <Table
                             columns={columns}
                             dataSource={orderTasks}
                             rowKey="taskNo"
+                            rowSelection={{
+                                selectedRowKeys,
+                                onChange: (keys) => setSelectedRowKeys(keys),
+                                selections: [
+                                    Table.SELECTION_ALL,
+                                    Table.SELECTION_INVERT,
+                                    Table.SELECTION_NONE
+                                ]
+                            }}
                             pagination={{
                                 current: currentPage,
                                 pageSize: pageSize,

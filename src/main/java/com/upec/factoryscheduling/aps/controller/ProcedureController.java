@@ -38,14 +38,4 @@ public class ProcedureController {
         return ApiResponse.success(new ArrayList<>());
     }
 
-    /**
-     * 分页查询工序列表
-     *
-     * @param request 查询参数
-     * @return 分页结果
-     */
-    @GetMapping("/page")
-    public ApiResponse<Page<TaskExt>> findProceduresByPage(ProcedureRequest request) {
-        return ApiResponse.success(procedureService.findProceduresByPage(request));
-    }
 }

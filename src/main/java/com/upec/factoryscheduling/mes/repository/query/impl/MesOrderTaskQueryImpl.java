@@ -85,7 +85,7 @@ public class MesOrderTaskQueryImpl extends JdbcTemplatePagination implements Mes
                 " orderno, " +
                 " route_seq as route_id, " +
                 " plan_quantity, " +
-                " task_status, " +
+                " task_status as status, " +
                 " fact_startdate as fact_start_date, " +
                 " fact_enddate as fact_end_date, " +
                 " createuser, " +

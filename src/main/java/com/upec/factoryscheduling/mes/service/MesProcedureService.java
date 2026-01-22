@@ -37,4 +37,9 @@ public class MesProcedureService {
                                                    Integer pageSize) {
         return mesProcedureRepository.procedureQueryDTOPage(orderName, taskNo, contractNum, productCode, statusList, startDate, endDate, pageNum, pageSize);
     }
+
+
+    public List<MesProcedure> queryMesProcedureNotInAps(List<String> taskNos){
+        return mesProcedureRepository.findAllByTaskNoIn(taskNos);
+    }
 }

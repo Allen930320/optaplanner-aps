@@ -25,6 +25,7 @@ public class Timeslot implements Serializable {
     @Id
     @PlanningId
     private String id;
+
     @Column(name = "problem_id")
     private Long problemId;
 
@@ -41,6 +42,9 @@ public class Timeslot implements Serializable {
     @ShadowVariable(variableListenerClass = TimeslotVariableListener.class, sourceVariableName = "maintenance", sourceEntityClass = Timeslot.class)
     @Column(name = "start_time")
     private LocalDateTime startTime;
+
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
 
     //绑定的工作中心日历
     @PlanningVariable(valueRangeProviderRefs = "maintenanceRange")
