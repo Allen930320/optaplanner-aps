@@ -8,6 +8,7 @@ import OrderTasksPage from './components/OrderTasksPage';
 import SchedulingTimelinePage from './components/SchedulingTimelinePage';
 import WorkCenterCalendarPage from './components/WorkCenterCalendarPage';
 import ProcedurePage from './components/ProcedurePage';
+import ProductionSchedulingResultPage from './components/ProductionSchedulingResultPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import { isLoggedIn, logout } from './services/orderService';
@@ -37,6 +38,11 @@ const menuItems = [
     key: '6',
     icon: <ClockCircleOutlined />,
     label: <Link to="/scheduling-timeline">调度时序图</Link>,
+  },
+  {
+    key: '9',
+    icon: <FileTextOutlined />,
+    label: <Link to="/production-scheduling-result">排产结果查看</Link>,
   },
   {
     key: '7',
@@ -109,6 +115,7 @@ const AppContent = () => {
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
+              <Route path="/production-scheduling-result" element={<ProtectedRoute><ProductionSchedulingResultPage /></ProtectedRoute>} />
               <Route path="/work-center-calendar" element={<ProtectedRoute><WorkCenterCalendarPage /></ProtectedRoute>} />
               {/* 其他受保护的路由可以在这里添加 */}
               <Route path="*" element={<Navigate to="/" replace />} />

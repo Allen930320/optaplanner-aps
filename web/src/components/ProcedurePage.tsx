@@ -42,8 +42,8 @@ const ProcedurePage: React.FC = () => {
     const procedureStatusOptions = [
         {label: '待执行', value: '待执行', color: 'blue'},
         {label: '执行中', value: '执行中', color: 'green'},
-        {label: '已完成', value: '已完成', color: 'orange'},
-        {label: '已暂停', value: '已暂停', color: 'red'},
+        {label: '执行完成', value: '执行完成', color: 'orange'},
+        {label: '待质检', value: '待质检', color: 'red'},
         {label: '初始导入', value: '初始导入', color: 'purple'},
     ];
 
@@ -52,6 +52,11 @@ const ProcedurePage: React.FC = () => {
         {label: '待生产', value: '待生产', color: 'blue'},
         {label: '生产中', value: '生产中', color: 'green'},
         {label: '生产完成', value: '生产完成', color: 'orange'},
+        {label: '待质检', value: '待质检', color: 'purple'},
+        {label: '质检中', value: '质检中', color: 'cyan'},
+        {label: '质检完成', value: '质检完成', color: 'success'},
+        {label: '已锁定', value: '已锁定', color: 'gray'},
+        {label: '已删除', value: '已删除', color: 'default'},
         {label: '已暂停', value: '已暂停', color: 'red'},
     ];
 

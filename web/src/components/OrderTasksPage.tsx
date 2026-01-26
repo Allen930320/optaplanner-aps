@@ -235,12 +235,16 @@ const OrderTasksPage: React.FC = () => {
             title: '计划信息',
             dataIndex: 'planStartDate',
             key: 'planInfo',
-            minWidth: 240,
+            minWidth: 280,
             render: (_, record) => (
                 <div>
                     <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center' }}>
                         <CalendarOutlined style={{ marginRight: 4, fontSize: 12 }} />
                         <Text style={{ fontSize: 12 }}>计划: {record.planStartDate} 至 {record.planEndDate}</Text>
+                    </div>
+                    <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center' }}>
+                        <CalendarOutlined style={{ marginRight: 4, fontSize: 12 }} />
+                        <Text style={{ fontSize: 12 }}>实际: {record.factStartDate || '未开始'} 至 {record.factEndDate || '未完成'}</Text>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
                         <Text style={{ fontSize: 12 }}>数量: {record.planQuantity}</Text>

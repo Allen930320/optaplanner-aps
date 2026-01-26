@@ -68,10 +68,5 @@ public class Timeslot implements Serializable {
     @Column(name = "procedure_index")
     private int procedureIndex;
 
-    public LocalDateTime getEndTime() {
-        if (this.startTime != null && this.duration >= 0) {
-            return this.startTime.plusMinutes(this.duration);
-        }
-        return null;
-    }
+
 }

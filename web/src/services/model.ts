@@ -285,7 +285,7 @@ export interface Timeslot {
     procedure: Procedure;
     order: Order;
     task: Task;
-    workCenter: WorkCenter;
+    workCenter?: WorkCenter;
     duration: number;
     priority: number;
     startTime: string;
