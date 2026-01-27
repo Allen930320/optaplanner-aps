@@ -68,4 +68,18 @@ public class TimeslotController {
         return ApiResponse.success(page);
     }
 
+    @GetMapping("/pageOfProductUser")
+    public ApiResponse<Page<TaskTimeslotDTO>> queryTimeslotsByProductUser(@RequestParam(required = false) String productName,
+                                                             @RequestParam(required = false) String productCode,
+                                                             @RequestParam(required = false) String contractNum,
+                                                             @RequestParam(required = false) String startTime,
+                                                             @RequestParam(required = false) String endTime,
+                                                             @RequestParam(required = false) String taskNo,
+                                                             @RequestParam(defaultValue = "1") Integer pageNum,
+                                                             @RequestParam(defaultValue = "20") Integer pageSize) {
+        Page<TaskTimeslotDTO> page = timeslotService.queryTimeslotsByProductUser(productName, productCode, taskNo, contractNum, startTime,
+                endTime, pageNum, pageSize);
+        return ApiResponse.success(page);
+    }
+
 }

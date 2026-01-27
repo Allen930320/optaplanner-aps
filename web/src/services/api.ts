@@ -263,6 +263,40 @@ export const queryTimeslots = async (params: {
   return result;
 };
 
+// 分页查询生产人员专用时间槽列表
+export const queryProductUserTimeslots = async (params: {
+  productName?: string;
+  productCode?: string;
+  contractNum?: string;
+  startTime?: string;
+  endTime?: string;
+  taskNo?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<any>>> => {
+  // 构建查询参数
+  const queryParams = {
+    productName: params.productName || '',
+    productCode: params.productCode || '',
+    contractNum: params.contractNum || '',
+    startTime: params.startTime || '',
+    endTime: params.endTime || '',
+    taskNo: params.taskNo || '',
+    pageNum: params.pageNum || 1,
+    pageSize: params.pageSize || 20
+  };
+
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<any>> = await apiClient.get('/api/timeslot/pageOfProductUser', {
+    params: queryParams
+  });
+
+  if (!result || result.code !== 200) {
+    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+  }
+  return result;
+};
+
 // 分页查询工序列表（适配新接口 /api/mesOrders/procedure/page）
 export const queryProcedures = async (params: {
   orderName?: string;

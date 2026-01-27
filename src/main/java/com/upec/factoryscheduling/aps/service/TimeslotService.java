@@ -6,6 +6,8 @@ import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.repository.TimeslotRepository;
 import com.upec.factoryscheduling.aps.resquest.ProcedureRequest;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
+import com.upec.factoryscheduling.auth.entity.User;
+import com.upec.factoryscheduling.common.utils.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -201,7 +203,32 @@ public class TimeslotService {
             List<String> taskNos = dtos.stream().map(TaskTimeslotDTO::getTaskNo).collect(Collectors.toList());
             List<Timeslot> timeslots = timeslotRepository.findAllByProcedure_Task_TaskNoIsIn(taskNos);
             Map<String, List<Timeslot>> map = timeslots.stream().collect(Collectors.groupingBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo()));
-            page.get().peek(m-> m.setTimeslots(map.get(m.getTaskNo()))).collect(Collectors.toList());
+            page.get().peek(m -> m.setTimeslots(map.get(m.getTaskNo()))).collect(Collectors.toList());
+        }
+        String userName = UserContext.getCurrentUsername();
+        List<Timeslot> timeslots = timeslotRepository.queryTimeslots(userName, dtos.stream().map(TaskTimeslotDTO::getTaskNo).collect(Collectors.toList()));
+        return page;
+    }
+
+
+    public Page<TaskTimeslotDTO> queryTimeslotsByProductUser(String productName,
+                                                String productCode,
+                                                String taskNo,
+                                                String contractNum,
+                                                String startTime,
+                                                String endTime,
+                                                Integer pageNum,
+                                                Integer pageSize){
+
+        Page<TaskTimeslotDTO> page = orderTaskService.queryTaskWithTimeslotByUser(productName, productCode, taskNo, contractNum, startTime,
+                endTime, pageNum, pageSize);
+        List<TaskTimeslotDTO> dtos = page.getContent();
+        if (!CollectionUtils.isEmpty(dtos)) {
+            List<String> taskNos = dtos.stream().map(TaskTimeslotDTO::getTaskNo).collect(Collectors.toList());
+            String userName = UserContext.getCurrentUsername();
+            List<Timeslot> timeslots = timeslotRepository.queryTimeslots(userName, taskNos);
+            Map<String, List<Timeslot>> map = timeslots.stream().collect(Collectors.groupingBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo()));
+            page.get().peek(m -> m.setTimeslots(map.get(m.getTaskNo()))).collect(Collectors.toList());
         }
         return page;
     }

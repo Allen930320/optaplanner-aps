@@ -61,4 +61,16 @@ public class OrderTaskService {
                                                        Integer pageSize){
         return taskRepository.queryTaskWithTimeslot(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
     }
+
+
+    Page<TaskTimeslotDTO> queryTaskWithTimeslotByUser(String productName,
+                                                      String productCode,
+                                                      String taskNo,
+                                                      String contractNum,
+                                                      String startTime,
+                                                      String endTime,
+                                                      Integer pageNum,
+                                                      Integer pageSize){
+        return taskRepository.queryTaskWithTimeslotByUser(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
+    }
 }

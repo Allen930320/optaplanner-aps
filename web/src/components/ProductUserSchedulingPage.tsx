@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space } from 'antd';
 import type { ColumnType } from 'antd/es/table';
-import { queryTimeslots } from '../services/api';
+import { queryProductUserTimeslots } from '../services/api';
 import type { Timeslot } from '../services/model';
 import moment from 'moment';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
@@ -23,7 +23,7 @@ interface TableData {
     [dateKey: string]: string | Timeslot[] | undefined;
 }
 
-const ProductionSchedulingResultPage: React.FC = () => {
+const ProductUserSchedulingPage: React.FC = () => {
     const [form] = Form.useForm();
     const [loading, setLoading] = useState(false);
     const [tableData, setTableData] = useState<TableData[]>([]);
@@ -161,19 +161,9 @@ const ProductionSchedulingResultPage: React.FC = () => {
                         }
                     }
                     
-                    // 添加日期到集合（只要有startTime或endTime中的任意一个即可）
+                    // 添加日期到集合
                     if (startTime) dateSet.add(startTime.substring(0, 10));
                     if (endTime) dateSet.add(endTime.substring(0, 10));
-                    
-                    // 如果没有时间数据但有task数据，使用task的计划日期
-                    if (!startTime && !endTime && timeslot.procedure?.task) {
-                        if (timeslot.procedure.task.planStartDate) {
-                            dateSet.add(timeslot.procedure.task.planStartDate.substring(0, 10));
-                        }
-                        if (timeslot.procedure.task.planEndDate) {
-                            dateSet.add(timeslot.procedure.task.planEndDate.substring(0, 10));
-                        }
-                    }
                 });
             }
         });
@@ -259,7 +249,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
     }) => {
         setLoading(true);
         try {
-            const response = await queryTimeslots({
+            const response = await queryProductUserTimeslots({
                 taskNo: params?.taskNo || '',
                 productName: params?.productName || '',
                 productCode: params?.productCode || '',
@@ -338,7 +328,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
 
     return (
         <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-            <h1 style={{ marginBottom: '20px', fontSize: '20px', color: '#262626' }}>排产结果查看</h1>
+            <h1 style={{ marginBottom: '20px', fontSize: '20px', color: '#262626' }}>生产人员专用调度</h1>
 
             <Card
                 title={
@@ -437,4 +427,4 @@ const ProductionSchedulingResultPage: React.FC = () => {
     );
 };
 
-export default ProductionSchedulingResultPage;
+export default ProductUserSchedulingPage;

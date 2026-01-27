@@ -183,6 +183,8 @@ export interface WorkCenter {
 
 // 工序类型定义
 export interface Procedure {
+    workCenter: WorkCenter;
+    task: Task;
     id: string;
     taskNo: string;
     orderNo: string;

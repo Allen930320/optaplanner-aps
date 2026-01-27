@@ -6,6 +6,7 @@ import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, Logo
 import HomePage from './components/HomePage';
 import OrderTasksPage from './components/OrderTasksPage';
 import SchedulingTimelinePage from './components/SchedulingTimelinePage';
+import ProductUserSchedulingPage from './components/ProductUserSchedulingPage';
 import WorkCenterCalendarPage from './components/WorkCenterCalendarPage';
 import ProcedurePage from './components/ProcedurePage';
 import ProductionSchedulingResultPage from './components/ProductionSchedulingResultPage';
@@ -38,6 +39,11 @@ const menuItems = [
     key: '6',
     icon: <ClockCircleOutlined />,
     label: <Link to="/scheduling-timeline">调度时序图</Link>,
+  },
+  {
+    key: '10',
+    icon: <ClockCircleOutlined />,
+    label: <Link to="/product-user-scheduling">生产人员调度</Link>,
   },
   {
     key: '9',
@@ -115,6 +121,7 @@ const AppContent = () => {
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
+              <Route path="/product-user-scheduling" element={<ProtectedRoute><ProductUserSchedulingPage /></ProtectedRoute>} />
               <Route path="/production-scheduling-result" element={<ProtectedRoute><ProductionSchedulingResultPage /></ProtectedRoute>} />
               <Route path="/work-center-calendar" element={<ProtectedRoute><WorkCenterCalendarPage /></ProtectedRoute>} />
               {/* 其他受保护的路由可以在这里添加 */}

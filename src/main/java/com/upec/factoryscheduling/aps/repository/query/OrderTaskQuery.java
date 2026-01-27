@@ -12,4 +12,13 @@ public interface OrderTaskQuery {
                                                 String endTime,
                                                 Integer pageNum,
                                                 Integer pageSize);
+
+    Page<TaskTimeslotDTO> queryTaskWithTimeslotByUser(String productName,
+                                                      String productCode,
+                                                      String taskNo,
+                                                      String contractNum,
+                                                      String startTime,
+                                                      String endTime,
+                                                      Integer pageNum,
+                                                      Integer pageSize);
 }
