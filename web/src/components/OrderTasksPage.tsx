@@ -11,17 +11,15 @@ import {
   Card,
   Space,
   Button,
-  Modal,
   Tag,
   Alert,
-  Tooltip,
   Spin,
   message
 } from 'antd';
 import type {ColumnsType} from 'antd/es/table';
 import {queryTasks, syncOrderData} from '../services/api.ts';
 import type {Task, OrderTaskQueryParams} from '../services/model.ts';
-import {SearchOutlined, FilterOutlined, CalendarOutlined, SyncOutlined} from '@ant-design/icons';
+import {SearchOutlined, FilterOutlined, SyncOutlined} from '@ant-design/icons';
 
 const {Text} = Typography;
 const {RangePicker} = DatePicker;
@@ -33,7 +31,6 @@ const OrderTasksPage: React.FC = () => {
     const [loading, setLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
     const [filterVisible, setFilterVisible] = useState<boolean>(false);
-    const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [currentPage, setCurrentPage] = useState<number>(1);
     const [pageSize, setPageSize] = useState<number>(20);
     const [total, setTotal] = useState<number>(0);
@@ -199,12 +196,12 @@ const OrderTasksPage: React.FC = () => {
             title: '任务信息',
             dataIndex: 'taskNo',
             key: 'taskInfo',
-            minWidth: 220,
+            minWidth: 160,
             render: (_, record) => (
                 <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: 4 }}>任务号: {record.taskNo}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>订单号: {record.orderNo}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>合同号: {record.contractNum}</div>
+                    <div style={{ fontSize: 13, fontWeight: 'bold' }}>任务号: {record.taskNo}</div>
+                    <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>订单号: {record.orderNo}</div>
+                    <div style={{ fontSize: 11, color: '#666', marginTop: 1 }}>合同号: {record.contractNum}</div>
                 </div>
             ),
         },
@@ -212,11 +209,11 @@ const OrderTasksPage: React.FC = () => {
             title: '产品信息',
             dataIndex: 'productName',
             key: 'productInfo',
-            minWidth: 250,
+            minWidth: 180,
             render: (_, record) => (
                 <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{record.productName}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>产品代码: {record.productCode}</div>
+                    <div style={{ fontSize: 13, fontWeight: 'bold' }}>{record.productName}</div>
+                    <div style={{ fontSize: 11, color: '#666', marginTop: 2 }}>产品代码: {record.productCode}</div>
                 </div>
             ),
         },
@@ -224,7 +221,7 @@ const OrderTasksPage: React.FC = () => {
             title: '任务状态',
             dataIndex: 'taskStatus',
             key: 'taskStatus',
-            minWidth: 100,
+            minWidth: 80,
             render: (_, record) => (
                 <div>
                     {getStatusTag(record.taskStatus)}
@@ -235,20 +232,12 @@ const OrderTasksPage: React.FC = () => {
             title: '计划信息',
             dataIndex: 'planStartDate',
             key: 'planInfo',
-            minWidth: 280,
+            minWidth: 200,
             render: (_, record) => (
                 <div>
-                    <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center' }}>
-                        <CalendarOutlined style={{ marginRight: 4, fontSize: 12 }} />
-                        <Text style={{ fontSize: 12 }}>计划: {record.planStartDate} 至 {record.planEndDate}</Text>
-                    </div>
-                    <div style={{ marginBottom: 4, display: 'flex', alignItems: 'center' }}>
-                        <CalendarOutlined style={{ marginRight: 4, fontSize: 12 }} />
-                        <Text style={{ fontSize: 12 }}>实际: {record.factStartDate || '未开始'} 至 {record.factEndDate || '未完成'}</Text>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <Text style={{ fontSize: 12 }}>数量: {record.planQuantity}</Text>
-                    </div>
+                    <div style={{ fontSize: 11, marginBottom: 2 }}>计划: {record.planStartDate} 至 {record.planEndDate}</div>
+                    <div style={{ fontSize: 11, marginBottom: 2 }}>实际: {record.factStartDate || '未开始'} 至 {record.factEndDate || '未完成'}</div>
+                    <div style={{ fontSize: 11 }}>数量: {record.planQuantity}</div>
                 </div>
             ),
         },
@@ -256,30 +245,12 @@ const OrderTasksPage: React.FC = () => {
             title: '创建信息',
             dataIndex: 'createDate',
             key: 'createInfo',
-            minWidth: 220,
+            minWidth: 160,
             render: (_, record) => (
                 <div>
-                    <div style={{ marginBottom: 4 }}>时间: {record.createDate}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>用户: {record.createUser}</div>
+                    <div style={{ fontSize: 11, marginBottom: 2 }}>时间: {record.createDate}</div>
+                    <div style={{ fontSize: 11, color: '#666' }}>用户: {record.createUser}</div>
                 </div>
-            ),
-        },
-        {
-            title: '操作',
-            key: 'action',
-            width: 100,
-            render: (_, record) => (
-                <Space size="small">
-                    <Tooltip title="查看详情">
-                        <Button 
-                            size="small" 
-                            type="link" 
-                            onClick={() => setSelectedTask(record)}
-                        >
-                            详情
-                        </Button>
-                    </Tooltip>
-                </Space>
             ),
         },
     ];
@@ -288,7 +259,7 @@ const OrderTasksPage: React.FC = () => {
         <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
             
             {/* 主要内容 */}
-            <div style={{ padding: 32 }}>  
+            <div style={{ padding: 2 }}>
                 {/* 查询条件 */}
                 <Card 
                     title={
@@ -297,10 +268,11 @@ const OrderTasksPage: React.FC = () => {
                             <Text>查询条件</Text>
                         </Space>
                     }
-                    style={{ marginBottom: 24, borderRadius: 8 }}
+                    style={{ marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px' }}
                     extra={
                         <Button 
                             type="link" 
+                            size="small"
                             onClick={() => setFilterVisible(!filterVisible)}
                         >
                             {filterVisible ? '收起筛选' : '展开筛选'}
@@ -309,27 +281,31 @@ const OrderTasksPage: React.FC = () => {
                 >
                     <Form
                         form={form}
-                        layout="vertical"
-                        size="middle"
+                        layout="horizontal"
+                        labelCol={{ span: 6 }}
+                        wrapperCol={{ span: 18 }}
+                        size="small"
+                        style={{ marginBottom: 0 }}
                     >
-                        <Row gutter={[16, 16]}>
+                        <Row gutter={[8, 8]}>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="orderNo" label="订单编号">
-                                    <Input placeholder="请输入订单编号" />
+                                <Form.Item name="orderNo" label="订单编号" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入订单编号" size="small" style={{ height: 24 }} />
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="orderName" label="订单名称">
-                                    <Input placeholder="请输入订单名称" />
+                                <Form.Item name="orderName" label="订单名称" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入订单名称" size="small" style={{ height: 24 }} />
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="statusList" label="任务状态">
+                                <Form.Item name="statusList" label="任务状态" style={{ marginBottom: 4 }}>
                                     <Select
                                         placeholder="请选择任务状态"
                                         allowClear
                                         mode="multiple"
-                                        style={{ width: '100%' }}
+                                        style={{ width: '100%', height: 24 }}
+                                        size="small"
                                     >
                                         {statusOptions.map(option => (
                                             <Option key={option.value} value={option.value}>{option.label}</Option>
@@ -341,35 +317,38 @@ const OrderTasksPage: React.FC = () => {
                             {filterVisible && (
                                 <>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="contractNum" label="合同编号">
-                                            <Input placeholder="请输入合同编号" />
+                                        <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }} />
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="productCode" label="产品编码">
-                                            <Input placeholder="请输入产品编码" />
+                                        <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }} />
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="dateRange" label="日期范围">
-                                            <RangePicker style={{ width: '100%' }} />
+                                        <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
+                                            <RangePicker style={{ width: '100%', height: 24 }} size="small" />
                                         </Form.Item>
                                     </Col>
                                 </>
                             )}
-                            
-                            <Col xs={24} style={{ textAlign: 'right' }}>
-                                <Space>
-                                    <Button onClick={handleReset}>重置</Button>
-                                    <Button 
-                                        type="primary" 
-                                        icon={<SearchOutlined />} 
-                                        onClick={handleSearch}
-                                        loading={loading}
-                                    >
-                                        搜索
-                                    </Button>
-                                </Space>
+                            <Col xs={24} sm={24} md={8} lg={6}>
+                                <Form.Item label="" style={{ marginBottom: 4 }}>
+                                    <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                                        <Button 
+                                            type="primary" 
+                                            size="small"
+                                            icon={<SearchOutlined />} 
+                                            onClick={handleSearch}
+                                            loading={loading}
+                                            style={{ height: 24, padding: '0 12px' }}
+                                        >
+                                            搜索
+                                        </Button>
+                                        <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
+                                    </Space>
+                                </Form.Item>
                             </Col>
                         </Row>
                     </Form>
@@ -382,7 +361,7 @@ const OrderTasksPage: React.FC = () => {
                         description={error} 
                         type="error" 
                         showIcon 
-                        style={{ marginBottom: 24 }}
+                        style={{ marginBottom: 16 }}
                         action={
                             <Button size="small" onClick={() => fetchTasks({})}>
                                 重试
@@ -393,10 +372,11 @@ const OrderTasksPage: React.FC = () => {
                 
                 {/* 任务表格 */}
                 <Card 
-                    style={{ borderRadius: 8, border: '1px solid #d9d9d9' }}
+                    style={{ borderRadius: 6, border: '1px solid #d9d9d9', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
                     extra={
                         <Button 
                             type="primary" 
+                            size="small"
                             icon={<SyncOutlined />}
                             onClick={handleSyncOrderData}
                             loading={syncLoading}
@@ -428,22 +408,17 @@ const OrderTasksPage: React.FC = () => {
                                 pageSizeOptions: ['10', '20', '50', '100'],
                                 showTotal: (total) => `共 ${total} 条记录`,
                                 showQuickJumper: true,
-                                onChange: handlePaginationChange
+                                onChange: handlePaginationChange,
+                                size: 'small'
                             }}
-                            scroll={{ x: 1200 }}
+                            scroll={{ x: 900 }}
                             bordered
-                            onRow={(record) => ({
-                                onClick: () => setSelectedTask(record),
-                                style: {
-                                    cursor: 'pointer',
-                                    backgroundColor: selectedTask?.taskNo === record.taskNo ? '#f0f7ff' : 'transparent'
-                                }
-                            })}
+                            size="small"
                             locale={{
                                 emptyText: (
-                                    <div style={{ textAlign: 'center', padding: 64 }}>
-                                        <div style={{ fontSize: 48, color: '#ccc', marginBottom: 16 }}>📋</div>
-                                        <Text style={{ fontSize: 16, color: '#999' }}>暂无任务数据</Text>
+                                    <div style={{ textAlign: 'center', padding: 32 }}>
+                                        <div style={{ fontSize: 32, color: '#ccc', marginBottom: 12 }}>📋</div>
+                                        <Text style={{ fontSize: 14, color: '#999' }}>暂无任务数据</Text>
                                     </div>
                                 )
                             }}
@@ -451,48 +426,6 @@ const OrderTasksPage: React.FC = () => {
                     </Spin>
                 </Card>
             </div>
-            
-            {/* 详情弹窗 */}
-            <Modal
-                title="任务详细信息"
-                open={!!selectedTask}
-                onCancel={() => setSelectedTask(null)}
-                footer={[
-                    <Button key="close" type="primary" onClick={() => setSelectedTask(null)}>
-                        关闭
-                    </Button>
-                ]}
-                width={600}
-            >
-                {selectedTask && (
-                    <div style={{ padding: 16 }}>
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}><Text strong>任务编号:</Text></Col>
-                            <Col span={12}>{selectedTask.taskNo}</Col>
-                            <Col span={12}><Text strong>订单编号:</Text></Col>
-                            <Col span={12}>{selectedTask.orderNo}</Col>
-                            <Col span={12}><Text strong>合同编号:</Text></Col>
-                            <Col span={12}>{selectedTask.contractNum}</Col>
-                            <Col span={12}><Text strong>产品编码:</Text></Col>
-                            <Col span={12}>{selectedTask.productCode}</Col>
-                            <Col span={12}><Text strong>产品名称:</Text></Col>
-                            <Col span={12}><Text ellipsis>{selectedTask.productName}</Text></Col>
-                            <Col span={12}><Text strong>任务状态:</Text></Col>
-                            <Col span={12}>{getStatusTag(selectedTask.taskStatus)}</Col>
-                            <Col span={12}><Text strong>计划开始:</Text></Col>
-                            <Col span={12}>{selectedTask.planStartDate}</Col>
-                            <Col span={12}><Text strong>计划结束:</Text></Col>
-                            <Col span={12}>{selectedTask.planEndDate}</Col>
-                            <Col span={12}><Text strong>计划数量:</Text></Col>
-                            <Col span={12}>{selectedTask.planQuantity}</Col>
-                            <Col span={12}><Text strong>创建日期:</Text></Col>
-                            <Col span={12}>{selectedTask.createDate}</Col>
-                            <Col span={12}><Text strong>创建用户:</Text></Col>
-                            <Col span={12}>{selectedTask.createUser}</Col>
-                        </Row>
-                    </div>
-                )}
-            </Modal>
         </div>
     );
 };

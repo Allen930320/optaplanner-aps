@@ -11,16 +11,14 @@ import {
   Col,
   Card,
   DatePicker,
-  Modal,
   Tag,
   Spin,
-  Alert,
-  Tooltip
+  Alert
 } from 'antd';
 import type {ColumnsType} from 'antd/es/table';
 import {queryProcedures} from '../services/api.ts';
 import type {ProcedureQueryDTO} from '../services/model.ts';
-import {SearchOutlined, FilterOutlined, CalendarOutlined, ClockCircleOutlined} from '@ant-design/icons';
+import {SearchOutlined, FilterOutlined} from '@ant-design/icons';
 
 const {Text} = Typography;
 const {Option} = Select;
@@ -36,7 +34,6 @@ const ProcedurePage: React.FC = () => {
     const [pageSize, setPageSize] = useState<number>(20);
     const [total, setTotal] = useState<number>(0);
     const [filterVisible, setFilterVisible] = useState<boolean>(false);
-    const [selectedProcedure, setSelectedProcedure] = useState<ProcedureQueryDTO | null>(null);
 
     // 工序状态选项
     const procedureStatusOptions = [
@@ -142,12 +139,12 @@ const ProcedurePage: React.FC = () => {
             title: '订单信息',
             dataIndex: 'orderNo',
             key: 'orderInfo',
-            minWidth: 200,
+            minWidth: 140,
             render: (_, record) => (
                 <div>
-                    <div style={{fontWeight: 'bold', marginBottom: 4}}>任务:{record.taskNo}</div>
-                    <div style={{fontSize: 12, color: '#666'}}>订单: {record.orderNo}</div>
-                    <div style={{fontSize: 12, color: '#666'}}>合同: {record.contractNum}</div>
+                    <div style={{fontSize: 13, fontWeight: 'bold'}}>任务:{record.taskNo}</div>
+                    <div style={{fontSize: 11, color: '#666', marginTop: 2}}>订单: {record.orderNo}</div>
+                    <div style={{fontSize: 11, color: '#666', marginTop: 1}}>合同: {record.contractNum}</div>
                 </div>
             ),
         },
@@ -155,11 +152,11 @@ const ProcedurePage: React.FC = () => {
             title: '产品名称',
             dataIndex: 'productName',
             key: 'productInfo',
-            minWidth: 300,
+            minWidth: 180,
             render: (_, record) => (
                 <div>
-                    <div style={{ fontWeight: 'bold', marginBottom: 4 }}>{record.productName}</div>
-                    <div style={{ fontSize: 12, color: '#666' }}>产品代码: {record.productCode}</div>
+                    <div style={{fontSize: 13, fontWeight: 'bold'}}>{record.productName}</div>
+                    <div style={{fontSize: 11, color: '#666', marginTop: 2}}>产品代码: {record.productCode}</div>
                 </div>
             ),
 
@@ -168,12 +165,12 @@ const ProcedurePage: React.FC = () => {
             title: '工序信息',
             dataIndex: 'procedureName',
             key: 'procedureInfo',
-            minWidth: 200,
+            minWidth: 160,
             render: (_, record) => (
                 <div>
-                    <div style={{fontWeight: 'bold', marginBottom: 4}}>名称: {record.procedureName}</div>
-                    <div style={{fontSize: 12, color: '#666'}}>工序: {record.procedureNo}</div>
-                    <div style={{fontSize: 12, color: '#666'}}>工作中心: {record.workCenterName}</div>
+                    <div style={{fontSize: 13, fontWeight: 'bold'}}>名称: {record.procedureName}</div>
+                    <div style={{fontSize: 11, color: '#666', marginTop: 2}}>工序: {record.procedureNo}</div>
+                    <div style={{fontSize: 11, color: '#666', marginTop: 1}}>工作中心: {record.workCenterName}</div>
                 </div>
             ),
         },
@@ -181,12 +178,11 @@ const ProcedurePage: React.FC = () => {
             title: '状态',
             dataIndex: 'procedureStatus',
             key: 'status',
-            minWidth: 180,
+            minWidth: 140,
             render: (_, record) => (
                 <div>
-                    <div
-                        style={{marginBottom: 4}}>工序状态: {getStatusTag(record.procedureStatus, procedureStatusOptions)}</div>
-                    <div>任务状态: {getStatusTag(record.taskStatus, taskStatusOptions)}</div>
+                    <div style={{fontSize: 11, marginBottom: 2}}>工序状态: {getStatusTag(record.procedureStatus, procedureStatusOptions)}</div>
+                    <div style={{fontSize: 11}}>任务状态: {getStatusTag(record.taskStatus, taskStatusOptions)}</div>
                 </div>
             ),
         },
@@ -194,17 +190,11 @@ const ProcedurePage: React.FC = () => {
             title: '时间信息',
             dataIndex: 'planStartDate',
             key: 'timeInfo',
-            minWidth: 300,
+            minWidth: 200,
             render: (_, record) => (
                 <div>
-                    <div style={{marginBottom: 8, display: 'flex', alignItems: 'center'}}>
-                        <CalendarOutlined style={{marginRight: 8, fontSize: 12}}/>
-                        <Text style={{fontSize: 12}}>计划: {record.planStartDate} 至 {record.planEndDate}</Text>
-                    </div>
-                    <div style={{display: 'flex', alignItems: 'center'}}>
-                        <ClockCircleOutlined style={{marginRight: 8, fontSize: 12}}/>
-                        <Text style={{fontSize: 12}}>实际: {record.startTime || '-'}</Text>
-                    </div>
+                    <div style={{fontSize: 11, marginBottom: 2}}>计划: {record.planStartDate} 至 {record.planEndDate}</div>
+                    <div style={{fontSize: 11}}>实际: {record.startTime || '-'}</div>
                 </div>
             ),
         },
@@ -212,39 +202,20 @@ const ProcedurePage: React.FC = () => {
             title: '工时信息',
             dataIndex: 'humanMinutes',
             key: 'workTime',
-            minWidth: 140,
+            minWidth: 100,
             render: (_, record) => (
                 <div>
-                    <div style={{marginBottom: 4}}>人工: {record.humanMinutes} 分钟</div>
-                    <div>机器: {record.machineMinutes} 分钟</div>
+                    <div style={{fontSize: 11, marginBottom: 1}}>人工: {record.humanMinutes} 分钟</div>
+                    <div style={{fontSize: 11}}>机器: {record.machineMinutes} 分钟</div>
                 </div>
-            ),
-        },
-        {
-            title: '操作',
-            key: 'action',
-            width: 100,
-            render: (_, record) => (
-                <Space size="small">
-                    <Tooltip title="查看详情">
-                        <Button
-                            size="small"
-                            type="link"
-                            onClick={() => setSelectedProcedure(record)}
-                        >
-                            详情
-                        </Button>
-                    </Tooltip>
-                </Space>
             ),
         },
     ];
 
     return (
         <div style={{minHeight: '100vh', backgroundColor: '#f0f2f5'}}>
-
             {/* 主要内容 */}
-            <div style={{padding: 32}}>
+            <div style={{padding: 2}}>
                 {/* 查询条件 */}
                 <Card
                     title={
@@ -253,10 +224,11 @@ const ProcedurePage: React.FC = () => {
                             <Text>查询条件</Text>
                         </Space>
                     }
-                    style={{marginBottom: 24, borderRadius: 8}}
+                    style={{marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px'}}
                     extra={
                         <Button
                             type="link"
+                            size="small"
                             onClick={() => setFilterVisible(!filterVisible)}
                         >
                             {filterVisible ? '收起筛选' : '展开筛选'}
@@ -265,72 +237,79 @@ const ProcedurePage: React.FC = () => {
                 >
                     <Form
                         form={form}
-                        layout="vertical"
-                        size="middle"
+                        layout="horizontal"
+                        labelCol={{ span: 6 }}
+                        wrapperCol={{ span: 18 }}
+                        size="small"
+                        style={{ marginBottom: 0 }}
                     >
-                        <Row gutter={[16, 16]}>
+                        <Row gutter={[8, 8]}>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="orderNo" label="订单编号">
-                                    <Input placeholder="请输入订单编号"/>
+                                <Form.Item name="orderNo" label="订单编号" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入订单编号" size="small" style={{ height: 24 }}/>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="taskNo" label="任务编号">
-                                    <Input placeholder="请输入任务编号"/>
+                                <Form.Item name="taskNo" label="任务编号" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入任务编号" size="small" style={{ height: 24 }}/>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="procedureStatus" label="工序状态">
-                                    <Select placeholder="请选择工序状态" allowClear>
+                                <Form.Item name="procedureStatus" label="工序状态" style={{ marginBottom: 4 }}>
+                                    <Select placeholder="请选择工序状态" allowClear size="small" style={{ height: 24 }}>
                                         {procedureStatusOptions.map(option => (
                                             <Option key={option.value} value={option.value}>{option.label}</Option>
                                         ))}
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="contractNum" label="合同编号">
-                                    <Input placeholder="请输入合同编号"/>
-                                </Form.Item>
-                            </Col>
 
                             {filterVisible && (
                                 <>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="orderName" label="订单名称">
-                                            <Input placeholder="请输入订单名称"/>
+                                        <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }}/>
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="productCode" label="产品编码">
-                                            <Input placeholder="请输入产品编码"/>
+                                        <Form.Item name="orderName" label="订单名称" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入订单名称" size="small" style={{ height: 24 }}/>
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="productName" label="产品名称">
-                                            <Input placeholder="请输入产品名称"/>
+                                        <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }}/>
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="dateRange" label="日期范围">
-                                            <RangePicker style={{width: '100%'}}/>
+                                        <Form.Item name="productName" label="产品名称" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入产品名称" size="small" style={{ height: 24 }}/>
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={12} md={8} lg={6}>
+                                        <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
+                                            <RangePicker style={{width: '100%', height: 24 }} size="small"/>
                                         </Form.Item>
                                     </Col>
                                 </>
                             )}
 
-                            <Col xs={24} style={{textAlign: 'right'}}>
-                                <Space>
-                                    <Button onClick={handleReset}>重置</Button>
-                                    <Button
-                                        type="primary"
-                                        icon={<SearchOutlined/>}
-                                        onClick={handleSearch}
-                                        loading={loading}
-                                    >
-                                        搜索
-                                    </Button>
-                                </Space>
+                            <Col xs={24} sm={24} md={8} lg={6}>
+                                <Form.Item label="" style={{ marginBottom: 4 }}>
+                                    <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            icon={<SearchOutlined/>}
+                                            onClick={handleSearch}
+                                            loading={loading}
+                                            style={{ height: 24, padding: '0 12px' }}
+                                        >
+                                            搜索
+                                        </Button>
+                                        <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
+                                    </Space>
+                                </Form.Item>
                             </Col>
                         </Row>
                     </Form>
@@ -343,7 +322,7 @@ const ProcedurePage: React.FC = () => {
                         description={error}
                         type="error"
                         showIcon
-                        style={{marginBottom: 24}}
+                        style={{marginBottom: 16}}
                         action={
                             <Button size="small" onClick={() => loadProcedures(currentPage, pageSize)}>
                                 重试
@@ -353,7 +332,7 @@ const ProcedurePage: React.FC = () => {
                 )}
 
                 {/* 工序表格 */}
-                <Card style={{borderRadius: 8, border: '1px solid #d9d9d9'}}>
+                <Card style={{borderRadius: 6, border: '1px solid #d9d9d9', boxShadow: '0 1px 3px rgba(0,0,0,0.1)'}}>
                     <Spin spinning={loading} tip="加载中...">
                         <Table
                             columns={columns}
@@ -367,22 +346,17 @@ const ProcedurePage: React.FC = () => {
                                 showSizeChanger: true,
                                 pageSizeOptions: ['10', '20', '50', '100'],
                                 showTotal: (total) => `共 ${total} 条记录`,
-                                showQuickJumper: true
+                                showQuickJumper: true,
+                                size: 'small'
                             }}
-                            scroll={{x: 1200}}
+                            scroll={{x: 900}}
                             bordered
-                            onRow={(record) => ({
-                                onClick: () => setSelectedProcedure(record),
-                                style: {
-                                    cursor: 'pointer',
-                                    backgroundColor: selectedProcedure?.taskNo === record.taskNo && selectedProcedure?.procedureNo === record.procedureNo ? '#f0f7ff' : 'transparent'
-                                }
-                            })}
+                            size="small"
                             locale={{
                                 emptyText: (
-                                    <div style={{textAlign: 'center', padding: 64}}>
-                                        <div style={{fontSize: 48, color: '#ccc', marginBottom: 16}}>📋</div>
-                                        <Text style={{fontSize: 16, color: '#999'}}>暂无工序数据</Text>
+                                    <div style={{textAlign: 'center', padding: 32}}>
+                                        <div style={{fontSize: 32, color: '#ccc', marginBottom: 12}}>📋</div>
+                                        <Text style={{fontSize: 14, color: '#999'}}>暂无工序数据</Text>
                                     </div>
                                 )
                             }}
@@ -390,58 +364,6 @@ const ProcedurePage: React.FC = () => {
                     </Spin>
                 </Card>
             </div>
-
-            {/* 详情弹窗 */}
-            <Modal
-                title="工序详细信息"
-                open={!!selectedProcedure}
-                onCancel={() => setSelectedProcedure(null)}
-                footer={[
-                    <Button key="close" type="primary" onClick={() => setSelectedProcedure(null)}>
-                        关闭
-                    </Button>
-                ]}
-                width={600}
-            >
-                {selectedProcedure && (
-                    <div style={{ padding: 16 }}>
-                        <Row gutter={[16, 16]}>
-                            <Col span={12}><Text strong>任务号:</Text></Col>
-                            <Col span={12}>{selectedProcedure.taskNo}</Col>
-                            <Col span={12}><Text strong>订单号:</Text></Col>
-                            <Col span={12}>{selectedProcedure.orderNo}</Col>
-                            <Col span={12}><Text strong>合同号:</Text></Col>
-                            <Col span={12}>{selectedProcedure.contractNum}</Col>
-                            <Col span={12}><Text strong>产品代码:</Text></Col>
-                            <Col span={12}>{selectedProcedure.productCode}</Col>
-                            <Col span={12}><Text strong>产品名称:</Text></Col>
-                            <Col span={12}><Text ellipsis>{selectedProcedure.productName}</Text></Col>
-                            <Col span={12}><Text strong>工序名称:</Text></Col>
-                            <Col span={12}>{selectedProcedure.procedureName}</Col>
-                            <Col span={12}><Text strong>工序号:</Text></Col>
-                            <Col span={12}>{selectedProcedure.procedureNo}</Col>
-                            <Col span={12}><Text strong>工序状态:</Text></Col>
-                            <Col span={12}>{getStatusTag(selectedProcedure.procedureStatus, procedureStatusOptions)}</Col>
-                            <Col span={12}><Text strong>任务状态:</Text></Col>
-                            <Col span={12}>{getStatusTag(selectedProcedure.taskStatus, taskStatusOptions)}</Col>
-                            <Col span={12}><Text strong>人工时间:</Text></Col>
-                            <Col span={12}>{selectedProcedure.humanMinutes}分钟</Col>
-                            <Col span={12}><Text strong>机器时间:</Text></Col>
-                            <Col span={12}>{selectedProcedure.machineMinutes}分钟</Col>
-                            <Col span={12}><Text strong>开始时间:</Text></Col>
-                            <Col span={12}>{selectedProcedure.startTime || '-'}</Col>
-                            <Col span={12}><Text strong>结束时间:</Text></Col>
-                            <Col span={12}>{selectedProcedure.endTime || '-'}</Col>
-                            <Col span={12}><Text strong>计划开始:</Text></Col>
-                            <Col span={12}>{selectedProcedure.planStartDate}</Col>
-                            <Col span={12}><Text strong>计划结束:</Text></Col>
-                            <Col span={12}>{selectedProcedure.planEndDate}</Col>
-                            <Col span={12}><Text strong>创建日期:</Text></Col>
-                            <Col span={12}>{selectedProcedure.createDate}</Col>
-                        </Row>
-                    </div>
-                )}
-            </Modal>
         </div>
     );
 };

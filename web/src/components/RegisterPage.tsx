@@ -87,7 +87,9 @@ const RegisterPage: React.FC = () => {
           
           <Form
             form={form}
-            layout="vertical"
+            layout="horizontal"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 18 }}
             onFinish={handleRegister}
             autoComplete="off"
           >

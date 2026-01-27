@@ -1,10 +1,12 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import { Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space } from 'antd';
-import type { ColumnType } from 'antd/es/table';
-import { queryTimeslots } from '../services/api';
-import type { Timeslot } from '../services/model';
+import React, {useState, useCallback, useEffect} from 'react';
+import {Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space, Typography} from 'antd';
+import type {ColumnType} from 'antd/es/table';
+import {queryTimeslots} from '../services/api';
+import type {Timeslot} from '../services/model';
 import moment from 'moment';
-import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import {SearchOutlined, FilterOutlined} from '@ant-design/icons';
+
+const { Text } = Typography;
 
 interface TaskTimeslot {
     taskNo: string;
@@ -20,6 +22,7 @@ interface TableData {
     contractNum: string;
     productName: string;
     productCode: string;
+
     [dateKey: string]: string | Timeslot[] | undefined;
 }
 
@@ -34,11 +37,12 @@ const ProductionSchedulingResultPage: React.FC = () => {
     const [filterVisible, setFilterVisible] = useState(false);
 
     const formatProcedureDetail = (timeslot: Timeslot) => {
-        const { procedure, startTime, endTime, duration } = timeslot;
+        const {procedure, startTime, endTime, duration} = timeslot;
         const durationHours = duration ? Number((duration).toFixed(2)) : 0;
         return (
-            <div style={{ fontSize: '12px', lineHeight: '1.5' }}>
-                <p><strong>工序名称：</strong>{procedure?.procedureName || '未知'}（{procedure?.procedureNo || '未知'}）</p>
+            <div style={{fontSize: '12px', lineHeight: '1.5'}}>
+                <p><strong>工序名称：</strong>{procedure?.procedureName || '未知'}（{procedure?.procedureNo || '未知'}）
+                </p>
                 <p><strong>工作中心：</strong>{procedure?.workCenter?.name || '未知'}</p>
                 <p><strong>开始时间：</strong>{startTime || '未知'}</p>
                 <p><strong>结束时间：</strong>{endTime || '未知'}</p>
@@ -56,14 +60,13 @@ const ProductionSchedulingResultPage: React.FC = () => {
     };
 
 
-
     const renderCellContent = (timeslots?: Timeslot[]) => {
         if (!timeslots || timeslots.length === 0) {
-            return <div style={{ textAlign: 'center', padding: '8px', color: '#999' }}>未安排</div>;
+            return <div style={{textAlign: 'center', padding: '8px', color: '#999'}}>未安排</div>;
         }
 
         return (
-            <div style={{ fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            <div style={{fontSize: '11px', display: 'flex', flexDirection: 'column', gap: '2px'}}>
                 {timeslots.map((ts) => (
                     <Tooltip key={ts.id} title={formatProcedureDetail(ts)} placement="topLeft">
                         <div
@@ -75,14 +78,14 @@ const ProductionSchedulingResultPage: React.FC = () => {
                                 cursor: 'default'
                             }}
                         >
-                            <div style={{ fontWeight: 'bold', color: '#333', marginBottom: '2px' }}>
+                            <div style={{fontWeight: 'bold', color: '#333', marginBottom: '2px'}}>
                                 {ts.procedure?.procedureName || '未知'}
                             </div>
                             <Tag
                                 color={
                                     ts.procedure?.status === '执行中' ? 'blue' :
-                                    ts.procedure?.status === '执行完成' ? 'green' :
-                                    ts.procedure?.status === '待执行' ? 'orange' : 'yellow'
+                                        ts.procedure?.status === '执行完成' ? 'green' :
+                                            ts.procedure?.status === '待执行' ? 'orange' : 'yellow'
                                 }
                             >
                                 {ts.procedure?.status || '未知'}
@@ -104,19 +107,19 @@ const ProductionSchedulingResultPage: React.FC = () => {
                 fixed: 'left' as const,
                 align: 'left' as const,
                 render: (text: string, record: TableData) => (
-                            <div>
-                                <div style={{ fontWeight: 'bold', color: '#1890ff', marginBottom: '4px' }}>任务号: {text}</div>
-                                <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>
-                                    合同编号: {record.contractNum || '-'}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#666', marginBottom: '2px' }}>
-                                    产品编码: {record.productCode || '-'}
-                                </div>
-                                <div style={{ fontSize: '12px', color: '#666' }}>
-                                    产品名称: {record.productName || '-'}
-                                </div>
-                            </div>
-                        )
+                    <div>
+                        <div style={{fontWeight: 'bold', color: '#1890ff', marginBottom: '4px'}}>任务号: {text}</div>
+                        <div style={{fontSize: '12px', color: '#666', marginBottom: '2px'}}>
+                            合同编号: {record.contractNum || '-'}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#666', marginBottom: '2px'}}>
+                            产品编码: {record.productCode || '-'}
+                        </div>
+                        <div style={{fontSize: '12px', color: '#666'}}>
+                            产品名称: {record.productName || '-'}
+                        </div>
+                    </div>
+                )
             }
         ];
 
@@ -144,7 +147,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
                     // 获取startTime和endTime，按照优先级：timeslot > procedure > task
                     let startTime: string | null = timeslot.startTime;
                     let endTime: string | null = timeslot.endTime;
-                    
+
                     // 如果timeslot中没有时间，尝试从procedure中获取
                     if (!startTime && !endTime) {
                         if (timeslot.procedure) {
@@ -152,7 +155,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
                             endTime = timeslot.procedure.planEndDate;
                         }
                     }
-                    
+
                     // 如果procedure中也没有时间，尝试从task中获取
                     if (!startTime && !endTime) {
                         if (timeslot.procedure?.task) {
@@ -160,11 +163,11 @@ const ProductionSchedulingResultPage: React.FC = () => {
                             endTime = timeslot.procedure.task.planEndDate;
                         }
                     }
-                    
+
                     // 添加日期到集合（只要有startTime或endTime中的任意一个即可）
                     if (startTime) dateSet.add(startTime.substring(0, 10));
                     if (endTime) dateSet.add(endTime.substring(0, 10));
-                    
+
                     // 如果没有时间数据但有task数据，使用task的计划日期
                     if (!startTime && !endTime && timeslot.procedure?.task) {
                         if (timeslot.procedure.task.planStartDate) {
@@ -194,7 +197,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
                     // 获取startTime和endTime，按照优先级：timeslot > procedure > task
                     let startTime: string | null = ts.startTime;
                     let endTime: string | null = ts.endTime;
-                    
+
                     // 如果timeslot中没有时间，尝试从procedure中获取
                     if (!startTime && !endTime) {
                         if (ts.procedure) {
@@ -202,7 +205,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
                             endTime = ts.procedure.planEndDate;
                         }
                     }
-                    
+
                     // 如果procedure中也没有时间，尝试从task中获取
                     if (!startTime && !endTime) {
                         if (ts.procedure?.task) {
@@ -210,27 +213,27 @@ const ProductionSchedulingResultPage: React.FC = () => {
                             endTime = ts.procedure.task.planEndDate;
                         }
                     }
-                    
+
                     // 检查是否有有效的时间数据（只要有startTime或endTime中的任意一个即可）
                     if (!startTime && !endTime) return false;
-                    
+
                     // 检查时间槽是否与当前日期重叠
                     let startDate = null;
                     let endDate = null;
-                    
+
                     if (startTime) startDate = startTime.substring(0, 10);
                     if (endTime) endDate = endTime.substring(0, 10);
-                    
+
                     // 处理只有startTime的情况
                     if (startDate && !endDate) {
                         return startDate === date;
                     }
-                    
+
                     // 处理只有endTime的情况
                     if (!startDate && endDate) {
                         return endDate === date;
                     }
-                    
+
                     // 处理两者都有的情况
                     if (startDate && endDate) {
                         // 处理endTime早于startTime的情况
@@ -239,7 +242,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
                         }
                         return startDate <= date && endDate >= date;
                     }
-                    
+
                     return false;
                 }) || [];
             });
@@ -337,102 +340,113 @@ const ProductionSchedulingResultPage: React.FC = () => {
     }, []);
 
     return (
-        <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-            <h1 style={{ marginBottom: '20px', fontSize: '20px', color: '#262626' }}>排产结果查看</h1>
-
-            <Card
-                title={
-                    <Space>
-                        <FilterOutlined />
-                        <span>查询条件</span>
-                    </Space>
-                }
-                style={{ marginBottom: 24, borderRadius: 8 }}
-                extra={
-                    <Button
-                        type="link"
-                        onClick={() => setFilterVisible(!filterVisible)}
-                    >
-                        {filterVisible ? '收起筛选' : '展开筛选'}
-                    </Button>
-                }
-            >
-                <Form
-                    form={form}
-                    layout="vertical"
-                    size="middle"
+        <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+            {/* 主要内容 */}
+            <div style={{ padding: 2 }}>
+                {/* 查询条件 */}
+                <Card
+                    title={
+                        <Space>
+                            <FilterOutlined />
+                            <Text>查询条件</Text>
+                        </Space>
+                    }
+                    style={{ marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px' }}
+                    extra={
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => setFilterVisible(!filterVisible)}
+                        >
+                            {filterVisible ? '收起筛选' : '展开筛选'}
+                        </Button>
+                    }
                 >
-                    <Row gutter={[16, 16]}>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="taskNo" label="任务编号">
-                                <Input placeholder="请输入任务编号" />
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productName" label="产品名称">
-                                <Input placeholder="请输入产品名称" />
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productCode" label="产品编码">
-                                <Input placeholder="请输入产品编码" />
-                            </Form.Item>
-                        </Col>
+                    <Form
+                        form={form}
+                        layout="horizontal"
+                        labelCol={{ span: 6 }}
+                        wrapperCol={{ span: 18 }}
+                        size="small"
+                        style={{ marginBottom: 0 }}
+                    >
+                        <Row gutter={[8, 8]}>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="taskNo" label="任务编号" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入任务编号" size="small" style={{ height: 24 }} />
+                                </Form.Item>
+                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="productName" label="产品名称" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入产品名称" size="small" style={{ height: 24 }} />
+                                </Form.Item>
+                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
+                                    <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }} />
+                                </Form.Item>
+                            </Col>
 
-                        {filterVisible && (
-                            <>
-                                <Col xs={24} sm={12} md={8} lg={6}>
-                                    <Form.Item name="contractNum" label="合同编号">
-                                        <Input placeholder="请输入合同编号" />
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={24} md={16} lg={12}>
-                                    <Form.Item name="dateRange" label="日期范围">
-                                        <DatePicker.RangePicker style={{ width: '100%' }} />
-                                    </Form.Item>
-                                </Col>
-                            </>
-                        )}
+                            {filterVisible && (
+                                <>
+                                    <Col xs={24} sm={12} md={8} lg={6}>
+                                        <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
+                                            <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }} />
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={24} md={16} lg={12}>
+                                        <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
+                                            <DatePicker.RangePicker style={{ width: '100%', height: 24 }} size="small" />
+                                        </Form.Item>
+                                    </Col>
+                                </>
+                            )}
 
-                        <Col xs={24} style={{ textAlign: 'right' }}>
-                            <Space>
-                                <Button onClick={handleReset}>重置</Button>
-                                <Button
-                                    type="primary"
-                                    icon={<SearchOutlined />}
-                                    onClick={handleSearch}
-                                    loading={loading}
-                                >
-                                    搜索
-                                </Button>
-                            </Space>
-                        </Col>
-                    </Row>
-                </Form>
-            </Card>
-
-            <Spin spinning={loading}>
-                <Card>
-                    <Table
-                        columns={generateColumns()}
-                        dataSource={tableData}
-                        scroll={{ x: 'max-content', y: 600 }}
-                        pagination={{
-                            current: currentPage,
-                            pageSize: pageSize,
-                            total: total,
-                            showSizeChanger: true,
-                            pageSizeOptions: ['10', '20', '50', '100'],
-                            showTotal: (total) => `共 ${total} 条记录`,
-                            showQuickJumper: true,
-                            onChange: handlePaginationChange
-                        }}
-                        size="middle"
-                        bordered
-                        rowKey="key"
-                    />
+                            <Col xs={24} sm={24} md={8} lg={6}>
+                                <Form.Item label="" style={{ marginBottom: 4 }}>
+                                    <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            icon={<SearchOutlined />}
+                                            onClick={handleSearch}
+                                            loading={loading}
+                                            style={{ height: 24, padding: '0 12px' }}
+                                        >
+                                            搜索
+                                        </Button>
+                                        <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
+                                    </Space>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Card>
-            </Spin>
+
+                <Card style={{borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)'}}>
+                    <Spin spinning={loading}>
+                        <Table
+                            columns={generateColumns()}
+                            dataSource={tableData}
+                            scroll={{x: 'max-content', y: 500}}
+                            pagination={{
+                                current: currentPage,
+                                pageSize: pageSize,
+                                total: total,
+                                showSizeChanger: true,
+                                pageSizeOptions: ['10', '20', '50', '100'],
+                                showTotal: (total) => `共 ${total} 条记录`,
+                                showQuickJumper: true,
+                                onChange: handlePaginationChange,
+                                size: 'small'
+                            }}
+                            size="small"
+                            bordered
+                            rowKey="key"
+                        />
+                    </Spin>
+                </Card>
+            </div>
         </div>
     );
 };

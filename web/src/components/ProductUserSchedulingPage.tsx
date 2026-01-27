@@ -1,10 +1,12 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space } from 'antd';
+import { Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space, Typography } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import { queryProductUserTimeslots } from '../services/api';
 import type { Timeslot } from '../services/model';
 import moment from 'moment';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
+
+const { Text } = Typography;
 
 interface TaskTimeslot {
     taskNo: string;
@@ -327,86 +329,95 @@ const ProductUserSchedulingPage: React.FC = () => {
     }, []);
 
     return (
-        <div style={{ padding: '20px', minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
-            <h1 style={{ marginBottom: '20px', fontSize: '20px', color: '#262626' }}>生产人员专用调度</h1>
-
-            <Card
-                title={
-                    <Space>
-                        <FilterOutlined />
-                        <span>查询条件</span>
-                    </Space>
-                }
-                style={{ marginBottom: 24, borderRadius: 8 }}
-                extra={
-                    <Button
-                        type="link"
-                        onClick={() => setFilterVisible(!filterVisible)}
-                    >
-                        {filterVisible ? '收起筛选' : '展开筛选'}
-                    </Button>
-                }
-            >
+        <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+            {/* 主要内容 */}
+            <div style={{ padding: 2 }}>
+                {/* 查询条件 */}
+                <Card
+                    title={
+                        <Space>
+                            <FilterOutlined />
+                            <Text>查询条件</Text>
+                        </Space>
+                    }
+                    style={{ marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px' }}
+                    extra={
+                        <Button
+                            type="link"
+                            size="small"
+                            onClick={() => setFilterVisible(!filterVisible)}
+                        >
+                            {filterVisible ? '收起筛选' : '展开筛选'}
+                        </Button>
+                    }
+                >
                 <Form
                     form={form}
-                    layout="vertical"
-                    size="middle"
+                    layout="horizontal"
+                    labelCol={{ span: 6 }}
+                    wrapperCol={{ span: 18 }}
+                    size="small"
+                    style={{ marginBottom: 0 }}
                 >
-                    <Row gutter={[16, 16]}>
+                    <Row gutter={[8, 8]}>
                         <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="taskNo" label="任务编号">
-                                <Input placeholder="请输入任务编号" />
+                            <Form.Item name="taskNo" label="任务编号" style={{ marginBottom: 4 }}>
+                                <Input placeholder="请输入任务编号" size="small" style={{ height: 24 }} />
                             </Form.Item>
                         </Col>
                         <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productName" label="产品名称">
-                                <Input placeholder="请输入产品名称" />
+                            <Form.Item name="productName" label="产品名称" style={{ marginBottom: 4 }}>
+                                <Input placeholder="请输入产品名称" size="small" style={{ height: 24 }} />
                             </Form.Item>
                         </Col>
                         <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productCode" label="产品编码">
-                                <Input placeholder="请输入产品编码" />
+                            <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
+                                <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }} />
                             </Form.Item>
                         </Col>
 
                         {filterVisible && (
                             <>
                                 <Col xs={24} sm={12} md={8} lg={6}>
-                                    <Form.Item name="contractNum" label="合同编号">
-                                        <Input placeholder="请输入合同编号" />
+                                    <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
+                                        <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }} />
                                     </Form.Item>
                                 </Col>
                                 <Col xs={24} sm={24} md={16} lg={12}>
-                                    <Form.Item name="dateRange" label="日期范围">
-                                        <DatePicker.RangePicker style={{ width: '100%' }} />
+                                    <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
+                                        <DatePicker.RangePicker style={{ width: '100%', height: 24 }} size="small" />
                                     </Form.Item>
                                 </Col>
                             </>
                         )}
 
-                        <Col xs={24} style={{ textAlign: 'right' }}>
-                            <Space>
-                                <Button onClick={handleReset}>重置</Button>
-                                <Button
-                                    type="primary"
-                                    icon={<SearchOutlined />}
-                                    onClick={handleSearch}
-                                    loading={loading}
-                                >
-                                    搜索
-                                </Button>
-                            </Space>
+                        <Col xs={24} sm={24} md={8} lg={6}>
+                            <Form.Item label="" style={{ marginBottom: 4 }}>
+                                <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                                    <Button
+                                        type="primary"
+                                        size="small"
+                                        icon={<SearchOutlined />}
+                                        onClick={handleSearch}
+                                        loading={loading}
+                                        style={{ height: 24, padding: '0 12px' }}
+                                    >
+                                        搜索
+                                    </Button>
+                                    <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
+                                </Space>
+                            </Form.Item>
                         </Col>
                     </Row>
                 </Form>
-            </Card>
+                </Card>
 
-            <Spin spinning={loading}>
-                <Card>
+                <Spin spinning={loading}>
+                <Card style={{ borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
                     <Table
                         columns={generateColumns()}
                         dataSource={tableData}
-                        scroll={{ x: 'max-content', y: 600 }}
+                        scroll={{ x: 'max-content', y: 500 }}
                         pagination={{
                             current: currentPage,
                             pageSize: pageSize,
@@ -415,14 +426,16 @@ const ProductUserSchedulingPage: React.FC = () => {
                             pageSizeOptions: ['10', '20', '50', '100'],
                             showTotal: (total) => `共 ${total} 条记录`,
                             showQuickJumper: true,
-                            onChange: handlePaginationChange
+                            onChange: handlePaginationChange,
+                            size: 'small'
                         }}
-                        size="middle"
+                        size="small"
                         bordered
                         rowKey="key"
                     />
                 </Card>
-            </Spin>
+                </Spin>
+            </div>
         </div>
     );
 };
