@@ -9,6 +9,7 @@ import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import com.upec.factoryscheduling.auth.entity.User;
 import com.upec.factoryscheduling.common.utils.UserContext;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -41,6 +42,13 @@ public class TimeslotService {
     @Autowired
     public void setOrderTaskService(OrderTaskService orderTaskService) {
         this.orderTaskService = orderTaskService;
+    }
+
+    private ProcedureService procedureService;
+
+    @Autowired
+    public void setProcedureService(ProcedureService procedureService) {
+        this.procedureService = procedureService;
     }
 
     @Transactional("oracleTransactionManager")
@@ -87,13 +95,17 @@ public class TimeslotService {
     }
 
     @Transactional("oracleTransactionManager")
-    public void createTimeslot(List<String> taskNos, List<String> timeslotIds, double time, int slice) {
-        List<Timeslot> timeslots = new ArrayList<>();
-        if (!CollectionUtils.isEmpty(taskNos)) {
-            timeslots = timeslotRepository.findAllByProcedure_Task_TaskNoIsIn(taskNos);
+    public void createTimeslot(String procedureId, double time, int slice) {
+        List<Timeslot> timeslots = timeslotRepository.findAllByProcedure_Id(procedureId);
+        if (CollectionUtils.isEmpty(timeslots)) {
+            return;
         }
-        if (!CollectionUtils.isEmpty(timeslotIds)) {
-            timeslots = timeslotRepository.findAllByIdIsIn(timeslotIds);
+        Procedure procedure = procedureService.findProcedureById(procedureId);
+        if (procedure == null) {
+            return;
+        }
+        if ("ZP02".equals(procedure.getProcedureType())) {
+
         }
         // 为每个工序创建分片Timeslot
         for (Timeslot timeslot : timeslots) {
@@ -114,6 +126,11 @@ public class TimeslotService {
             }
             timeslotRepository.saveAll(newTimeslots);
         }
+    }
+
+
+    private void arrangeOutsourcing(int slice, Timeslot timeslot) {
+
     }
 
     private List<Timeslot> splitTimeslot(Timeslot timeslot, List<Timeslot> others, double time) {
@@ -212,13 +229,13 @@ public class TimeslotService {
 
 
     public Page<TaskTimeslotDTO> queryTimeslotsByProductUser(String productName,
-                                                String productCode,
-                                                String taskNo,
-                                                String contractNum,
-                                                String startTime,
-                                                String endTime,
-                                                Integer pageNum,
-                                                Integer pageSize){
+                                                             String productCode,
+                                                             String taskNo,
+                                                             String contractNum,
+                                                             String startTime,
+                                                             String endTime,
+                                                             Integer pageNum,
+                                                             Integer pageSize) {
 
         Page<TaskTimeslotDTO> page = orderTaskService.queryTaskWithTimeslotByUser(productName, productCode, taskNo, contractNum, startTime,
                 endTime, pageNum, pageSize);

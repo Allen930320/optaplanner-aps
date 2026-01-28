@@ -46,5 +46,9 @@ public class ProcedureService {
         return procedureRepository.findAllByTask_TaskNoIsIn(taskNos);
     }
 
+    public Procedure findProcedureById(String id) {
+        return procedureRepository.findById(id).orElse(null);
+    }
+
 
 }

@@ -38,4 +38,8 @@ public class ProcedureQueryDTO implements Serializable {
     @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate planEndDate;
     private String workCenterName;
+    private String procedureId;
+    private int timeslotCount;
+    private String procedureType;
+
 }

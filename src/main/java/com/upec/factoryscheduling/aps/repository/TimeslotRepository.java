@@ -32,4 +32,7 @@ public interface TimeslotRepository extends JpaRepository<Timeslot, String>, Jpa
             " and t2.taskNo in (:taskNos)")
     List<Timeslot> queryTimeslots(@Param("user") String user, @Param("taskNos") List<String> taskNos);
 
+
+    List<Timeslot> findAllByProcedure_Id(String id);
+
 }

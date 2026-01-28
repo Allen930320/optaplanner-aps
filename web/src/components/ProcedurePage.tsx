@@ -13,12 +13,25 @@ import {
   DatePicker,
   Tag,
   Spin,
-  Alert
+  Alert,
+  Modal,
+  message
 } from 'antd';
+import {createTimeslot} from '../services/api.ts';
 import type {ColumnsType} from 'antd/es/table';
 import {queryProcedures} from '../services/api.ts';
 import type {ProcedureQueryDTO} from '../services/model.ts';
 import {SearchOutlined, FilterOutlined} from '@ant-design/icons';
+
+// 添加任务行背景色样式
+const styles = `
+  .task-row-even {
+    background-color: #e6f7ff;
+  }
+  .task-row-odd {
+    background-color: #ffffff;
+  }
+`;
 
 const {Text} = Typography;
 const {Option} = Select;
@@ -34,6 +47,20 @@ const ProcedurePage: React.FC = () => {
     const [pageSize, setPageSize] = useState<number>(20);
     const [total, setTotal] = useState<number>(0);
     const [filterVisible, setFilterVisible] = useState<boolean>(false);
+    
+    // 切分工序对话框状态
+    const [splitModalVisible, setSplitModalVisible] = useState<boolean>(false);
+    // 切分工序表单
+    const [splitForm] = Form.useForm();
+    // 当前选中的工序
+    const [selectedProcedure, setSelectedProcedure] = useState<ProcedureQueryDTO | null>(null);
+    // 对话框加载状态
+    const [splitLoading, setSplitLoading] = useState<boolean>(false);
+    // 输入框值状态，用于控制互斥禁用
+    const [minWorkTime, setMinWorkTime] = useState<number | undefined>(undefined);
+    const [splitDays, setSplitDays] = useState<number | undefined>(undefined);
+    // 任务号到索引的映射，用于确保不同任务号交替显示背景色
+    const [taskNoIndexMap, setTaskNoIndexMap] = useState<Record<string, number>>({});
 
     // 工序状态选项
     const procedureStatusOptions = [
@@ -63,7 +90,6 @@ const ProcedurePage: React.FC = () => {
         setError(null);
         try {
             const values = form.getFieldsValue();
-
             // 处理日期范围
             let startDate: string | undefined;
             let endDate: string | undefined;
@@ -71,7 +97,6 @@ const ProcedurePage: React.FC = () => {
                 startDate = values.dateRange[0].format('YYYY-MM-DD');
                 endDate = values.dateRange[1].format('YYYY-MM-DD');
             }
-
             const response = await queryProcedures({
                 orderName: values.orderName,
                 taskNo: values.taskNo,
@@ -83,9 +108,18 @@ const ProcedurePage: React.FC = () => {
                 pageNum: page,
                 pageSize: size
             });
-
             if (response.code === 200) {
-                setProcedures(response.data?.content || []);
+                const procedureList = response.data?.content || [];
+                // 生成任务号到索引的映射，确保不同任务号的索引递增
+                const taskMap: Record<string, number> = {};
+                let taskIndex = 0;
+                procedureList.forEach(procedure => {
+                    if (!taskMap[procedure.taskNo]) {
+                        taskMap[procedure.taskNo] = taskIndex++;
+                    }
+                });
+                setTaskNoIndexMap(taskMap);
+                setProcedures(procedureList);
                 setTotal(response.data?.totalElements || 0);
                 setCurrentPage(page);
                 setPageSize(size);
@@ -93,11 +127,13 @@ const ProcedurePage: React.FC = () => {
                 setError(response.msg || '获取数据失败');
                 setProcedures([]);
                 setTotal(0);
+                setTaskNoIndexMap({});
             }
         } catch {
             setError('网络错误，请稍后重试');
             setProcedures([]);
             setTotal(0);
+            setTaskNoIndexMap({});
         } finally {
             setLoading(false);
         }
@@ -123,6 +159,57 @@ const ProcedurePage: React.FC = () => {
     const handlePaginationChange = (page: number, size: number) => {
         loadProcedures(page, size);
     };
+    
+    // 打开切分工序对话框
+    const handleOpenSplitModal = (procedure: ProcedureQueryDTO) => {
+        setSelectedProcedure(procedure);
+        splitForm.resetFields();
+        setMinWorkTime(undefined);
+        setSplitDays(undefined);
+        setSplitModalVisible(true);
+    };
+    
+    // 关闭切分工序对话框
+    const handleCloseSplitModal = () => {
+        setSplitModalVisible(false);
+        setSelectedProcedure(null);
+        splitForm.resetFields();
+        setMinWorkTime(undefined);
+        setSplitDays(undefined);
+    };
+    
+    // 提交切分工序
+    const handleSplitProcedure = async () => {
+        try {
+            const values = await splitForm.validateFields();
+            
+            if (!selectedProcedure) {
+                message.error('请选择要切分的工序');
+                return;
+            }
+            
+            setSplitLoading(true);
+            
+            // 调用createTimeslot接口
+            await createTimeslot(
+                selectedProcedure.procedureId,
+                values.minWorkTime || 0,
+                values.splitDays || 0
+            );
+            
+            message.success('提交成功');
+            setSplitModalVisible(false);
+            setSelectedProcedure(null);
+            splitForm.resetFields();
+            
+            // 重新加载数据
+            loadProcedures(currentPage, pageSize);
+        } catch (error) {
+            message.error(`分配失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        } finally {
+            setSplitLoading(false);
+        }
+    };
 
     // 获取状态标签
     const getStatusTag = (status: string, options: Array<{ label: string; value: string; color: string }>) => {
@@ -135,6 +222,28 @@ const ProcedurePage: React.FC = () => {
 
     // 表格列定义
     const columns: ColumnsType<ProcedureQueryDTO> = [
+        {
+            title: '操作',
+            key: 'action',
+            width: 90,
+            fixed: 'left' as const,
+            render: (_, record) => {
+                const buttonText = record.procedureType === 'ZP02' ? '外协安排' : '工序拆分';
+                const isDisabled = record.procedureStatus === '执行完成';
+                return (
+                    <div style={{ textAlign: 'center' }}>
+                        <Button 
+                            size="small" 
+                            type="primary" 
+                            onClick={() => handleOpenSplitModal(record)}
+                            disabled={isDisabled}
+                        >
+                            {buttonText}
+                        </Button>
+                    </div>
+                );
+            },
+        },
         {
             title: '订单信息',
             dataIndex: 'orderNo',
@@ -210,10 +319,12 @@ const ProcedurePage: React.FC = () => {
                 </div>
             ),
         },
+
     ];
 
     return (
         <div style={{minHeight: '100vh', backgroundColor: '#f0f2f5'}}>
+            <style>{styles}</style>
             {/* 主要内容 */}
             <div style={{padding: 2}}>
                 {/* 查询条件 */}
@@ -338,6 +449,11 @@ const ProcedurePage: React.FC = () => {
                             columns={columns}
                             dataSource={procedures}
                             rowKey={(record) => `${record.taskNo}_${record.procedureNo}`}
+                            rowClassName={(record) => {
+                                // 使用任务号到索引的映射来生成背景色类名，确保不同任务号交替显示
+                                const taskIndex = taskNoIndexMap[record.taskNo] || 0;
+                                return taskIndex % 2 === 0 ? 'task-row-even' : 'task-row-odd';
+                            }}
                             pagination={{
                                 current: currentPage,
                                 pageSize: pageSize,
@@ -363,6 +479,82 @@ const ProcedurePage: React.FC = () => {
                         />
                     </Spin>
                 </Card>
+                
+                {/* 切分工序对话框 */}
+                <Modal
+                    title={selectedProcedure?.procedureType === 'ZP02' ? '外协安排' : '工序拆分'}
+                    open={splitModalVisible}
+                    onCancel={handleCloseSplitModal}
+                    footer={[
+                        <Button key="cancel" onClick={handleCloseSplitModal}>
+                            取消
+                        </Button>,
+                        <Button
+                            key="submit"
+                            type="primary"
+                            loading={splitLoading}
+                            onClick={handleSplitProcedure}
+                        >
+                            确认
+                        </Button>,
+                    ]}
+                >
+                    <Form
+                        form={splitForm}
+                        layout="vertical"
+                        style={{ maxWidth: 600 }}
+                    >
+                        <Form.Item
+                            hidden={selectedProcedure?.procedureType === 'ZP02'}
+                            name="minWorkTime"
+                            label="最小工时（分钟）"
+                            rules={[
+                                {
+                                    validator: (_, value, callback) => {
+                                        if (value && splitDays) {
+                                            callback('最小工时和分拆天数只能填写一个');
+                                        } else {
+                                            callback();
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input 
+                                type="number" 
+                                placeholder="请输入最小工时" 
+                                min={1} 
+                                step={1}
+                                disabled={!!splitDays}
+                                onChange={(e) => setMinWorkTime(e.target.value ? Number(e.target.value) : undefined)}
+                            />
+                        </Form.Item>
+                        <Form.Item
+                            name="splitDays"
+                            label="预计天数"
+                            rules={[
+                                {
+                                    validator: (_, value, callback) => {
+                                        if (value && minWorkTime) {
+                                            callback('最小工时和分拆天数只能填写一个');
+                                        } else {
+                                            callback();
+                                        }
+                                    },
+                                },
+                            ]}
+                        >
+                            <Input 
+                                type="number" 
+                                placeholder="请输入天数"
+                                min={1} 
+                                step={1}
+                                disabled={!!minWorkTime}
+                                onChange={(e) => setSplitDays(e.target.value ? Number(e.target.value) : undefined)}
+                            />
+                        </Form.Item>
+                    </Form>
+                </Modal>
             </div>
         </div>
     );

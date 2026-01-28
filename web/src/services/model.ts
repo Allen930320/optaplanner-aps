@@ -222,6 +222,8 @@ export interface ProcedureQueryDTO {
     planStartDate: string;
     planEndDate: string;
     workCenterName:string;
+    procedureId:string;
+    procedureType:string;
 }
 
 // 订单类型定义

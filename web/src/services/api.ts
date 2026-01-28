@@ -192,22 +192,12 @@ export const logout = async (): Promise<void> => {
 };
 
 // 创建时间槽
-export const createTimeslot = async (taskNos: string[], timeslotIds: string[], time: number = 0.5, slice: number = 0): Promise<void> => {
+export const createTimeslot = async (procedureId: string, time: number = 0.5, slice: number = 0): Promise<void> => {
   const params = new URLSearchParams();
-  // 添加taskNos参数
-  taskNos.forEach(taskNo => params.append('taskNos', taskNo));
-  if(taskNos.length === 0) {
-    params.append('taskNos', '');
-  }
-  // 添加timeslotIds参数
-  timeslotIds.forEach(timeslotId => params.append('timeslotIds', timeslotId));
-  // 添加其他参数，添加空值检查
-  if(timeslotIds.length === 0) {
-    params.append('timeslotIds', '');
-  }
-  params.append('time', time !== null && time !== undefined ? time.toString() : '0.5');
+  // 添加taskNo参数
+  params.append('time', time !== null && time !== undefined ? time.toString() : '30');
   params.append('slice', slice !== null && slice !== undefined ? slice.toString() : '0');
-  
+  params.append('procedureId', procedureId);
   const response: ApiResponse<void> = await apiClient.post('/api/timeslot/create', params, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'

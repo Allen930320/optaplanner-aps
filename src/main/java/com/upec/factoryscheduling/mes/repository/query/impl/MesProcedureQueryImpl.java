@@ -34,6 +34,8 @@ public class MesProcedureQueryImpl extends JdbcTemplatePagination implements Mes
                 "       p.create_date, " +
                 "       t3.product_code, " +
                 "       t3.product_name, " +
+                "       p.id as procedure_id, " +
+                "       p.procedure_type as procedureType ," +
                 "       p.procedure_name, " +
                 "       p.procedure_no, " +
                 "       p.status as procedure_status, " +
@@ -78,9 +80,9 @@ public class MesProcedureQueryImpl extends JdbcTemplatePagination implements Mes
                 pageSize
         );
     }
-    
 
-    public List<MesProcedure> queryMesProcedureNotInAps(List<String> taskNos){
+
+    public List<MesProcedure> queryMesProcedureNotInAps(List<String> taskNos) {
         String querySQL = " select t1.seq, " +
                 "       t1.orderno, " +
                 "       t1.taskno, " +

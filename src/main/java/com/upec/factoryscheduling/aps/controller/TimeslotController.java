@@ -32,11 +32,11 @@ public class TimeslotController {
 
     @PostMapping("/create")
     public ApiResponse<Void> createTimeslot(
-            @RequestParam("taskNos") List<String> taskNos,
-            @RequestParam("timeslotIds") List<String> timeslotIds,
+            @RequestParam("taskNo") String taskNo,
+            @RequestParam("procedureId") String procedureId,
             @RequestParam(value = "time", defaultValue = "0.5") double time,
             @RequestParam(value = "slice", defaultValue = "0") int slice) {
-        timeslotService.createTimeslot(taskNos, timeslotIds, time, slice);
+        timeslotService.createTimeslot(procedureId, time, slice);
         return ApiResponse.success();
     }
 

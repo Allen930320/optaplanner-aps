@@ -90,6 +90,16 @@ const SchedulingTimelinePage: React.FC = () => {
         // 如果没有时间信息，使用当前时间作为默认值
         if (!minTime) minTime = new Date();
         if (!maxTime) maxTime = new Date(minTime.getTime() + 2 * 60 * 60 * 1000); // 默认2小时时间范围
+        
+        // 调整时间轴范围：开始时间设为当天0点，结束时间设为当天23:59
+        const adjustedMinTime = new Date(minTime);
+        adjustedMinTime.setHours(0, 0, 0, 0);
+        
+        const adjustedMaxTime = new Date(maxTime);
+        adjustedMaxTime.setHours(23, 59, 59, 999);
+        
+        minTime = adjustedMinTime;
+        maxTime = adjustedMaxTime;
 
         // 计算时间轴总长度（毫秒）
         const timeRange = maxTime.getTime() - minTime.getTime();
@@ -213,8 +223,10 @@ const SchedulingTimelinePage: React.FC = () => {
             return tracks;
         };
 
+        // 筛选出有开始时间或结束时间的 timeslot 用于时间轴显示
+        const timelineTimeslots = sortedTimeslots.filter(ts => ts.startTime || ts.endTime);
         // 分配轨道，将重叠的时间槽分配到不同轨道
-        const tracks = assignTracks(sortedTimeslots);
+        const tracks = assignTracks(timelineTimeslots);
         const trackCount = tracks.length; // 轨道数量
         const trackHeight = 50; // 每个轨道的高度（像素）
         const totalHeight = Math.max(80, trackCount * trackHeight); // 总高度，至少80px，确保时间轴有足够高度
@@ -243,19 +255,8 @@ const SchedulingTimelinePage: React.FC = () => {
                             <div style={{width: '80px', flexShrink: 0}}>时间</div>
                             <div style={{flex: 1, position: 'relative'}}>
                                 {/* 时间点 */}
-                                <div style={{position: 'absolute', left: '0%', top: '0'}}>
-                                    {moment(minTime).format('YYYY-MM-DD HH:mm')}
-                                </div>
                                 <div style={{position: 'absolute', left: '50%', top: '0'}}>
                                     {moment(new Date(minTime.getTime() + timeRange / 2)).format('YYYY-MM-DD HH:mm')}
-                                </div>
-                                <div style={{
-                                    position: 'absolute',
-                                    left: '100%',
-                                    top: '0',
-                                    transform: 'translateX(-100%)'
-                                }}>
-                                    {moment(maxTime).format('YYYY-MM-DD HH:mm')}
                                 </div>
                             </div>
                         </div>
