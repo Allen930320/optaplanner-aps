@@ -65,8 +65,63 @@ const SchedulingTimelinePage: React.FC = () => {
         // 从allTimeslots中获取该任务的所有时间槽
         const uniqueTimeslots = record.allTimeslots || [];
 
+        // 合并相同工序的 timeslot 数据块
+        const mergeTimeslotsByProcedure = (timeslots: Timeslot[]) => {
+            const procedureMap = new Map<string, Timeslot[]>();
+            
+            // 按工序 ID 分组 timeslot
+            timeslots.forEach(ts => {
+                if (ts.procedure) {
+                    const procedureId = ts.procedure.id;
+                    if (!procedureMap.has(procedureId)) {
+                        procedureMap.set(procedureId, []);
+                    }
+                    procedureMap.get(procedureId)?.push(ts);
+                }
+            });
+            
+            // 合并每组中的 timeslot
+            const mergedTimeslots: Timeslot[] = [];
+            procedureMap.forEach((tsList, procedureId) => {
+                if (tsList.length === 0) return;
+                
+                // 取第一个 timeslot 作为基础
+                const baseTs = tsList[0];
+                let minStartTime: Date | null = null;
+                let maxEndTime: Date | null = null;
+                
+                // 计算最小开始时间和最大结束时间
+                tsList.forEach(ts => {
+                    if (ts.startTime) {
+                        const startTime = new Date(ts.startTime);
+                        minStartTime = minStartTime ? (startTime < minStartTime ? startTime : minStartTime) : startTime;
+                    }
+                    if (ts.endTime) {
+                        const endTime = new Date(ts.endTime);
+                        maxEndTime = maxEndTime ? (endTime > maxEndTime ? endTime : maxEndTime) : endTime;
+                    }
+                });
+                
+                // 创建合并后的 timeslot
+                const mergedTs: Timeslot = {
+                    ...baseTs,
+                    startTime: minStartTime ? minStartTime.toISOString() : null,
+                    endTime: maxEndTime ? maxEndTime.toISOString() : null,
+                    // 合并 duration，取总和
+                    duration: tsList.reduce((sum, ts) => sum + (ts.duration || 0), 0)
+                };
+                
+                mergedTimeslots.push(mergedTs);
+            });
+            
+            return mergedTimeslots;
+        };
+        
+        // 合并相同工序的 timeslot
+        const mergedTimeslots = mergeTimeslotsByProcedure(uniqueTimeslots);
+        
         // 按开始时间排序时间槽，确保时间轴上的工序按时间顺序排列
-        const sortedTimeslots = [...uniqueTimeslots].sort((a, b) => {
+        const sortedTimeslots = [...mergedTimeslots].sort((a, b) => {
             if (!a.startTime) return 1; // 无开始时间的排在后面
             if (!b.startTime) return -1; // 有开始时间的排在前面
             return new Date(a.startTime).getTime() - new Date(b.startTime).getTime(); // 按开始时间升序排列
