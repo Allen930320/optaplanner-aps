@@ -316,6 +316,7 @@ const ProcedurePage: React.FC = () => {
                 <div>
                     <div style={{fontSize: 11, marginBottom: 1}}>人工: {record.humanMinutes} 分钟</div>
                     <div style={{fontSize: 11}}>机器: {record.machineMinutes} 分钟</div>
+                    <div style={{fontSize: 11}}>预计天数: {record.timeslotDays} 天</div>
                 </div>
             ),
         },
@@ -505,7 +506,7 @@ const ProcedurePage: React.FC = () => {
                         style={{ maxWidth: 600 }}
                     >
                         <Form.Item
-                            hidden={selectedProcedure?.procedureType === 'ZP02'}
+                            hidden={true}
                             name="minWorkTime"
                             label="最小工时（分钟）"
                             rules={[

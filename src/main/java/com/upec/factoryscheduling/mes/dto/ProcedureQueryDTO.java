@@ -41,5 +41,6 @@ public class ProcedureQueryDTO implements Serializable {
     private String procedureId;
     private int timeslotCount;
     private String procedureType;
+    private int timeslotDays;
 
 }

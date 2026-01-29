@@ -45,7 +45,8 @@ public class MesProcedureQueryImpl extends JdbcTemplatePagination implements Mes
                 "       p.end_time, " +
                 "       t2.plan_startdate as plan_start_date, " +
                 "       t2.plan_enddate as plan_end_date, " +
-                "       wc.name as work_center_name " +
+                "       wc.name as work_center_name, " +
+                "       (select count(id) from APS_TIMESLOT ap where ap.PROCEDURE_ID=p.ID) as timeslot_days "+
                 " from mes_jj_order t1 " +
                 "         inner join mes_jj_order_task t2 on t1.orderno = t2.orderno and t2.route_seq is not null " +
                 "         inner join mes_jj_order_product_info t3 on t2.orderno = t3.orderno " +

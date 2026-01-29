@@ -19,10 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -95,42 +92,31 @@ public class TimeslotService {
     }
 
     @Transactional("oracleTransactionManager")
-    public void createTimeslot(String procedureId, double time, int slice) {
+    public String createTimeslot(String procedureId, double time, int slice) {
         List<Timeslot> timeslots = timeslotRepository.findAllByProcedure_Id(procedureId);
         if (CollectionUtils.isEmpty(timeslots)) {
-            return;
+            return "未查询到相关工序!";
         }
         Procedure procedure = procedureService.findProcedureById(procedureId);
         if (procedure == null) {
-            return;
+            return "未查询到相关工序!";
         }
         if ("ZP02".equals(procedure.getProcedureType())) {
-
+            arrangeOutsourcing(timeslots, slice);
+            return null;
+        } else {
+            splitTimeslot(timeslots, slice, procedure.getMachineMinutes());
         }
-        // 为每个工序创建分片Timeslot
-        for (Timeslot timeslot : timeslots) {
-            if (timeslot.getProcedure().getWorkCenter() == null) {
-                log.info("跳过未绑定工作中心的工序: {}", timeslot.getProcedure().getId());
-                continue;
-            }
-            if (timeslot.isManual()) {
-                continue;
-            }
-            List<Timeslot> newTimeslots = new ArrayList<>();
-            List<Timeslot> list = timeslotRepository.findAllByProcedureAndIdNot(timeslot.getProcedure(), timeslot.getId());
-            if (time >= 0.5 && slice <= 1) {
-                newTimeslots.addAll(splitTimeslot(timeslot, list, time));
-            }
-            if (slice > 1) {
-                newTimeslots.addAll(splitTimeslot(timeslot, list, slice));
-            }
-            timeslotRepository.saveAll(newTimeslots);
-        }
+        return null;
     }
 
 
-    private void arrangeOutsourcing(int slice, Timeslot timeslot) {
-
+    private void arrangeOutsourcing(List<Timeslot> timeslots, int slice) {
+        splitTimeslot(timeslots, slice);
+        for (Timeslot ts : timeslots) {
+            ts.setTotal(timeslots.size());
+        }
+        timeslotRepository.saveAll(timeslots);
     }
 
     private List<Timeslot> splitTimeslot(Timeslot timeslot, List<Timeslot> others, double time) {
@@ -160,27 +146,52 @@ public class TimeslotService {
         return timeslots.stream().peek(t -> t.setTotal(total)).collect(Collectors.toList());
     }
 
-    private List<Timeslot> splitTimeslot(Timeslot timeslot, List<Timeslot> others, int slice) {
-        List<Timeslot> timeslots = new ArrayList<>();
-        int duration = timeslot.getDuration();
-        int index = timeslot.getTotal();
-        int interval = Math.round((float) duration / slice * 100) / 100;
-        timeslot.setDuration(interval);
-        timeslots.add(timeslot);
-        timeslots.addAll(others);
-        for (int i = 1; i < slice; i++) {
-            Timeslot newTimeslot = new Timeslot();
-            BeanUtils.copyProperties(timeslot, newTimeslot);
-            index++;
-            newTimeslot.setId(timeslot.getProcedure().getTask().getTaskNo() + "_" + timeslot.getProcedure().getProcedureNo() + "_" + index);
-            newTimeslot.setIndex(index);
-            newTimeslot.setDuration(Math.min(duration - (interval * i), interval));
-            timeslots.add(newTimeslot);
+    private void splitTimeslot(List<Timeslot> timeslots, int slice, int duration) {
+        splitTimeslot(timeslots, slice);
+        int[] interval = splitNumber(duration, slice);
+        for (int i = 0; i < timeslots.size(); i++) {
+            Timeslot ts = timeslots.get(i);
+            ts.setTotal(timeslots.size());
+            ts.setDuration(interval[i]);
+            timeslotRepository.save(ts);
         }
-        int total = timeslots.size();
-        return timeslots.stream().peek(t -> t.setTotal(total)).collect(Collectors.toList());
     }
 
+    private void splitTimeslot(List<Timeslot> timeslots, int slice) {
+        int size = timeslots.size();
+        if (slice == size) {
+            return;
+        }
+        if (slice > size) {
+            Timeslot timeslot = timeslots.get(size - 1);
+            for (; size < slice; size++) {
+                Timeslot ts = new Timeslot();
+                BeanUtils.copyProperties(timeslot, ts);
+                ts.setId(timeslot.getProcedure().getTask().getTaskNo() + "_" + timeslot.getProcedure().getProcedureNo() +
+                        "_" + (size + 1));
+                ts.setIndex(size + 1);
+                timeslots.add(ts);
+            }
+        }
+        if (slice < size) {
+            Map<Integer, Timeslot> map = timeslots.stream().collect(Collectors.toMap(Timeslot::getIndex, timeslot -> timeslot));
+            for (; slice < size; slice++) {
+                Timeslot ts = map.get(slice + 1);
+                timeslots.remove(ts);
+                timeslotRepository.delete(ts);
+            }
+        }
+    }
+
+    private int[] splitNumber(int total, int parts) {
+        int[] result = new int[parts];
+        int base = total / parts;
+        int remainder = total % parts;
+        for (int i = 0; i < parts; i++) {
+            result[i] = base + (i < remainder ? 1 : 0);
+        }
+        return result;
+    }
 
     public void splitOutsourcingTimeslot(String timeId, int days) {
         Timeslot timeslot = timeslotRepository.findById(timeId).orElse(null);
@@ -222,8 +233,6 @@ public class TimeslotService {
             Map<String, List<Timeslot>> map = timeslots.stream().collect(Collectors.groupingBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo()));
             page.get().peek(m -> m.setTimeslots(map.get(m.getTaskNo()))).collect(Collectors.toList());
         }
-        String userName = UserContext.getCurrentUsername();
-        List<Timeslot> timeslots = timeslotRepository.queryTimeslots(userName, dtos.stream().map(TaskTimeslotDTO::getTaskNo).collect(Collectors.toList()));
         return page;
     }
 

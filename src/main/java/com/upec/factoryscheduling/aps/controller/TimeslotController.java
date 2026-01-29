@@ -32,11 +32,13 @@ public class TimeslotController {
 
     @PostMapping("/create")
     public ApiResponse<Void> createTimeslot(
-            @RequestParam("taskNo") String taskNo,
             @RequestParam("procedureId") String procedureId,
             @RequestParam(value = "time", defaultValue = "0.5") double time,
             @RequestParam(value = "slice", defaultValue = "0") int slice) {
-        timeslotService.createTimeslot(procedureId, time, slice);
+        String message = timeslotService.createTimeslot(procedureId, time, slice);
+        if (message != null) {
+            return ApiResponse.error(message);
+        }
         return ApiResponse.success();
     }
 
@@ -70,13 +72,13 @@ public class TimeslotController {
 
     @GetMapping("/pageOfProductUser")
     public ApiResponse<Page<TaskTimeslotDTO>> queryTimeslotsByProductUser(@RequestParam(required = false) String productName,
-                                                             @RequestParam(required = false) String productCode,
-                                                             @RequestParam(required = false) String contractNum,
-                                                             @RequestParam(required = false) String startTime,
-                                                             @RequestParam(required = false) String endTime,
-                                                             @RequestParam(required = false) String taskNo,
-                                                             @RequestParam(defaultValue = "1") Integer pageNum,
-                                                             @RequestParam(defaultValue = "20") Integer pageSize) {
+                                                                          @RequestParam(required = false) String productCode,
+                                                                          @RequestParam(required = false) String contractNum,
+                                                                          @RequestParam(required = false) String startTime,
+                                                                          @RequestParam(required = false) String endTime,
+                                                                          @RequestParam(required = false) String taskNo,
+                                                                          @RequestParam(defaultValue = "1") Integer pageNum,
+                                                                          @RequestParam(defaultValue = "20") Integer pageSize) {
         Page<TaskTimeslotDTO> page = timeslotService.queryTimeslotsByProductUser(productName, productCode, taskNo, contractNum, startTime,
                 endTime, pageNum, pageSize);
         return ApiResponse.success(page);

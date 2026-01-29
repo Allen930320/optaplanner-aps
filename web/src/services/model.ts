@@ -224,6 +224,7 @@ export interface ProcedureQueryDTO {
     workCenterName:string;
     procedureId:string;
     procedureType:string;
+    timeslotDays: number;
 }
 
 // 订单类型定义
