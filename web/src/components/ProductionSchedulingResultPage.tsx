@@ -37,13 +37,14 @@ const ProductionSchedulingResultPage: React.FC = () => {
     const [filterVisible, setFilterVisible] = useState(false);
 
     const formatProcedureDetail = (timeslot: Timeslot) => {
-        const {procedure, startTime, endTime, duration} = timeslot;
+        const {procedure, startTime, endTime, duration,maintenance} = timeslot;
         const durationHours = duration ? Number((duration).toFixed(2)) : 0;
         return (
             <div style={{fontSize: '12px', lineHeight: '1.5'}}>
                 <p><strong>工序名称：</strong>{procedure?.procedureName || '未知'}（{procedure?.procedureNo || '未知'}）
                 </p>
                 <p><strong>工作中心：</strong>{procedure?.workCenter?.name || '未知'}</p>
+                <p><strong>分配工作中心：</strong>{maintenance?.workCenter?.name || '未知'}</p>
                 <p><strong>开始时间：</strong>{startTime || '未知'}</p>
                 <p><strong>结束时间：</strong>{endTime || '未知'}</p>
                 <p><strong>持续时间：</strong>{durationHours} 分钟</p>

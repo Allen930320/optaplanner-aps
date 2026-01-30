@@ -1,11 +1,14 @@
 package com.upec.factoryscheduling.aps.entity;
 
+import com.upec.factoryscheduling.common.utils.PubFun;
+import com.upec.factoryscheduling.common.utils.RandomFun;
 import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 @Entity
@@ -36,10 +39,10 @@ public class WorkCenterMaintenance implements Serializable {
     private String description;
 
     @Column(name = "start_time")
-    private LocalTime startTime;
+    private LocalDateTime startTime;
 
     @Column(name = "end_time")
-    private LocalTime endTime;
+    private LocalDateTime endTime;
 
     @Column(name = "usage_time")
     private int usageTime;
@@ -80,6 +83,7 @@ public class WorkCenterMaintenance implements Serializable {
         this.date = date;
         this.capacity = capacity;
         this.description = description;
+        this.id = RandomFun.getInstance().getRandom();
     }
 
 }

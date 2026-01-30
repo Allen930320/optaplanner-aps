@@ -82,7 +82,7 @@ const SchedulingTimelinePage: React.FC = () => {
             
             // 合并每组中的 timeslot
             const mergedTimeslots: Timeslot[] = [];
-            procedureMap.forEach((tsList, procedureId) => {
+            procedureMap.forEach((tsList) => {
                 if (tsList.length === 0) return;
                 
                 // 取第一个 timeslot 作为基础

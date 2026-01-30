@@ -1,5 +1,9 @@
-package com.upec.factoryscheduling.aps.entity;
+package com.upec.factoryscheduling.aps.dto;
 
+import com.upec.factoryscheduling.aps.entity.Order;
+import com.upec.factoryscheduling.aps.entity.Procedure;
+import com.upec.factoryscheduling.aps.entity.WorkCenter;
+import com.upec.factoryscheduling.aps.entity.WorkCenterMaintenance;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;

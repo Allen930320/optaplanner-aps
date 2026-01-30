@@ -2,8 +2,6 @@ package com.upec.factoryscheduling.aps.entity;
 
 import com.upec.factoryscheduling.aps.solution.TimeslotVariableListener;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
 import org.optaplanner.core.api.domain.entity.PlanningEntity;
 import org.optaplanner.core.api.domain.lookup.PlanningId;
 import org.optaplanner.core.api.domain.variable.PlanningVariable;
@@ -15,8 +13,6 @@ import java.time.LocalDateTime;
 
 @Entity
 @PlanningEntity
-@Getter
-@Setter
 @Data
 @Table(name = "aps_timeslot")
 public class Timeslot implements Serializable {
@@ -69,4 +65,10 @@ public class Timeslot implements Serializable {
     private int procedureIndex;
 
 
+    public LocalDateTime getEndTime() {
+        if (this.startTime != null) {
+            return startTime.toLocalDate().atTime(18, 0);
+        }
+        return endTime;
+    }
 }

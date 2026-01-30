@@ -88,7 +88,9 @@ public class TimeslotService {
 
     public List<Timeslot> findAllByTaskIn(List<String> taskNos) {
         Sort sort = Sort.by(Sort.Direction.DESC, "procedureIndex", "index").ascending();
-        return timeslotRepository.findAllByProcedure_Task_TaskNoIsIn(taskNos, sort);
+        List<String> procedureTypes = List.of("ZP01","ZP02");
+        return timeslotRepository.findAllByProcedure_Task_TaskNoIsInAndProcedure_ProcedureTypeIsIn(taskNos,
+                procedureTypes,sort);
     }
 
     @Transactional("oracleTransactionManager")

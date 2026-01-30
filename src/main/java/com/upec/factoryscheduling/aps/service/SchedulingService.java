@@ -1,5 +1,6 @@
 package com.upec.factoryscheduling.aps.service;
 
+import com.upec.factoryscheduling.aps.dto.ValidateSolution;
 import com.upec.factoryscheduling.aps.entity.*;
 import com.upec.factoryscheduling.aps.response.TimeslotValidate;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
@@ -240,14 +241,8 @@ public class SchedulingService {
             }
         }).filter(timeslot -> timeslot.getProcedure().getWorkCenter() != null).collect(Collectors.toList());
         // 确定时间范围（基于订单的计划开始和结束日期）
-        LocalDate start = timeslots.stream().map(timeslot -> timeslot.getProcedure().getOrder())
-                .map(Order::getPlanStartDate)
-                .min(LocalDate::compareTo)
-                .orElse(LocalDate.now());
-        LocalDate end = timeslots.stream().map(timeslot ->  timeslot.getProcedure().getOrder())
-                .map(Order::getPlanEndDate)
-                .max(LocalDate::compareTo)
-                .orElse(LocalDate.now());
+        LocalDate start = LocalDate.now();
+        LocalDate end = LocalDate.now().plusDays(20);
         List<WorkCenterMaintenance> maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters, start, end.plusDays(10));
         return new FactorySchedulingSolution(timeslots, maintenances);
     }

@@ -27,15 +27,19 @@ import java.util.stream.Collectors;
 @Service // 标记此类为Spring服务组件
 public class WorkCenterMaintenanceService {
 
-    /** 设备维护仓库 - 用于访问设备维护数据 */
+    /**
+     * 设备维护仓库 - 用于访问设备维护数据
+     */
     private WorkCenterMaintenanceRepository maintenanceRepository;
 
-    /** 工作中心服务 - 提供工作中心相关的业务逻辑 */
+    /**
+     * 工作中心服务 - 提供工作中心相关的业务逻辑
+     */
     private WorkCenterService workCenterService;
 
     /**
      * 设置维护仓库
-     * 
+     *
      * @param maintenanceRepository 设备维护仓库实例
      */
     @Autowired
@@ -45,7 +49,7 @@ public class WorkCenterMaintenanceService {
 
     /**
      * 设置工作中心服务
-     * 
+     *
      * @param workCenterService 工作中心服务实例
      */
     @Autowired
@@ -58,7 +62,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 将单个设备维护记录保存到数据库中。
      * </p>
-     * 
+     *
      * @param maintenance 设备维护记录对象
      * @return 保存后的设备维护记录
      */
@@ -72,7 +76,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 批量保存设备维护记录列表到数据库中。
      * </p>
-     * 
+     *
      * @param maintenances 设备维护记录列表
      * @return 保存后的设备维护记录列表
      */
@@ -86,20 +90,21 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 为指定的工作中心（设备）自动生成未来30天的维护计划，每天上午9点开始，持续8小时（480分钟）。
      * </p>
-     * 
+     *
      * @param machine 工作中心（设备）对象
      * @return 生成的维护计划列表
      */
     @Transactional("oracleTransactionManager") // 声明事务
     public List<WorkCenterMaintenance> autoCreateMaintenance(WorkCenter machine) {
-        LocalDate now = LocalDate.now();
+        LocalDate now = LocalDate.of(2025, 12, 24);
         List<WorkCenterMaintenance> maintenances = new ArrayList<>();
         // 为未来30天每天创建维护计划
-        for (int i = 1; i <= 30; i++) {
+        for (int i = 1; i <= 60; i++) {
             // 创建维护计划对象，持续时间为480分钟（8小时）
-            WorkCenterMaintenance maintenance = new WorkCenterMaintenance(machine, now.plusDays(i), 480, null);
-            maintenance.setStartTime(LocalTime.of(9, 0)); // 上午9点开始
-            maintenance.setEndTime(maintenance.getStartTime().plusMinutes(maintenance.getCapacity())); // 计算结束时间
+            LocalDate localDate = now.plusDays(i);
+            WorkCenterMaintenance maintenance = new WorkCenterMaintenance(machine, localDate, 540, null);
+            maintenance.setStartTime(localDate.atTime(9, 0)); // 上午9点开始
+            maintenance.setEndTime(localDate.atTime(18, 0)); // 计算结束时间
             maintenances.add(maintenance);
         }
 
@@ -111,7 +116,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 为系统中的所有工作中心（设备）自动生成未来30天的维护计划。
      * </p>
-     * 
+     *
      * @return 所有设备生成的维护计划列表
      */
     public List<WorkCenterMaintenance> auto() {
@@ -130,7 +135,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 查询数据库中所有的设备维护计划记录。
      * </p>
-     * 
+     *
      * @return 所有维护计划列表
      */
     public List<WorkCenterMaintenance> getAllMaintenances() {
@@ -142,7 +147,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 根据传入的维护计划列表更新数据库中的记录，包括状态、开始时间、结束时间和容量等信息。
      * </p>
-     * 
+     *
      * @param maintenances 待更新的维护计划列表
      * @return 更新后的维护计划列表
      * @throws IllegalArgumentException 如果开始时间晚于结束时间
@@ -150,33 +155,33 @@ public class WorkCenterMaintenanceService {
     @Transactional("oracleTransactionManager")
     public List<WorkCenterMaintenance> updateAll(List<WorkCenterMaintenance> maintenances) {
         List<WorkCenterMaintenance> list = maintenances.stream().map(maintenance -> {
-            // 验证时间有效性
-            if (maintenance.getStartTime().isAfter(maintenance.getEndTime())) {
-                throw new IllegalArgumentException("开始时间不能晚于结束时间");
-            }
-            // 查找数据库中对应的记录
-            WorkCenterMaintenance workCenterMaintenance =
-                    maintenanceRepository.findById(maintenance.getId()).orElse(null);
-            if (workCenterMaintenance == null) {
-                return null; // 记录不存在，跳过
-            }
-            // 更新字段
-            if (maintenance.getStatus() != null) {
-                workCenterMaintenance.setStatus(maintenance.getStatus());
-            }
-            if (maintenance.getStartTime() != null) {
-                workCenterMaintenance.setStartTime(maintenance.getStartTime());
-            }
-            if (maintenance.getEndTime() != null) {
-                workCenterMaintenance.setEndTime(maintenance.getEndTime());
-            }
-            // 计算容量（持续时间）
-            assert maintenance.getEndTime() != null;
-            long durationMinutes = java.time.Duration.between(maintenance.getStartTime(), maintenance.getEndTime()).toMinutes();
-            workCenterMaintenance.setCapacity((int) durationMinutes);
+                    // 验证时间有效性
+                    if (maintenance.getStartTime().isAfter(maintenance.getEndTime())) {
+                        throw new IllegalArgumentException("开始时间不能晚于结束时间");
+                    }
+                    // 查找数据库中对应的记录
+                    WorkCenterMaintenance workCenterMaintenance =
+                            maintenanceRepository.findById(maintenance.getId()).orElse(null);
+                    if (workCenterMaintenance == null) {
+                        return null; // 记录不存在，跳过
+                    }
+                    // 更新字段
+                    if (maintenance.getStatus() != null) {
+                        workCenterMaintenance.setStatus(maintenance.getStatus());
+                    }
+                    if (maintenance.getStartTime() != null) {
+                        workCenterMaintenance.setStartTime(maintenance.getStartTime());
+                    }
+                    if (maintenance.getEndTime() != null) {
+                        workCenterMaintenance.setEndTime(maintenance.getEndTime());
+                    }
+                    // 计算容量（持续时间）
+                    assert maintenance.getEndTime() != null;
+                    long durationMinutes = java.time.Duration.between(maintenance.getStartTime(), maintenance.getEndTime()).toMinutes();
+                    workCenterMaintenance.setCapacity((int) durationMinutes);
 
-            return workCenterMaintenance;
-        }).filter(Objects::nonNull) // 过滤掉null值（不存在的记录）
+                    return workCenterMaintenance;
+                }).filter(Objects::nonNull) // 过滤掉null值（不存在的记录）
                 .collect(Collectors.toList());
 
         return maintenanceRepository.saveAll(list);
@@ -191,7 +196,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 注意：此方法查找的是特定日期且工作中心为空的维护计划，可能是用于全局维护或特殊日期维护。
      * </p>
-     * 
+     *
      * @param maintenances 待保存或更新的维护计划列表
      */
     @Transactional("oracleTransactionManager")
@@ -224,7 +229,7 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 批量创建设备维护计划并保存到数据库。
      * </p>
-     * 
+     *
      * @param maintenances 待创建的维护计划列表
      * @return 创建后的维护计划列表
      */
@@ -239,9 +244,9 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 查找指定设备在特定日期的维护计划记录。
      * </p>
-     * 
+     *
      * @param machine 工作中心（设备）
-     * @param date 查询日期
+     * @param date    查询日期
      * @return 对应的维护计划记录，如果不存在则返回null
      */
     public WorkCenterMaintenance findFirstByMachineAndDate(WorkCenter machine, LocalDate date) {
@@ -253,10 +258,10 @@ public class WorkCenterMaintenanceService {
      * <p>
      * 查询指定多个设备在指定日期范围内的所有维护计划记录。
      * </p>
-     * 
+     *
      * @param workCenters 工作中心（设备）列表
-     * @param start 开始日期
-     * @param end 结束日期
+     * @param start       开始日期
+     * @param end         结束日期
      * @return 符合条件的维护计划列表
      */
     public List<WorkCenterMaintenance> findAllByMachineInAndDateBetween(List<WorkCenter> workCenters, LocalDate start, LocalDate end) {

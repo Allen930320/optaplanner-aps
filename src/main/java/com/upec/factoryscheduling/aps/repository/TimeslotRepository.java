@@ -19,6 +19,8 @@ public interface TimeslotRepository extends JpaRepository<Timeslot, String>, Jpa
 
     List<Timeslot> findAllByProcedure_Task_TaskNoIsIn(List<String> taskNos, Sort sort);
 
+    List<Timeslot> findAllByProcedure_Task_TaskNoIsInAndProcedure_ProcedureTypeIsIn(List<String> taskNos,
+                                                                                    List<String> procedureTypes,Sort sort);
     List<Timeslot> findAllByProcedure(Procedure procedure);
 
     List<Timeslot> findAllByIdIsIn(Collection<String> ids);
