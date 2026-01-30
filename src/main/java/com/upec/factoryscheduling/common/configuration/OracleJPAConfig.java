@@ -53,8 +53,8 @@ public class OracleJPAConfig {
 
     private static Properties getProperties() {
         Properties jpaProperties = new Properties();
-        jpaProperties.put("hibernate.show_sql", "false");
-        jpaProperties.put("hibernate.format_sql", "false");
+        jpaProperties.put("hibernate.show_sql", "true");
+        jpaProperties.put("hibernate.format_sql", "true");
         jpaProperties.put("hibernate.jdbc.batch_size", "200");
         jpaProperties.put("hibernate.order_inserts", "true");
         jpaProperties.put("hibernate.order_updates", "true");

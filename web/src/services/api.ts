@@ -3,11 +3,8 @@ import axios from 'axios';
 import type {
     ApiResponse,
     LoginResponse,
-    OrderTask,
     OrderTaskQueryParams,
-    PageResponse,
-    Procedure,
-    ProcedureQueryParams,
+    ProcedureQueryDTO,
     RegisterRequest,
     RegisterResponse,
     SpringDataPage,
@@ -59,40 +56,9 @@ apiClient.interceptors.response.use(
   }
 );
 
-// 根据条件分页查询订单任务
-export const queryOrderTasksWithPagination = async (params: OrderTaskQueryParams): Promise<PageResponse<OrderTask>> => {
-  // 构建查询参数
-  const queryParams = {
-    orderName: params.orderName,
-    startTime: params.startTime,
-    endTime: params.endTime,
-    statusList: params.statusList?.join(','),
-    pageNum: params.pageNum || 1,
-    pageSize: params.pageSize || 20,
-    orderNo: params.orderNo || '',
-    taskNo: params.taskNo || '',
-    taskStatus: params.taskStatus || ''
-  };
-  // 由于响应拦截器已经返回response.data，直接获取ApiResponse格式的数据
-  const result: ApiResponse<SpringDataPage<OrderTask>> = await apiClient.get('/api/mesOrders/orderTasks/page', { params: queryParams });
-  // 确保返回的数据格式正确
-  if (!result || result.code !== 200) {
-    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
-  }
-  const pageData = result.data;
-  // 转换Spring Data Page为前端需要的格式
-  return {
-    total: pageData.totalElements,
-    records: pageData.content || [],
-    totalPages: pageData.totalPages,
-    pageSize: pageData.size,
-    pageNum: pageData.number + 1 // Spring Data的页码从0开始，转换为前端从1开始
-  };
-};
-
 // 同步订单数据到MES系统
-export const syncOrderData = async (orderNos: string[]): Promise<void> => {
-  const response:ApiResponse<string> = await apiClient.post('/api/mesOrders/syncData', orderNos);
+export const syncOrderData = async (taskNos: string[]): Promise<void> => {
+  const response:ApiResponse<string> = await apiClient.post('/api/mesOrders/syncData', taskNos);
   // 检查响应状态，确保同步成功
   if (response.code !== 200) {
     throw new Error(`同步失败: ${response.msg || '未知错误'}`);
@@ -100,22 +66,53 @@ export const syncOrderData = async (orderNos: string[]): Promise<void> => {
 };
 
 // 调用OrderController.queryTasks接口获取任务数据
-export const queryTasks = async (params?: OrderTaskQueryParams): Promise<Task[]> => {
-  // 构建查询参数
-  const queryParams = {
-    startTime: params?.startTime,
-    endTime: params?.endTime,
-    taskNo: params?.taskNo,
-    taskStatus: params?.taskStatus
-  };
+export const queryTasks = async (params?: OrderTaskQueryParams): Promise<ApiResponse<SpringDataPage<Task>>> => {
+  // 构建查询参数对象
+    const queryParams: Record<string, string | string[]> = {};
+    
+    // 添加基本参数
+    queryParams.orderName = params?.orderName || '';
+    queryParams.orderNo = params?.orderNo || '';
+    queryParams.contractNum = params?.contractNum || '';
+    queryParams.productCode = params?.productCode || '';
+    queryParams.productName = params?.productName || '';
+    queryParams.startTime = params?.startTime || '';
+    queryParams.endTime = params?.endTime || '';
+    queryParams.pageNum = (params?.pageNum || 1).toString();
+    queryParams.pageSize = (params?.pageSize || 20).toString();
+    
+    // 处理statusList参数
+    if (params?.statusList && params.statusList.length > 0) {
+        // 将statusList设置为数组
+        queryParams.statusList = params.statusList;
+    }
+  
   // 适配新的API返回格式：ApiResponse<SpringDataPage<Task>>
-  const result: ApiResponse<SpringDataPage<Task>> = await apiClient.get('/api/orders/tasks', { params: queryParams });
-  // 确保返回的数据格式正确
-  if (!result || result.code !== 200) {
+  const result: ApiResponse<SpringDataPage<Task>> = await apiClient.get('/api/mesOrders/orderTasks/page', {
+    params: queryParams,
+    // 自定义参数序列化器，处理重复的参数名
+    paramsSerializer: function(params: Record<string, string | string[]>) {
+      let result = '';
+      Object.keys(params).forEach(key => {
+        const value = params[key];
+        if (Array.isArray(value)) {
+          // 对于数组，为每个元素创建一个同名参数
+          value.forEach(item => {
+            result += `${key}=${encodeURIComponent(item)}&`;
+          });
+        } else {
+          // 对于单个值，创建一个参数
+          result += `${key}=${encodeURIComponent(value)}&`;
+        }
+      });
+      // 移除末尾的&
+      return result.slice(0, -1);
+    }
+  });
+    if (!result || result.code !== 200) {
     throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
   }
-  // 从嵌套结构中提取任务列表
-    return result.data?.content || [];
+  return result;
 };
 
 // 开始任务调度
@@ -128,7 +125,6 @@ export const startTasks = async (orderNos: string[]): Promise<string> => {
   const problemId = `${Date.now()}`;
   // 保存服务器响应（响应拦截器已经返回了response.data）
   const response:ApiResponse<string> = await apiClient.post(`/api/scheduling/solve/${problemId}`, orderNos);
-  // 此时response已经是{code: 200, msg: "success", data: "..."}的格式
   if (response.code === 200) {
     return response.data || '';
   } else {
@@ -196,22 +192,12 @@ export const logout = async (): Promise<void> => {
 };
 
 // 创建时间槽
-export const createTimeslot = async (taskNos: string[], timeslotIds: string[], time: number = 0.5, slice: number = 0): Promise<void> => {
+export const createTimeslot = async (procedureId: string, time: number = 0.5, slice: number = 0): Promise<void> => {
   const params = new URLSearchParams();
-  // 添加taskNos参数
-  taskNos.forEach(taskNo => params.append('taskNos', taskNo));
-  if(taskNos.length === 0) {
-    params.append('taskNos', '');
-  }
-  // 添加timeslotIds参数
-  timeslotIds.forEach(timeslotId => params.append('timeslotIds', timeslotId));
-  // 添加其他参数，添加空值检查
-  if(timeslotIds.length === 0) {
-    params.append('timeslotIds', '');
-  }
-  params.append('time', time !== null && time !== undefined ? time.toString() : '0.5');
+  // 添加taskNo参数
+  params.append('time', time !== null && time !== undefined ? time.toString() : '30');
   params.append('slice', slice !== null && slice !== undefined ? slice.toString() : '0');
-  
+  params.append('procedureId', procedureId);
   const response: ApiResponse<void> = await apiClient.post('/api/timeslot/create', params, {
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded'
@@ -233,39 +219,129 @@ export const getTimeslotByTaskNo = async (taskNo: string) => {
     return await apiClient.get(`/api/timeslot/${taskNo}/list`);
 };
 
-// 定义新的任务数据结构，包含工序列表
-export interface TaskWithProcedures {
-  taskNo: string;
-  orderNo: string;
-  status: string;
-  factStartDate: string | null;
-  factEndDate: string | null;
-  planStartDate: string;
-  planEndDate: string;
-  priority: number;
-  outsourcingNo: string | null;
-  outsourcingId: string | null;
-  procedures: Procedure[];
-}
-
-// 分页查询工序列表，返回任务级别的数据结构
-export const queryProceduresWithPagination = async (params: ProcedureQueryParams): Promise<ApiResponse<SpringDataPage<TaskWithProcedures>>> => {
+// 分页查询时间槽列表
+export const queryTimeslots = async (params: {
+  productName?: string;
+  productCode?: string;
+  contractNum?: string;
+  startTime?: string;
+  endTime?: string;
+  taskNo?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<any>>> => {
   // 构建查询参数
   const queryParams = {
+    productName: params.productName || '',
+    productCode: params.productCode || '',
+    contractNum: params.contractNum || '',
+    startTime: params.startTime || '',
+    endTime: params.endTime || '',
     taskNo: params.taskNo || '',
-    orderNo: params.orderNo || '',
-    status: params.status || '',
+    pageNum: params.pageNum || 1,
+    pageSize: params.pageSize || 20
+  };
+
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<any>> = await apiClient.get('/api/timeslot/page', {
+    params: queryParams
+  });
+
+  if (!result || result.code !== 200) {
+    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+  }
+  return result;
+};
+
+// 分页查询生产人员专用时间槽列表
+export const queryProductUserTimeslots = async (params: {
+  productName?: string;
+  productCode?: string;
+  contractNum?: string;
+  startTime?: string;
+  endTime?: string;
+  taskNo?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<any>>> => {
+  // 构建查询参数
+  const queryParams = {
+    productName: params.productName || '',
+    productCode: params.productCode || '',
+    contractNum: params.contractNum || '',
+    startTime: params.startTime || '',
+    endTime: params.endTime || '',
+    taskNo: params.taskNo || '',
+    pageNum: params.pageNum || 1,
+    pageSize: params.pageSize || 20
+  };
+
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<any>> = await apiClient.get('/api/timeslot/pageOfProductUser', {
+    params: queryParams
+  });
+
+  if (!result || result.code !== 200) {
+    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+  }
+  return result;
+};
+
+// 分页查询工序列表（适配新接口 /api/mesOrders/procedure/page）
+export const queryProcedures = async (params: {
+  orderName?: string;
+  taskNo?: string;
+  contractNum?: string;
+  productCode?: string;
+  statusList?: string[];
+  startDate?: string;
+  endDate?: string;
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<ProcedureQueryDTO>>> => {
+  // 构建查询参数
+  const queryParams = {
+    orderName: params.orderName || '',
+    taskNo: params.taskNo || '',
+    contractNum: params.contractNum || '',
+    productCode: params.productCode || '',
+    startDate: params.startDate || '',
+    endDate: params.endDate || '',
     pageNum: params.pageNum || 1,
     pageSize: params.pageSize || 20
   };
   
-  // 调用后端接口，直接返回完整的API响应
-  const result: ApiResponse<SpringDataPage<TaskWithProcedures>> = await apiClient.get('/api/procedure/page', { params: queryParams });
+  // 处理statusList参数
+    const paramsSerializer = function(params: Record<string, string | string[]>) {
+        let result = '';
+        Object.keys(params).forEach(key => {
+            const value = params[key];
+            if (Array.isArray(value)) {
+                // 对于数组，为每个元素创建一个同名参数
+                value.forEach(item => {
+                    result += `${key}=${encodeURIComponent(item)}&`;
+                });
+            } else if (value) {
+                // 对于单个值，创建一个参数
+                result += `${key}=${encodeURIComponent(value)}&`;
+            }
+        });
+        // 移除末尾的&
+        return result.slice(0, -1);
+    };
+  
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<ProcedureQueryDTO>> = await apiClient.get('/api/mesOrders/procedure/page', {
+    params: {
+      ...queryParams,
+      statusList: params.statusList
+    },
+    paramsSerializer
+  });
   
   if (!result || result.code !== 200) {
     throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
   }
-  
   return result;
 };
 

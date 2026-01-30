@@ -4,11 +4,12 @@ import { Layout, Menu, Button } from 'antd';
 import { Routes, Route, Link, BrowserRouter, Navigate } from 'react-router-dom';
 import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import HomePage from './components/HomePage';
-import OrderQueryPage from './components/OrderQueryPage';
 import OrderTasksPage from './components/OrderTasksPage';
 import SchedulingTimelinePage from './components/SchedulingTimelinePage';
+import ProductUserSchedulingPage from './components/ProductUserSchedulingPage';
 import WorkCenterCalendarPage from './components/WorkCenterCalendarPage';
 import ProcedurePage from './components/ProcedurePage';
+import ProductionSchedulingResultPage from './components/ProductionSchedulingResultPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import { isLoggedIn, logout } from './services/orderService';
@@ -25,11 +26,6 @@ const menuItems = [
     label: <Link to="/">首页</Link>,
   },
   {
-    key: '2',
-    icon: <FileTextOutlined />,
-    label: <Link to="/order-query">订单查询</Link>,
-  },
-  {
     key: '5',
     icon: <FileTextOutlined />,
     label: <Link to="/order-tasks">任务列表</Link>,
@@ -43,6 +39,16 @@ const menuItems = [
     key: '6',
     icon: <ClockCircleOutlined />,
     label: <Link to="/scheduling-timeline">调度时序图</Link>,
+  },
+  {
+    key: '10',
+    icon: <ClockCircleOutlined />,
+    label: <Link to="/product-user-scheduling">生产人员调度</Link>,
+  },
+  {
+    key: '9',
+    icon: <FileTextOutlined />,
+    label: <Link to="/production-scheduling-result">排产结果查看</Link>,
   },
   {
     key: '7',
@@ -112,10 +118,11 @@ const AppContent = () => {
             <Content className="content">
               <Routes>
               <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
-              <Route path="/order-query" element={<ProtectedRoute><OrderQueryPage /></ProtectedRoute>} />
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
+              <Route path="/product-user-scheduling" element={<ProtectedRoute><ProductUserSchedulingPage /></ProtectedRoute>} />
+              <Route path="/production-scheduling-result" element={<ProtectedRoute><ProductionSchedulingResultPage /></ProtectedRoute>} />
               <Route path="/work-center-calendar" element={<ProtectedRoute><WorkCenterCalendarPage /></ProtectedRoute>} />
               {/* 其他受保护的路由可以在这里添加 */}
               <Route path="*" element={<Navigate to="/" replace />} />

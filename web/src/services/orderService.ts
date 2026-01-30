@@ -20,13 +20,12 @@ export type {
 // 重新导出所有API函数
 export {
   // 订单相关API
-  queryOrderTasksWithPagination,
   syncOrderData,
   queryTasks,
   startTasks,
   createTimeslot,
   getTimeslotByTaskNo,
-  queryProceduresWithPagination,
+  queryProcedures,
   // 认证相关API
   login,
   register,

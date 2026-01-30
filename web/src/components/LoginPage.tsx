@@ -55,7 +55,9 @@ const LoginPage: React.FC = () => {
           </div>
           <Form
             form={form}
-            layout="vertical"
+            layout="horizontal"
+            labelCol={{ span: 6 }}
+            wrapperCol={{ span: 18 }}
             onFinish={handleLogin}
           >
             <Form.Item

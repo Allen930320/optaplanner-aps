@@ -5,9 +5,11 @@ import com.upec.factoryscheduling.aps.repository.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.CollectionUtils;
 
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderService {
@@ -46,5 +48,18 @@ public class OrderService {
     @Transactional("oracleTransactionManager")
     public List<Order> saveAll(List<Order> orders) {
         return orderRepository.saveAll(orders);
+    }
+
+    public List<Order> findAllByOrderNoIn(List<String> orderNos) {
+        return orderRepository.findByOrderNoIn(orderNos);
+    }
+
+
+    public Map<String, Order> findAllByOrderNoInConvertToMap(List<String> orderNos) {
+        List<Order> orders = orderRepository.findByOrderNoIn(orderNos);
+        if (!CollectionUtils.isEmpty(orders)) {
+            return orders.stream().collect(Collectors.toMap(Order::getOrderNo, m -> m));
+        }
+        return new HashMap<>();
     }
 }

@@ -7,16 +7,16 @@ const { Title, Paragraph } = Typography;
 
 const HomePage: React.FC = () => {
   return (
-    <div style={{ padding: '20px' }}>
-      <Title level={2}>欢迎使用生产计划管理系统</Title>
+    <div style={{ padding: '16px' }}>
+      <Title level={3} style={{ marginBottom: '12px' }}>欢迎使用生产计划管理系统</Title>
       
-      <Paragraph>
+      <Paragraph style={{ marginBottom: '16px', fontSize: '14px' }}>
         本系统用于管理和查询生产订单任务，提供订单数据的可视化展示和状态监控。
       </Paragraph>
 
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[12, 12]} style={{ marginBottom: '16px' }}>
         <Col span={8}>
-          <Card hoverable>
+          <Card hoverable style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <Statistic
               title="待处理订单"
               value={42}
@@ -27,7 +27,7 @@ const HomePage: React.FC = () => {
           </Card>
         </Col>
         <Col span={8}>
-          <Card hoverable>
+          <Card hoverable style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <Statistic
               title="进行中任务"
               value={28}
@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
           </Card>
         </Col>
         <Col span={8}>
-          <Card hoverable>
+          <Card hoverable style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
             <Statistic
               title="本月完成率"
               value={78.5}
@@ -51,29 +51,29 @@ const HomePage: React.FC = () => {
         </Col>
       </Row>
 
-      <Row gutter={[16, 16]}>
+      <Row gutter={[12, 12]}>
         <Col span={24}>
-          <Card title="快速操作">
-            <Row gutter={[16, 16]}>
+          <Card title="快速操作" style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
+            <Row gutter={[12, 12]}>
               <Col span={6}>
                 <Link to="/order-query">
-                <Button type="primary" icon={<ShoppingCartOutlined />} block>
+                <Button type="primary" icon={<ShoppingCartOutlined />} block size="small">
                   订单查询
                 </Button>
               </Link>
               </Col>
               <Col span={6}>
-                <Button icon={<CalendarOutlined />} block>
+                <Button icon={<CalendarOutlined />} block size="small">
                   生产计划
                 </Button>
               </Col>
               <Col span={6}>
-                <Button icon={<BarChartOutlined />} block>
+                <Button icon={<BarChartOutlined />} block size="small">
                   数据报表
                 </Button>
               </Col>
               <Col span={6}>
-                <Button icon={<ShoppingCartOutlined />} block>
+                <Button icon={<ShoppingCartOutlined />} block size="small">
                   系统设置
                 </Button>
               </Col>

@@ -103,16 +103,6 @@ public class ApsWorkCenterMaintenanceService {
         repository.saveAll(workCenterMaintenances);
     }
 
-    /**
-     * 根据工作中心代码查询所有维护计划
-     *
-     * @param workCenterCodes 工作中心代码列表
-     * @return 工作中心维护计划列表
-     */
-    public List<ApsWorkCenterMaintenance> findAllByWorkCenterCodeIn(List<String> workCenterCodes) {
-        return repository.findAllByWorkCenterCodeIn(workCenterCodes);
-    }
-
     public List<ApsWorkCenterMaintenance> findAllByWorkCenterCodeAndLocalDateBetween(String workCenterCode,
                                                                                      String localDateAfter,
                                                                                      String localDateBefore) {

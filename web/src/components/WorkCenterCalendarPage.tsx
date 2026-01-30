@@ -408,9 +408,9 @@ const WorkCenterCalendarPage: React.FC = () => {
   };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
-        <h1 style={{ margin: 0, fontSize: 24 }}>
+    <div style={{ padding: 16 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h1 style={{ margin: 0, fontSize: 18 }}>
           <CalendarOutlined style={{ marginRight: 8 }} />
           工作中心维护日历
         </h1>
@@ -418,18 +418,20 @@ const WorkCenterCalendarPage: React.FC = () => {
           value={moment(selectedMonth).format('YYYY-MM-DD')}
           onChange={handleMonthSelect}
           options={monthOptions}
-          style={{ width: 200 }}
+          style={{ width: 180 }}
+          size="small"
         />
       </div>
 
-      <div style={{ display: 'flex', gap: 24, height: 'calc(100vh - 160px)' }}>
+      <div style={{ display: 'flex', gap: 16, height: 'calc(100vh - 140px)' }}>
         {/* 左侧工作中心列表 */}
         <Card
           title="工作中心列表"
-          style={{ width: 200, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%' }}
+          style={{ width: 180, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '100%', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+          size="small"
         >
           <div style={{ flex: 1, overflow: 'hidden' }}>
-            <Spin spinning={workCenterLoading} indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
+            <Spin spinning={workCenterLoading} indicator={<LoadingOutlined style={{ fontSize: 20 }} spin />}>
               <List
                 dataSource={workCenters}
                 renderItem={(item) => (
@@ -440,16 +442,18 @@ const WorkCenterCalendarPage: React.FC = () => {
                       cursor: 'pointer',
                       borderLeft: selectedWorkCenter === item.workCenterCode ? '3px solid #1890ff' : 'none',
                       backgroundColor: selectedWorkCenter === item.workCenterCode ? '#e6f7ff' : 'transparent',
-                      paddingLeft: 12
+                      paddingLeft: 10,
+                      paddingTop: 8,
+                      paddingBottom: 8
                     }}
                   >
                     <div>
-                      <div style={{ fontWeight: 'bold' }}>{item.description}</div>
-                      <div style={{ fontSize: 12, color: '#666' }}>{item.workCenterCode}</div>
+                      <div style={{ fontWeight: 'bold', fontSize: '13px' }}>{item.description}</div>
+                      <div style={{ fontSize: '11px', color: '#666', marginTop: 2 }}>{item.workCenterCode}</div>
                     </div>
                   </List.Item>
                 )}
-                style={{ overflowY: 'auto', height: '100%', maxHeight: 'calc(100vh - 260px)', padding: 0 }}
+                style={{ overflowY: 'auto', height: '100%', maxHeight: 'calc(100vh - 220px)', padding: 0 }}
               />
             </Spin>
           </div>
@@ -458,16 +462,18 @@ const WorkCenterCalendarPage: React.FC = () => {
         {/* 右侧日历表格 */}
         <Card
           title={`${moment(selectedMonth).format('YYYY年MM月')} 维护计划 (${getMonthRange()})`}
-          style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+          style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}
+          size="small"
         >
-          <Spin spinning={loading} indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}>
+          <Spin spinning={loading} indicator={<LoadingOutlined style={{ fontSize: 20 }} spin />}>
             <Table
               dataSource={calendarData}
               columns={tableColumns}
               pagination={false}
-              scroll={{ y: 'calc(100vh - 300px)', x: 'max-content' }}
+              scroll={{ y: 'calc(100vh - 260px)', x: 'max-content' }}
               rowKey="key"
               bordered
+              size="small"
             />
           </Spin>
         </Card>
@@ -476,31 +482,32 @@ const WorkCenterCalendarPage: React.FC = () => {
       {/* 维护记录详情模态框 */}
       <Modal
         title="维护记录详情"
-        width={416}
+        width={380}
         open={isModalVisible}
         onCancel={handleModalCancel}
         footer={[
-          <Button key="cancel" onClick={handleModalCancel}>
+          <Button key="cancel" size="small" onClick={handleModalCancel}>
             取消
           </Button>,
-          <Button key="save" type="primary" onClick={handleFormSubmit} loading={isSubmitting}>
+          <Button key="save" type="primary" size="small" onClick={handleFormSubmit} loading={isSubmitting}>
             保存修改
           </Button>
         ]}
       >
         {selectedMaintenance && (
           <div style={{ textAlign: 'left' }}>
-            <div style={{ marginBottom: '16px', marginLeft: '8px' }}>
-              <p style={{ margin: '8px 0' }}>工作中心: {selectedMaintenance.description} ({selectedMaintenance.workCenterCode})</p>
-              <p style={{ margin: '8px 0' }}>日期: {selectedMaintenance.localDate}</p>
+            <div style={{ marginBottom: '12px', marginLeft: '8px' }}>
+              <p style={{ margin: '6px 0', fontSize: '13px' }}>工作中心: {selectedMaintenance.description} ({selectedMaintenance.workCenterCode})</p>
+              <p style={{ margin: '6px 0', fontSize: '13px' }}>日期: {selectedMaintenance.localDate}</p>
             </div>
-            <Form form={form} layout="horizontal" labelAlign="left" labelCol={{ span: 7 }} wrapperCol={{ span: 17 }} style={{ marginLeft: '8px' }}>
+            <Form form={form} layout="horizontal" labelAlign="left" labelCol={{ span: 7 }} wrapperCol={{ span: 17 }} style={{ marginLeft: '8px' }} size="small">
               <Form.Item label="容量" name="capacity" rules={[{ required: true, message: '请输入容量' }]}>
-                <InputNumber disabled  min={0} step={1} />
+                <InputNumber disabled min={0} step={1} size="small" />
               </Form.Item>
               <Form.Item label="状态" name="status" rules={[{ required: true, message: '请选择状态' }]}>
                 <Select
-                 style={{ width: '50%' }}>
+                 style={{ width: '50%' }}
+                 size="small">
                   <Select.Option value="Active">激活</Select.Option>
                   <Select.Option value="Inactive">未激活</Select.Option>
                 </Select>
@@ -516,6 +523,7 @@ const WorkCenterCalendarPage: React.FC = () => {
                   format="HH:mm" 
                   minuteStep={30} 
                   style={{ width: '50%' }}
+                  size="small"
                 />
               </Form.Item>
               <Form.Item 
@@ -529,6 +537,7 @@ const WorkCenterCalendarPage: React.FC = () => {
                   format="HH:mm" 
                   minuteStep={30} 
                   style={{ width: '50%' }}
+                  size="small"
                 />
               </Form.Item>
             </Form>

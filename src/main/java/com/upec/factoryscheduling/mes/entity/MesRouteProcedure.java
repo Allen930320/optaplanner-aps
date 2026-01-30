@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Getter
 @Entity
 @Table(name = "MES_JJ_ROUTE_PROCEDURE")
-public class MesJjRouteProcedure implements Serializable {
+public class MesRouteProcedure implements Serializable {
     @Id
     @Column(name = "SEQ", nullable = false, length = 20)
     private String seq;

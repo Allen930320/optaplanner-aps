@@ -21,7 +21,7 @@ public class SchedulingJobService {
     @Scheduled(cron = "0 0 0 * * *")
     @Transactional("oracleTransactionManager")
     public void syncWorkCenterData() {
-        workCenterService.deleteAll();
-        mesBaseWorkCenterService.asyncWorkCenterData();
+
+        mesBaseWorkCenterService.syncWorkCenterData();
     }
 }

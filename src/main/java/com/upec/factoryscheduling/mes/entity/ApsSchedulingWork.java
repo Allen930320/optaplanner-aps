@@ -7,13 +7,14 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
 @Entity
 @Table(name = "APS_SCHEDULING_WORK")
-public class ApsSchedulingWork {
+public class ApsSchedulingWork implements Serializable {
     @Id
     @Column(name = "ID", nullable = false, length = 30)
     private String id;

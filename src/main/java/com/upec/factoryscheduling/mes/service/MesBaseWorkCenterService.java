@@ -4,13 +4,19 @@ import com.upec.factoryscheduling.aps.entity.WorkCenter;
 import com.upec.factoryscheduling.aps.service.WorkCenterService;
 import com.upec.factoryscheduling.mes.entity.MesBaseWorkCenter;
 import com.upec.factoryscheduling.mes.repository.MesBaseWorkCenterRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class MesBaseWorkCenterService {
 
@@ -28,23 +34,9 @@ public class MesBaseWorkCenterService {
         this.workCenterService = workCenterService;
     }
 
-
-    public List<MesBaseWorkCenter> findAllByWorkCenterCodeIn(List<String> workCenterCodes) {
-        return mesBaseWorkCenterRepository.findAllByWorkCenterCodeIn(workCenterCodes);
-    }
-
-    public List<MesBaseWorkCenter> findByIdIn(List<String> workCenterId) {
-        return mesBaseWorkCenterRepository.findAllById(workCenterId);
-    }
-
-    /**
-     * 获取所有工作中心
-     *
-     * @return 所有工作中心列表
-     */
-    public List<MesBaseWorkCenter> findAll() {
-        return mesBaseWorkCenterRepository.findAll();
-    }
+    @Autowired
+    @Qualifier("oracleTemplate")
+    protected JdbcTemplate jdbcTemplate;
 
 
     public List<MesBaseWorkCenter> findAllByFactorySeq(String factorySeq) {
@@ -65,10 +57,17 @@ public class MesBaseWorkCenterService {
         return workCenterService.saveWorkCenters(workCenters);
     }
 
-
     @Transactional("oracleTransactionManager")
-    public void asyncWorkCenterData() {
-        List<MesBaseWorkCenter> mesBaseWorkCenters = findAllByFactorySeq("2");
-        convertWorkCenters(mesBaseWorkCenters);
+    public void  syncWorkCenterData() {
+        String querySQL = " select t1.seq as id, t1.description as name, t1.status, t1.workcenter_code as " +
+                " work_center_code " +
+                " from mes_base_workcenter t1  " +
+                " left join aps_work_center t2 on t2.work_center_code = t1.workcenter_code  " +
+                " where t2.work_center_code is null and t1.factory_seq='2'";
+        List<WorkCenter> workCenters = jdbcTemplate.query(querySQL, new BeanPropertyRowMapper<>(WorkCenter.class));
+       if(!workCenters.isEmpty()) {
+           log.info("同步工作中心数据中....");
+           workCenterService.saveWorkCenters(workCenters);
+       }
     }
 }

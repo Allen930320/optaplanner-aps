@@ -156,8 +156,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             // 如果后序在前序完成前开始，计算提前的时间
                             long minutesEarly = Duration.between(next.getStartTime(), current.getEndTime()).toMinutes();
                             return (int) Math.max(0, minutesEarly) * MEDIUM_PENALTY_WEIGHT;
-                        })
-                .asConstraint("中约束：工序必须按顺序执行");
+                        }).asConstraint("中约束：工序必须按顺序执行");
     }
 
     /**
@@ -195,8 +194,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             long daysEarly =
                                     Duration.between(timeslot.getStartTime(), timeslot.getProcedure().getTask().getFactStartDate()).toDays();
                             return (int) daysEarly * MEDIUM_PENALTY_WEIGHT;
-                        })
-                .asConstraint("中约束：不能早于实际开始时间");
+                        }).asConstraint("中约束：不能早于实际开始时间");
     }
 
     /**
@@ -217,8 +215,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                                 return (int) daysEarly * SOFT_REWARD_WEIGHT;
                             }
                             return 0;
-                        })
-                .asConstraint("软约束：奖励提前完成");
+                        }).asConstraint("软约束：奖励提前完成");
     }
 
     /**
@@ -240,8 +237,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                                 return (int) (SOFT_REWARD_WEIGHT * (5 - hoursDiff));
                             }
                             return 0;
-                        })
-                .asConstraint("软约束：奖励准时开始");
+                        }).asConstraint("软约束：奖励准时开始");
     }
 
     /**
@@ -262,8 +258,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                                 }
                             }
                             return 0;
-                        })
-                .asConstraint("软约束：奖励高优先级任务先完成");
+                        }).asConstraint("软约束：奖励高优先级任务先完成");
     }
 
     /**

@@ -21,16 +21,26 @@ export interface OrderTask {
     productName: string;
 }
 
-// 任务数据类型定义（适配/api/orders/tasks接口）
+// 任务数据类型定义（适配/api/mesOrders/orderTasks/page接口）
 export interface Task {
     taskNo: string;
     orderNo: string;
-    status: string;
-    factStartDate: string | null;
-    factEndDate: string | null;
+    routeSeq: string;
+    planQuantity: string;
+    taskStatus: string;
+    factStartDate: string;
+    factEndDate: string;
+    createUser: string;
+    createDate: string;
     planStartDate: string;
     planEndDate: string;
-    priority: number;
+    oldTaskNo: string | null;
+    lockedUser: string | null;
+    lockedDate: string | null;
+    beforeTaskStatus: string | null;
+    lockedRemark: string | null;
+    mark: string | null;
+    contractNum: string;
     productCode: string;
     productName: string;
 }
@@ -42,12 +52,15 @@ export interface Task {
 // 订单任务查询参数接口
 export interface OrderTaskQueryParams {
     orderName?: string;
+    orderNo?: string;
+    contractNum?: string;
+    productCode?: string;
+    productName?: string;
     startTime?: string;
     endTime?: string;
     statusList?: string[];
     pageNum?: number;
     pageSize?: number;
-    orderNo?: string;
     taskNo?: string;
     taskStatus?: string;
 }
@@ -170,6 +183,8 @@ export interface WorkCenter {
 
 // 工序类型定义
 export interface Procedure {
+    workCenter: WorkCenter;
+    task: Task;
     id: string;
     taskNo: string;
     orderNo: string;
@@ -186,6 +201,30 @@ export interface Procedure {
     parallel: boolean;
     index: number;
     level: number;
+}
+
+// 工序查询DTO（适配新接口返回数据结构）
+export interface ProcedureQueryDTO {
+    contractNum: string;
+    taskNo: string;
+    orderNo: string;
+    taskStatus: string;
+    productCode: string;
+    productName: string;
+    createDate: string;
+    procedureName: string;
+    procedureNo: string;
+    procedureStatus: string;
+    humanMinutes: number;
+    machineMinutes: number;
+    startTime: string | null;
+    endTime: string | null;
+    planStartDate: string;
+    planEndDate: string;
+    workCenterName:string;
+    procedureId:string;
+    procedureType:string;
+    timeslotDays: number;
 }
 
 // 订单类型定义
@@ -251,7 +290,7 @@ export interface Timeslot {
     procedure: Procedure;
     order: Order;
     task: Task;
-    workCenter: WorkCenter;
+    workCenter?: WorkCenter;
     duration: number;
     priority: number;
     startTime: string;
