@@ -69,8 +69,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
 
                 // ========== 软约束 (SOFT) - 优化目标 ==========
                 // 时间优化
-                closeToPlannedStartDate(factory),                // 接近计划开始日期
-                firstProcedureCloseToToday(factory),             // 第一个工序尽量接近当天时间
+                firstProcedureCloseToTodayOrPlanStartDate(factory),             // 第一个工序尽量接近当天时间
                 closeToPlannedEndDate(factory),                  // 接近计划结束日期
                 earlyCompletionReward(factory),                  // 奖励早完成
                 adjacentProcedureProximity(factory),             // 相邻工序时间接近
@@ -81,7 +80,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 capacityUtilizationOptimization(factory),        // 容量利用率优化
 
                 // 负载均衡
-                balancedWorkCenterLoad(factory)                  // 工作中心负载均衡
+//                balancedWorkCenterLoad(factory)                  // 工作中心负载均衡
         };
     }
 
@@ -101,8 +100,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && !Objects.equals(
                         timeslot.getMaintenance().getWorkCenter().getId(),
                         timeslot.getProcedure().getWorkCenter().getId()))
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        timeslot -> HARD_WEIGHT_CRITICAL)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 工作中心必须匹配");
     }
 
@@ -122,13 +120,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                     int threshold = (int) (maintenance.getCapacity() * CAPACITY_THRESHOLD);
                     return totalUsage > threshold;
                 })
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        (maintenance, totalDuration) -> {
-                            int totalUsage = maintenance.getUsageTime() + totalDuration;
-                            int threshold = (int) (maintenance.getCapacity() * CAPACITY_THRESHOLD);
-                            int exceeded = totalUsage - threshold;
-                            return exceeded * HARD_WEIGHT_HIGH;
-                        })
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 容量不超90%");
     }
 
@@ -142,13 +134,13 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getProcedure() != null)
                 .join(Timeslot.class,
                         // 同一工序
-                        Joiners.equal(t -> t.getProcedure().getId()),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getId(), timeslot -> timeslot.getProcedure().getId()),
                         // 不同时间槽索引
                         Joiners.lessThan(Timeslot::getIndex),
                         // 同一天
-                        Joiners.equal(t -> t.getMaintenance().getDate()))
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        (slot1, slot2) -> HARD_WEIGHT_CRITICAL)
+                        Joiners.equal(timeslot -> timeslot.getMaintenance().getId(), timeslot -> timeslot.getMaintenance().getId()))
+                .filter((timeslot1, timeslot2) -> timeslot1.getStartTime().isEqual(timeslot2.getStartTime()))
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 同工序同天不重复");
     }
 
@@ -159,14 +151,10 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     protected Constraint notBeforeCurrentDate(ConstraintFactory factory) {
         LocalDate today = LocalDate.now();
         return factory.forEach(Timeslot.class)
-                .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getMaintenance().getDate().isBefore(today))
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        timeslot -> {
-                            long daysBefore = ChronoUnit.DAYS.between(
-                                    timeslot.getMaintenance().getDate(), today);
-                            return (int) daysBefore * HARD_WEIGHT_MEDIUM;
-                        })
+                .filter(timeslot -> timeslot.getMaintenance() != null)
+                .groupBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo(), min(Timeslot::getStartTime))
+                .filter((taskNo, minLocalTime) -> minLocalTime.toLocalDate().isBefore(today))
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 不早于当前日期");
     }
 
@@ -178,8 +166,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
                         && "N".equals(timeslot.getMaintenance().getStatus()))
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        timeslot -> HARD_WEIGHT_HIGH)
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 避开维护期间");
     }
 
@@ -194,21 +181,15 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getIndex() > 0)
                 .join(Timeslot.class,
                         // 同一工序
-                        Joiners.equal(t -> t.getProcedure().getId()),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getId(), timeslot -> timeslot.getProcedure().getId()),
                         // 前一个时间槽
-                        Joiners.equal(t -> t.getIndex() - 1, Timeslot::getIndex))
+                        Joiners.equal(timeslot -> timeslot.getIndex() - 1, Timeslot::getIndex))
                 .filter((current, previous) ->
                         previous.getMaintenance() != null
                                 && ChronoUnit.DAYS.between(
                                 previous.getMaintenance().getDate(),
                                 current.getMaintenance().getDate()) > 1)
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        (current, previous) -> {
-                            long gap = ChronoUnit.DAYS.between(
-                                    previous.getMaintenance().getDate(),
-                                    current.getMaintenance().getDate()) - 1;
-                            return (int) gap * HARD_WEIGHT_HIGH;
-                        })
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 外协工序必须连续");
     }
 
@@ -227,21 +208,17 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getProcedure() != null
                         && timeslot.getEndTime() != null
                         && timeslot.getIndex() == timeslot.getTotal()) // 前置工序的最后一个时间槽
-                .join(Timeslot.class, Joiners.equal(timeslot -> timeslot.getProcedure().getLevel() + 1,
-                        timeslot -> timeslot.getProcedure().getLevel()))
+                .join(Timeslot.class,
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getTask(), timeslot -> timeslot.getProcedure().getTask()),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getLevel() + 1,
+                                timeslot -> timeslot.getProcedure().getLevel()))
                 .filter((previous, next) -> {
                     // 后续工序的开始日期必须在前置工序结束日期的第二天或之后
                     long daysBetween = ChronoUnit.DAYS.between(
                             previous.getMaintenance().getDate(),
                             next.getMaintenance().getDate());
                     return daysBetween < 1; // 必须至少间隔0天（同一天结束后第二天开始）
-                }).penalize(HardMediumSoftScore.ONE_HARD,
-                        (previous, next) -> {
-                            long daysViolation = ChronoUnit.DAYS.between(
-                                    next.getMaintenance().getDate(),
-                                    previous.getMaintenance().getDate()) + 1;
-                            return (int) Math.max(1, daysViolation) * HARD_WEIGHT_HIGH;
-                        })
+                }).penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 工序依赖顺序");
     }
 
@@ -254,16 +231,12 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .filter(timeslot -> timeslot.getMaintenance() != null
                         && timeslot.getProcedure() != null)
                 .join(Timeslot.class,
-                        Joiners.equal(Timeslot::getProcedure, Timeslot::getProcedure),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getId(), timeslot -> timeslot.getProcedure().getId()),
                         // 时间槽索引较小的在前
                         Joiners.lessThan(Timeslot::getIndex, Timeslot::getIndex),
                         // 但日期较大的在前（顺序错误）
-                        Joiners.filtering((timeslot1, timeslot2) -> {
-                            if (timeslot2.getMaintenance() == null) return false;
-                            return timeslot2.getStartTime().isBefore(timeslot1.getStartTime());
-                        }))
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        (slot1, slot2) -> HARD_WEIGHT_CRITICAL)
+                        Joiners.filtering((timeslot1, timeslot2) -> timeslot1.getStartTime().getNano() >= timeslot2.getStartTime().getNano()))
+                .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 时间槽顺序执行");
     }
 
@@ -304,63 +277,42 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                     }
                     // 后续工序的开始日期必须在所有并行工序结束日期的第二天或之后
                     return latestEndDate != null && !next.getMaintenance().getDate().isAfter(latestEndDate.plusDays(1));
-                })
-                .penalize(HardMediumSoftScore.ONE_HARD,
-                        (task, level, timeslots, next) -> HARD_WEIGHT_HIGH)
+                }).penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 并行工序同步");
-    }
-
-    // ========================================================================
-    // 软约束实现 - 优化目标
-    // ========================================================================
-
-    /**
-     * 软约束1: 接近计划开始日期
-     * 任务的第一个工序的第一个时间槽应尽量接近计划开始日期
-     */
-    protected Constraint closeToPlannedStartDate(ConstraintFactory factory) {
-        LocalDate today = LocalDate.now();
-        return factory.forEach(Timeslot.class)
-                .filter(timeslot -> timeslot.getMaintenance() != null && timeslot.getStartTime() != null && timeslot.getProcedure().getOrder().getPlanStartDate().isAfter(today))
-                .groupBy(timeslot -> timeslot.getProcedure().getTask(), toList())
-                .groupBy(((task, timeslots) -> timeslots.stream().min(Comparator.comparing(timeslot -> timeslot.getProcedureIndex() * 100 + timeslot.getIndex())).orElse(null)))
-                .reward(HardMediumSoftScore.ONE_SOFT,
-                        timeslot -> {
-                            LocalDate planStart = timeslot.getProcedure().getTask().getPlanStartDate();
-                            LocalDate actualStart = timeslot.getMaintenance().getDate();
-                            long daysDiff = Math.abs(ChronoUnit.DAYS.between(planStart, actualStart));
-                            // 距离越近奖励越高
-                            if (daysDiff == 0) return SOFT_WEIGHT_HIGH * 10;
-                            if (daysDiff <= 2) return SOFT_WEIGHT_HIGH * 5;
-                            if (daysDiff <= 5) return SOFT_WEIGHT_HIGH * 2;
-                            if (daysDiff <= 10) return SOFT_WEIGHT_NORMAL;
-
-                            return 0;
-                        })
-                .asConstraint("软约束: 接近计划开始日期");
     }
 
     /**
      * 软约束: 第一个工序尽量接近当天时间
      * 任务的第一个工序的第一个时间槽应尽量接近当天时间
      */
-    protected Constraint firstProcedureCloseToToday(ConstraintFactory factory) {
+    protected Constraint firstProcedureCloseToTodayOrPlanStartDate(ConstraintFactory factory) {
         LocalDate today = LocalDate.now();
         return factory.forEach(Timeslot.class)
-                .filter(timeslot -> timeslot.getMaintenance() != null && timeslot.getStartTime() != null && timeslot.getProcedure().getOrder().getPlanStartDate().isBefore(today))
-                .groupBy(timeslot -> timeslot.getProcedure().getTask(), toList())
-                .groupBy(((task, timeslots) -> timeslots.stream().min(Comparator.comparing(timeslot -> timeslot.getProcedureIndex() * 100 + timeslot.getIndex())).orElse(null)))
+                .filter(timeslot -> timeslot.getMaintenance() != null)
+                .groupBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo(),
+                        min(Comparator.comparing(timeslot -> timeslot.getProcedure().getIndex() * 100 + timeslot.getIndex())))
                 .reward(HardMediumSoftScore.ONE_SOFT,
-                        timeslot -> {
+                        (taskNo, timeslot) -> {
                             LocalDate scheduleDate = timeslot.getStartTime().toLocalDate();
-                            long daysFromToday = ChronoUnit.DAYS.between(today, scheduleDate);
-                            // 越接近今天奖励越高
-                            if (daysFromToday == 0) return SOFT_WEIGHT_HIGH * 20;
-                            if (daysFromToday == 1) return SOFT_WEIGHT_HIGH * 15;
-                            if (daysFromToday == 2) return SOFT_WEIGHT_HIGH * 10;
-                            if (daysFromToday <= 5) return SOFT_WEIGHT_HIGH * 5;
-                            if (daysFromToday <= 10) return SOFT_WEIGHT_HIGH;
-                            if (daysFromToday <= 15) return SOFT_WEIGHT_NORMAL;
+                            LocalDate planStartDate = timeslot.getProcedure().getOrder().getPlanStartDate();
+                            if (scheduleDate.isAfter(today) && planStartDate.isBefore(today)) {
+                                long daysFromToday = ChronoUnit.DAYS.between(today, scheduleDate);
+                                // 越接近今天奖励越高
+                                if (daysFromToday == 0) return SOFT_WEIGHT_HIGH * 20;
+                                if (daysFromToday == 1) return SOFT_WEIGHT_HIGH * 15;
+                                if (daysFromToday == 2) return SOFT_WEIGHT_HIGH * 10;
+                                if (daysFromToday <= 5) return SOFT_WEIGHT_HIGH * 5;
+                                if (daysFromToday <= 10) return SOFT_WEIGHT_HIGH;
+                                if (daysFromToday <= 1000) return SOFT_WEIGHT_NORMAL;
+                            }
+                            if (planStartDate.isAfter(today) && scheduleDate.isAfter(today)) {
+                                long daysDiff = Math.abs(ChronoUnit.DAYS.between(planStartDate, timeslot.getStartTime()));
+                                // 距离越近奖励越高
+                                if (daysDiff == 0) return SOFT_WEIGHT_HIGH * 10;
+                                if (daysDiff <= 2) return SOFT_WEIGHT_HIGH * 5;
+                                if (daysDiff <= 5) return SOFT_WEIGHT_HIGH * 2;
+                                if (daysDiff <= 1000) return SOFT_WEIGHT_NORMAL;
+                            }
                             return 0;
                         })
                 .asConstraint("软约束: 第一个工序尽量接近当天时间");
@@ -392,11 +344,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             }
                             // 按时完成
                             if (daysDiff == 0) return SOFT_WEIGHT_HIGH * 10;
-
                             // 轻微延迟的惩罚较小
                             if (daysDiff <= 2) return SOFT_WEIGHT_NORMAL * 5;
                             if (daysDiff <= 5) return SOFT_WEIGHT_NORMAL;
-
                             return 0;
                         })
                 .asConstraint("软约束: 接近计划结束日期");
@@ -439,7 +389,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getIndex() > 0) // 不是第一个时间槽
                 .join(Timeslot.class,
                         // 同一工序
-                        Joiners.equal(Timeslot::getProcedure, Timeslot::getProcedure),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getId(), timeslot -> timeslot.getProcedure().getId()),
                         // 前一个时间槽（索引-1）
                         Joiners.equal(t -> t.getIndex() - 1, Timeslot::getIndex))
                 .reward(HardMediumSoftScore.ONE_SOFT,
@@ -447,7 +397,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             long daysBetween = ChronoUnit.DAYS.between(
                                     previous.getMaintenance().getDate(),
                                     current.getMaintenance().getDate());
-                            
+
                             // 连续天数给予高奖励，间隔越大奖励越少
                             if (daysBetween == 1) return SOFT_WEIGHT_HIGH * 20; // 连续天
                             if (daysBetween == 2) return SOFT_WEIGHT_HIGH * 10; // 间隔1天
@@ -474,11 +424,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             int priority = timeslot.getPriority();
                             LocalDate scheduleDate = timeslot.getMaintenance().getDate();
                             long daysFromNow = ChronoUnit.DAYS.between(today, scheduleDate);
-
                             // 优先级越高,越早完成,奖励越高
                             int priorityWeight = (priority - 50) * 2; // 50-100映射到0-100
                             int timeWeight = Math.max(0, 30 - (int) daysFromNow); // 越早权重越高
-
                             return priorityWeight * timeWeight;
                         })
                 .asConstraint("软约束: 高优先级优先");
@@ -497,10 +445,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .groupBy(Timeslot::getMaintenance, sum(Timeslot::getDuration))
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         (maintenance, totalDuration) -> {
-                            int totalUsage = maintenance.getUsageTime() + totalDuration;
                             int capacity = maintenance.getCapacity();
-                            double utilization = (double) totalUsage / capacity;
-
+                            double utilization = (double) totalDuration / capacity;
                             // 最佳利用率范围: 70%-85%
                             if (utilization >= 0.70 && utilization <= 0.85) {
                                 return SOFT_WEIGHT_HIGH * 5;
@@ -516,7 +462,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             if (utilization >= 0.50 && utilization < 0.60) {
                                 return SOFT_WEIGHT_NORMAL;
                             }
-
                             return 0;
                         })
                 .asConstraint("软约束: 容量利用率优化");
@@ -526,34 +471,31 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
      * 软约束7: 工作中心负载均衡
      * 平衡不同工作中心的负载,避免某些工作中心过载而其他空闲
      */
-    protected Constraint balancedWorkCenterLoad(ConstraintFactory factory) {
-        return factory.forEach(Timeslot.class)
-                .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getDuration() > 0
-                        && !isOutsourcingWorkCenter(timeslot))
-                .groupBy(t -> t.getMaintenance().getWorkCenter().getId(),
-                        t -> t.getMaintenance().getDate(),
-                        sum(Timeslot::getDuration))
-                .reward(HardMediumSoftScore.ONE_SOFT,
-                        (workCenterId, date, totalDuration) -> {
-                            // 基于每日工作时间8小时=480分钟计算
-                            int dailyCapacity = 480;
-                            double loadRate = (double) totalDuration / dailyCapacity;
-
-                            // 理想负载率: 60%-80%
-                            if (loadRate >= 0.60 && loadRate <= 0.80) {
-                                return SOFT_WEIGHT_NORMAL * 3;
-                            }
-                            if (loadRate >= 0.50 && loadRate < 0.60) {
-                                return SOFT_WEIGHT_NORMAL;
-                            }
-                            if (loadRate > 0.80 && loadRate <= 0.90) {
-                                return SOFT_WEIGHT_NORMAL;
-                            }
-                            return 0;
-                        })
-                .asConstraint("软约束: 工作中心负载均衡");
-    }
+//    protected Constraint balancedWorkCenterLoad(ConstraintFactory factory) {
+//        return factory.forEach(Timeslot.class)
+//                .filter(timeslot -> timeslot.getMaintenance() != null
+//                        && timeslot.getDuration() > 0
+//                        && !isOutsourcingWorkCenter(timeslot))
+//                .groupBy(Timeslot::getMaintenance, sum(Timeslot::getDuration))
+//                .reward(HardMediumSoftScore.ONE_SOFT,
+//                        (maintenance, totalDuration) -> {
+//                            // 基于每日工作时间8小时=480分钟计算
+//                            int dailyCapacity = maintenance.getCapacity();
+//                            double loadRate = (double) totalDuration / dailyCapacity;
+//                            // 理想负载率: 60%-80%
+//                            if (loadRate >= 0.60 && loadRate <= 0.80) {
+//                                return SOFT_WEIGHT_NORMAL * 3;
+//                            }
+//                            if (loadRate >= 0.50 && loadRate < 0.60) {
+//                                return SOFT_WEIGHT_NORMAL;
+//                            }
+//                            if (loadRate > 0.80 && loadRate <= 0.90) {
+//                                return SOFT_WEIGHT_NORMAL;
+//                            }
+//                            return 0;
+//                        })
+//                .asConstraint("软约束: 工作中心负载均衡");
+//    }
 
     /**
      * 软约束: 相邻工序时间接近
@@ -572,19 +514,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                     // 下一道工序的第一个时间槽
                     return next.getIndex() == 1;
                 }).penalize(HardMediumSoftScore.ONE_MEDIUM,
-                        (previous, next) -> {
-                            long daysBetween = ChronoUnit.DAYS.between(
-                                    previous.getMaintenance().getDate(),
-                                    next.getMaintenance().getDate());
-                            // 间隔越大惩罚越重，相邻天不惩罚
-                            if (daysBetween == 1) return 0; // 相邻天，无惩罚
-                            if (daysBetween == 2) return SOFT_WEIGHT_LOW; // 间隔1天，轻微惩罚
-                            if (daysBetween == 3) return SOFT_WEIGHT_NORMAL; // 间隔2天，普通惩罚
-                            if (daysBetween == 4) return SOFT_WEIGHT_NORMAL * 2; // 间隔3天，较重惩罚
-                            if (daysBetween == 5) return SOFT_WEIGHT_HIGH; // 间隔4天，严重惩罚
-                            if (daysBetween <= 7) return SOFT_WEIGHT_HIGH * 2; // 间隔5-6天，更严重惩罚
-                            return SOFT_WEIGHT_HIGH * 5; // 间隔超过7天，最严重惩罚
-                        })
+                        (previous, next) -> Math.abs((int) ChronoUnit.DAYS.between(
+                                previous.getMaintenance().getDate(),
+                                next.getMaintenance().getDate())))
                 .asConstraint("软约束: 相邻工序时间接近");
     }
 
