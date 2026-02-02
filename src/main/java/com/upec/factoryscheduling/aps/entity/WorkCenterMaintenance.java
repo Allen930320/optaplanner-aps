@@ -1,15 +1,13 @@
 package com.upec.factoryscheduling.aps.entity;
 
-import com.upec.factoryscheduling.common.utils.PubFun;
 import com.upec.factoryscheduling.common.utils.RandomFun;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Entity
 @Table(name = "aps_work_center_maintenance")

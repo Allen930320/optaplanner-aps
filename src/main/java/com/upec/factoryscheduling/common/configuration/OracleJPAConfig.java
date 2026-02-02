@@ -1,5 +1,7 @@
 package com.upec.factoryscheduling.common.configuration;
 
+import jakarta.annotation.Resource;
+import jakarta.persistence.EntityManagerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,8 +13,7 @@ import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.annotation.Resource;
-import javax.persistence.EntityManagerFactory;
+
 import javax.sql.DataSource;
 import java.util.Properties;
 
@@ -58,7 +59,7 @@ public class OracleJPAConfig {
         jpaProperties.put("hibernate.jdbc.batch_size", "200");
         jpaProperties.put("hibernate.order_inserts", "true");
         jpaProperties.put("hibernate.order_updates", "true");
-        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
+        jpaProperties.put("hibernate.dialect", "org.hibernate.dialect.OracleDialect");
         jpaProperties.put("hibernate.hbm2ddl.auto", "update");
         jpaProperties.put("hibernate.connection.charSet", "UTF-8");
         jpaProperties.put("hibernate.connection.useUnicode", "true");

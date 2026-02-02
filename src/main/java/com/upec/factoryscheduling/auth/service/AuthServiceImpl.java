@@ -7,7 +7,6 @@ import com.upec.factoryscheduling.auth.entity.User;
 import com.upec.factoryscheduling.auth.repository.UserRepository;
 import com.upec.factoryscheduling.auth.utils.JwtUtils;
 import com.upec.factoryscheduling.common.utils.RandomFun;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,7 +26,6 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
-    @Autowired
     public AuthServiceImpl(AuthenticationManager authenticationManager,
                           UserRepository userRepository,
                           PasswordEncoder passwordEncoder,

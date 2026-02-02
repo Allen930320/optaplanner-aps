@@ -5,13 +5,13 @@ import com.upec.factoryscheduling.auth.dto.LoginResponse;
 import com.upec.factoryscheduling.auth.dto.RegisterRequest;
 import com.upec.factoryscheduling.auth.service.AuthService;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.validation.Valid;
+
 
 /**
  * 认证控制器
@@ -22,7 +22,6 @@ public class AuthController {
 
     private final AuthService authService;
 
-    @Autowired
     public AuthController(AuthService authService) {
         this.authService = authService;
     }

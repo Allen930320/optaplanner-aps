@@ -1,13 +1,13 @@
 package com.upec.factoryscheduling.aps.entity;
 
+import ai.timefold.solver.core.api.domain.lookup.PlanningId;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
-import org.optaplanner.core.api.domain.lookup.PlanningId;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
 
 @Entity
 @Table(name = "aps_work_center")

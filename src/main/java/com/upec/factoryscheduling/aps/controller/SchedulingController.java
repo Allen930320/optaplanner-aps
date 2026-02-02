@@ -1,5 +1,8 @@
 package com.upec.factoryscheduling.aps.controller;
 
+import ai.timefold.solver.core.api.score.ScoreExplanation;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+import ai.timefold.solver.core.api.solver.SolverStatus;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.resquest.ProcedureRequest;
 import com.upec.factoryscheduling.aps.service.SchedulingService;
@@ -7,9 +10,6 @@ import com.upec.factoryscheduling.aps.service.TimeslotService;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.optaplanner.core.api.score.ScoreExplanation;
-import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import org.optaplanner.core.api.solver.SolverStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,7 +34,6 @@ public class SchedulingController {
      * 构造函数
      * @param schedulingService 调度服务，用于处理核心调度逻辑
      */
-    @Autowired
     public SchedulingController(SchedulingService schedulingService) {
         this.schedulingService = schedulingService;
     }

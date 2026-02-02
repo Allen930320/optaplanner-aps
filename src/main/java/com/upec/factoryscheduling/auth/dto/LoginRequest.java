@@ -1,8 +1,9 @@
 package com.upec.factoryscheduling.auth.dto;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 
-import javax.validation.constraints.NotBlank;
+
 
 /**
  * 登录请求 DTO

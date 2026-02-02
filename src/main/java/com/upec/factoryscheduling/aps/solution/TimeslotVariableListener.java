@@ -3,18 +3,18 @@ package com.upec.factoryscheduling.aps.solution;
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import com.upec.factoryscheduling.aps.entity.WorkCenterMaintenance;
 import lombok.extern.slf4j.Slf4j;
-import org.optaplanner.core.api.domain.variable.VariableListener;
-import org.optaplanner.core.api.score.director.ScoreDirector;
+import ai.timefold.solver.core.api.domain.variable.VariableListener;
+import ai.timefold.solver.core.api.score.director.ScoreDirector;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
 /**
- * 优化的时间槽变量监听器
+ * 时间槽变量监听器
  * 主要功能:
  * 1. 实时更新WorkCenterMaintenance的usageTime
- * 2. 动态计算Timeslot的startTime和endTime
+ * 2. 动态计算Timeslot的startTime
  */
 @Slf4j
 public class TimeslotVariableListener implements VariableListener<FactorySchedulingSolution, Timeslot>, Serializable {
@@ -31,10 +31,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         if (timeslot.getMaintenance() != null) {
             WorkCenterMaintenance oldMaintenance = timeslot.getMaintenance();
             releaseCapacity(oldMaintenance, timeslot.getDuration());
-//            log.debug("释放资源 - 工作中心: {}, 日期: {}, 时长: {}分钟",
-//                    oldMaintenance.getWorkCenter().getWorkCenterCode(),
-//                    oldMaintenance.getDate(),
-//                    timeslot.getDuration());
         }
     }
 
@@ -46,14 +42,8 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
             // 1. 分配容量资源
             allocateCapacity(newMaintenance, timeslot.getDuration());
 
-            // 2. 更新开始和结束时间
-            updateTimeslotTime(scoreDirector, timeslot, newMaintenance);
-//
-//            log.debug("分配资源 - 工作中心: {}, 日期: {}, 时长: {}分钟, 剩余容量: {}分钟",
-//                    newMaintenance.getWorkCenter().getWorkCenterCode(),
-//                    newMaintenance.getDate(),
-//                    timeslot.getDuration(),
-//                    newMaintenance.getRemainingCapacity());
+            // 2. 更新开始时间
+            updateTimeslotStartTime(scoreDirector, timeslot, newMaintenance);
         } else {
             // 如果取消分配,清空时间
             clearTimeslotTime(scoreDirector, timeslot);
@@ -63,11 +53,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
     @Override
     public void beforeEntityAdded(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
         // 实体添加前不需要特殊处理
-        if (timeslot.getMaintenance() != null) {
-//            log.debug("准备添加时间槽 - 工序: {}, 索引: {}",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex());
-        }
     }
 
     @Override
@@ -80,12 +65,7 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
             allocateCapacity(maintenance, timeslot.getDuration());
 
             // 更新时间
-            updateTimeslotTime(scoreDirector, timeslot, maintenance);
-//
-//            log.debug("添加时间槽完成 - 工序: {}, 索引: {}, 日期: {}",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex(),
-//                    maintenance.getDate());
+            updateTimeslotStartTime(scoreDirector, timeslot, maintenance);
         }
     }
 
@@ -95,20 +75,12 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         if (timeslot.getMaintenance() != null) {
             WorkCenterMaintenance maintenance = timeslot.getMaintenance();
             releaseCapacity(maintenance, timeslot.getDuration());
-
-//            log.debug("准备移除时间槽 - 工序: {}, 索引: {}, 释放: {}分钟",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex(),
-//                    timeslot.getDuration());
         }
     }
 
     @Override
     public void afterEntityRemoved(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
         // 实体移除后,清理可能的残留状态
-//        log.debug("移除时间槽完成 - 工序: {}, 索引: {}",
-//                timeslot.getProcedure().getId(),
-//                timeslot.getIndex());
     }
 
     /**
@@ -132,40 +104,39 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
     }
 
     /**
-     * 更新时间槽的开始和结束时间
-     * <p>
-     * 逻辑:
-     * - 开始时间: 使用工作中心当天的开始时间,如果未设置则使用默认值09:00
-     * - 结束时间: 使用工作中心当天的结束时间,如果未设置则使用默认值18:00
-     * <p>
-     * 注意: 根据需求,不需要精确计算每个时间槽的具体执行时间,
-     * 只需要知道在哪一天的工作时间段内执行即可
+     * 更新时间槽的开始时间
+     * 根据分配的工作中心来动态计算startTime
      */
-    private void updateTimeslotTime(ScoreDirector<FactorySchedulingSolution> scoreDirector,
-                                    Timeslot timeslot,
-                                    WorkCenterMaintenance maintenance) {
+    private void updateTimeslotStartTime(ScoreDirector<FactorySchedulingSolution> scoreDirector,
+                                         Timeslot timeslot,
+                                         WorkCenterMaintenance maintenance) {
         // 通知ScoreDirector即将变更startTime
         scoreDirector.beforeVariableChanged(timeslot, "startTime");
 
-        // 获取或使用默认开始时间
-        LocalDateTime startTime = maintenance.getStartTime();
+        // 计算开始时间
+        LocalDateTime startTime;
+        if (maintenance.getStartTime() != null) {
+            // 使用工作中心维护计划中定义的开始时间
+            startTime = maintenance.getStartTime();
+        } else {
+            // 使用默认开始时间 09:00
+            startTime = LocalDateTime.of(maintenance.getDate(), DEFAULT_START_TIME);
+        }
+
         timeslot.setStartTime(startTime);
         // 通知ScoreDirector startTime已变更
         scoreDirector.afterVariableChanged(timeslot, "startTime");
-
     }
 
     /**
      * 清空时间槽的时间信息
      */
     private void clearTimeslotTime(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
-
         if (timeslot.getStartTime() != null && timeslot.getStartTime().toLocalTime().equals(DEFAULT_START_TIME)) {
             // 清空开始时间
             scoreDirector.beforeVariableChanged(timeslot, "startTime");
             timeslot.setStartTime(null);
             scoreDirector.afterVariableChanged(timeslot, "startTime");
         }
-
     }
 }

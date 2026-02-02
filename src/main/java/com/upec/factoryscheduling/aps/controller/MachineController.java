@@ -3,7 +3,6 @@ package com.upec.factoryscheduling.aps.controller;
 import com.upec.factoryscheduling.aps.entity.WorkCenter;
 import com.upec.factoryscheduling.aps.service.WorkCenterService;
 import com.upec.factoryscheduling.common.utils.ApiResponse;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -25,7 +24,6 @@ public class MachineController {
      * 构造函数
      * @param workCenterService 工作中心服务实例，通过依赖注入自动装配
      */
-    @Autowired
     public MachineController(WorkCenterService workCenterService) {
         this.workCenterService = workCenterService;
     }

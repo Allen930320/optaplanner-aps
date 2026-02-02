@@ -49,25 +49,17 @@ jwt:
   issuer: aps-system  # 签发者
 
 
-optaplanner:
+timefold:
   # 求解器配置
-  solver:
-    # 终止条件
-    termination:
-      # 最长运行时间（支持: s, m, h, d）
-      spent-limit: ${SOLVER_TIME_LIMIT:5m}
-      # 无改进终止时间
-      unimproved-spent-limit: 1m
-      best-score-limit: "0hard/0medium/10000soft"
-    # 环境模式 (FULL_ASSERT, FAST_ASSERT, REPRODUCIBLE, NON_REPRODUCIBLE)
-    environment-mode: FAST_ASSERT
-    # 守护线程模式
-    daemon: true
   # 求解器管理器配置
   solver-manager:
     # 并行求解数量
     parallel-solver-count: 4
-
+  benchmark:
+    solver:
+      termination:
+        spent-limit: 5m
+        unimproved-spent-limit: 1m
 logging:
   file:
     name: logs/app.log

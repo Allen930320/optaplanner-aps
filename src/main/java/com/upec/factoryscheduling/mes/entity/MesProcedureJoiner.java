@@ -2,10 +2,7 @@ package com.upec.factoryscheduling.mes.entity;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import jakarta.persistence.*;
 
 @Table(name = "MES_JJ_PROCEDURE_JOINER")
 @Entity

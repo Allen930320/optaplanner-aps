@@ -1,7 +1,6 @@
 package com.upec.factoryscheduling.auth.config;
 
 import com.upec.factoryscheduling.auth.filter.JwtAuthenticationFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,7 +28,6 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
-    @Autowired
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -51,7 +49,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)) // 禁用X-Frame-Options以允许H2控制台在iframe中加载
                 .authorizeHttpRequests(auth -> auth
-                        .antMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/h2-console/**",
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/api/auth/logout", "/h2-console/**",
                                 "/h2-console").permitAll()
                         .anyRequest().authenticated()
                 ).addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

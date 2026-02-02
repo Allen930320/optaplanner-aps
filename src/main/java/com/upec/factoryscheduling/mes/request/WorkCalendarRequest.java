@@ -1,6 +1,8 @@
 package com.upec.factoryscheduling.mes.request;
 
-import javax.validation.constraints.NotNull;
+
+import jakarta.validation.constraints.NotNull;
+
 import java.time.LocalDate;
 
 /**

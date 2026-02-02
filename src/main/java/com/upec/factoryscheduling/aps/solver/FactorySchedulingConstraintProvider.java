@@ -2,11 +2,11 @@ package com.upec.factoryscheduling.aps.solver;
 
 import com.upec.factoryscheduling.aps.entity.Timeslot;
 import lombok.extern.slf4j.Slf4j;
-import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import org.optaplanner.core.api.score.stream.Constraint;
-import org.optaplanner.core.api.score.stream.ConstraintFactory;
-import org.optaplanner.core.api.score.stream.ConstraintProvider;
-import org.optaplanner.core.api.score.stream.Joiners;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+import ai.timefold.solver.core.api.score.stream.Constraint;
+import ai.timefold.solver.core.api.score.stream.ConstraintFactory;
+import ai.timefold.solver.core.api.score.stream.ConstraintProvider;
+import ai.timefold.solver.core.api.score.stream.Joiners;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
@@ -14,11 +14,12 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
 
-import static org.optaplanner.core.api.score.stream.ConstraintCollectors.sum;
+import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.sum;
+
 
 /**
- * 优化的工厂调度约束提供者
- * 专注于高效的约束计算和清晰的业务规则表达
+ * 工厂调度约束提供者
+ * 实现高效的任务排产约束规则
  */
 @Slf4j
 @Component
@@ -52,6 +53,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         return new Constraint[]{
                 // ========== 硬约束 (HARD) - 必须满足 ==========
                 // 基础约束
+                manualTimeslotFix(factory),                      // 手动标记时间槽固定
                 workCenterMustMatch(factory),                    // 工作中心必须匹配
                 capacityNotExceeded(factory),                    // 容量不能超过90%
                 noOverlapSameProcedure(factory),                 // 同一工序同一天不能重复分配
@@ -66,6 +68,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 // ========== 中等约束 (MEDIUM) - 重要但可适度违反 ==========
                 procedureDependencyOrder(factory),               // 工序依赖顺序
                 parallelProcedureSynchronization(factory),       // 并行工序同步
+                sameTaskProcedureOrder(factory),                 // 同一任务工序顺序
 
                 // ========== 软约束 (SOFT) - 优化目标 ==========
                 // 时间优化
@@ -88,7 +91,19 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     // ========================================================================
 
     /**
-     * 硬约束1: 工作中心必须匹配
+     * 硬约束1: 手动标记时间槽固定
+     * 当时间槽有手动标记时，manual=true，则该时间槽不允许被更改位置和分配的工作中心
+     */
+    protected Constraint manualTimeslotFix(ConstraintFactory factory) {
+        return factory.forEach(Timeslot.class)
+                .filter(timeslot -> timeslot.isManual() && timeslot.getMaintenance() != null)
+                .penalize(HardMediumSoftScore.ONE_HARD,
+                        timeslot -> HARD_WEIGHT_CRITICAL)
+                .asConstraint("硬约束: 手动时间槽固定");
+    }
+
+    /**
+     * 硬约束2: 工作中心必须匹配
      * 时间槽分配的工作中心必须与工序要求的工作中心一致
      */
     protected Constraint workCenterMustMatch(ConstraintFactory factory) {
@@ -105,7 +120,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     }
 
     /**
-     * 硬约束2: 容量不能超过90%阈值
+     * 硬约束3: 容量不能超过90%阈值
      * 每个工作中心每天的容量使用不能超过90%
      * 外协工序(PM10W200)不受此限制
      */
@@ -131,7 +146,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     }
 
     /**
-     * 硬约束3: 同一工序在同一天不能重复分配
+     * 硬约束4: 同一工序在同一天不能重复分配
      * 每个工序每天只能分配一次时间槽
      */
     protected Constraint noOverlapSameProcedure(ConstraintFactory factory) {
@@ -151,7 +166,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     }
 
     /**
-     * 硬约束4: 不能早于当前日期
+     * 硬约束5: 不能早于当前日期
      * 所有时间槽的分配日期不能早于当前日期
      */
     protected Constraint notBeforeCurrentDate(ConstraintFactory factory) {
@@ -169,7 +184,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     }
 
     /**
-     * 硬约束5: 避开维护期间
+     * 硬约束6: 避开维护期间
      * 在工作中心维护期间不能分配任务
      */
     protected Constraint maintenancePeriodAvoidance(ConstraintFactory factory) {
@@ -182,8 +197,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     }
 
     /**
-     * 硬约束6: 外协工序必须连续分配
+     * 硬约束7: 外协工序必须连续分配
      * 外协工序(ZP02类型且工作中心为PM10W200)的时间槽必须在连续的天数内完成
+     * 外协工序的工作中心资源无限大，不受机器资源限制
      */
     protected Constraint outsourcingContinuousAllocation(ConstraintFactory factory) {
         return factory.forEach(Timeslot.class)
@@ -244,9 +260,9 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
 
                     if (!isLastSlot || !isFirstSlot) return false;
 
-                    // 下一工序的开始日期不能早于或等于当前工序的结束日期
+                    // 下一工序的开始日期必须在当前工序结束日期的第二天或之后
                     return !next.getMaintenance().getDate()
-                            .isAfter(current.getMaintenance().getDate());
+                            .isAfter(current.getMaintenance().getDate().plusDays(1));
                 })
                 .penalize(HardMediumSoftScore.ONE_MEDIUM,
                         (current, next) -> {
@@ -266,7 +282,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     protected Constraint parallelProcedureSynchronization(ConstraintFactory factory) {
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getProcedure() != null
-                        && timeslot.getProcedure().isParallel()
+                        && timeslot.isParallel()
                         && timeslot.getMaintenance() != null
                         && timeslot.getIndex() == timeslot.getTotal() - 1) // 最后一个时间槽
                 .join(Timeslot.class,
@@ -277,7 +293,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         Joiners.lessThan(t -> t.getProcedure().getProcedureNo(),
                                 t -> t.getProcedure().getProcedureNo()),
                         // 也是并行工序
-                        Joiners.filtering((p1, p2) -> p2.getProcedure().isParallel()
+                        Joiners.filtering((p1, p2) -> p2.isParallel()
                                 && p2.getIndex() == p2.getTotal() - 1))
                 .join(Timeslot.class,
                         // 同一任务
@@ -306,11 +322,51 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             ? p1.getMaintenance().getDate()
                             : p2.getMaintenance().getDate();
 
-                    return !next.getMaintenance().getDate().isAfter(maxParallelEnd);
+                    return !next.getMaintenance().getDate().isAfter(maxParallelEnd.plusDays(1));
                 })
                 .penalize(HardMediumSoftScore.ONE_MEDIUM,
                         (p1, p2, next) -> MEDIUM_WEIGHT_NORMAL)
                 .asConstraint("中约束: 并行工序同步");
+    }
+
+    /**
+     * 中等约束3: 同一任务工序顺序
+     * 同一任务的不同工序之间需要考虑前后顺序关系
+     * 后续工序必须在前续工序完成后才能开始，且要在第二天开始执行
+     */
+    protected Constraint sameTaskProcedureOrder(ConstraintFactory factory) {
+        return factory.forEach(Timeslot.class)
+                .filter(timeslot -> timeslot.getProcedure() != null
+                        && timeslot.getMaintenance() != null)
+                .join(Timeslot.class,
+                        // 同一任务
+                        Joiners.equal(t -> t.getProcedure().getTask().getTaskNo(),
+                                t -> t.getProcedure().getTask().getTaskNo()),
+                        // 不同工序
+                        Joiners.lessThan(t -> t.getProcedure().getProcedureNo(),
+                                t -> t.getProcedure().getProcedureNo()))
+                .filter((prev, next) -> {
+                    if (next.getMaintenance() == null) return false;
+
+                    // 找到前工序的最后一个时间槽
+                    boolean isPrevLastSlot = prev.getIndex() == prev.getTotal() - 1;
+                    // 找到后工序的第一个时间槽
+                    boolean isNextFirstSlot = next.getIndex() == 0;
+
+                    if (!isPrevLastSlot || !isNextFirstSlot) return false;
+
+                    // 后工序的开始日期必须在前台序结束日期的第二天或之后
+                    return !next.getMaintenance().getDate()
+                            .isAfter(prev.getMaintenance().getDate().plusDays(1));
+                })
+                .penalize(HardMediumSoftScore.ONE_MEDIUM,
+                        (prev, next) -> {
+                            long daysViolation = ChronoUnit.DAYS.between(
+                                    next.getMaintenance().getDate(),
+                                    prev.getMaintenance().getDate()) + 1;
+                            return (int) daysViolation * MEDIUM_WEIGHT_NORMAL;
+                        })
+                .asConstraint("中约束: 同一任务工序顺序");
     }
 
     // ========================================================================
@@ -327,7 +383,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getProcedure() != null
                         && timeslot.getProcedure().getTask() != null
                         && timeslot.getProcedure().getTask().getPlanStartDate() != null
-                        && timeslot.getProcedure().getProcedureNo() == 1
                         && timeslot.getIndex() == 0)
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
@@ -356,8 +411,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getProcedure() != null
                         && timeslot.getProcedure().getTask() != null
                         && timeslot.getProcedure().getTask().getPlanEndDate() != null
-                        && (timeslot.getProcedure().getNextProcedureNo() == null
-                        || timeslot.getProcedure().getNextProcedureNo().isEmpty())
                         && timeslot.getIndex() == timeslot.getTotal() - 1)
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
@@ -393,8 +446,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
                         && timeslot.getProcedure() != null
-                        && (timeslot.getProcedure().getNextProcedureNo() == null
-                        || timeslot.getProcedure().getNextProcedureNo().isEmpty())
                         && timeslot.getIndex() == timeslot.getTotal() - 1)
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
@@ -418,8 +469,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
     protected Constraint continuousAllocation(ConstraintFactory factory) {
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getIndex() > 0
-                        && !isOutsourcingProcedure(timeslot)) // 外协已有硬约束
+                        && timeslot.getIndex() > 0)
                 .join(Timeslot.class,
                         // 同一工序
                         Joiners.equal(t -> t.getProcedure().getId()),
@@ -450,8 +500,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         LocalDate today = LocalDate.now();
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getPriority() != null
-                        && timeslot.getPriority() > 50) // 高优先级
+                        && timeslot.getPriority() != null)
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
                             int priority = timeslot.getPriority();
@@ -459,10 +508,10 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                             long daysFromNow = ChronoUnit.DAYS.between(today, scheduleDate);
 
                             // 优先级越高,越早完成,奖励越高
-                            int priorityWeight = (priority - 50) * 2; // 50-100映射到0-100
+                            int priorityWeight = priority; // 0-100直接使用
                             int timeWeight = Math.max(0, 30 - (int) daysFromNow); // 越早权重越高
 
-                            return priorityWeight * timeWeight;
+                            return priorityWeight * timeWeight / 100; // 归一化
                         })
                 .asConstraint("软约束: 高优先级优先");
     }
@@ -519,8 +568,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         sum(Timeslot::getDuration))
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         (workCenterId, date, totalDuration) -> {
-                            // 基于每日工作时间8小时=480分钟计算
-                            int dailyCapacity = 480;
+                            // 基于工作中心的实际容量计算
+                            int dailyCapacity = 480; // 默认每天8小时=480分钟
                             double loadRate = (double) totalDuration / dailyCapacity;
 
                             // 理想负载率: 60%-80%

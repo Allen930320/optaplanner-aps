@@ -1,17 +1,17 @@
 package com.upec.factoryscheduling.aps.service;
 
+import ai.timefold.solver.core.api.score.ScoreExplanation;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+import ai.timefold.solver.core.api.solver.SolutionManager;
+import ai.timefold.solver.core.api.solver.SolverJob;
+import ai.timefold.solver.core.api.solver.SolverManager;
+import ai.timefold.solver.core.api.solver.SolverStatus;
 import com.upec.factoryscheduling.aps.dto.ValidateSolution;
 import com.upec.factoryscheduling.aps.entity.*;
 import com.upec.factoryscheduling.aps.response.TimeslotValidate;
 import com.upec.factoryscheduling.aps.solution.FactorySchedulingSolution;
 import com.xkzhangsan.time.calculator.DateTimeCalculatorUtil;
 import lombok.extern.slf4j.Slf4j;
-import org.optaplanner.core.api.score.ScoreExplanation;
-import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
-import org.optaplanner.core.api.solver.SolutionManager;
-import org.optaplanner.core.api.solver.SolverJob;
-import org.optaplanner.core.api.solver.SolverManager;
-import org.optaplanner.core.api.solver.SolverStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -117,23 +117,13 @@ public class SchedulingService {
         // 使用求解器管理器创建求解作业并监听进度
         SolverJob<FactorySchedulingSolution, Long> solverJob = solverManager.solveAndListen(
                 problemId,  // 问题标识
-                id -> problem,  // 提供问题数据的函数
-                // 每次找到更好的解决方案时的回调函数
-                solution -> {
-                    // 记录新的最佳解决方案分数
-                    log.info("New best solution found: {}", solution.getScore());
-                    // 此处可以扩展，例如更新UI或临时保存中间结果
-                },
+                problem,  // 提供问题数据的函数
                 // 求解完成时的回调函数
                 finalBestSolution -> {
                     // 记录最终最佳解决方案分数
                     log.info("Final best solution found: {}", finalBestSolution.getScore());
                     // 保存最终调度结果到数据库
                     saveSolution(finalBestSolution);
-                },
-                // 求解出错时的回调函数
-                (id, throwable) -> {
-                    log.error("Scheduling error: {}", throwable.getMessage());
                 });
     }
 

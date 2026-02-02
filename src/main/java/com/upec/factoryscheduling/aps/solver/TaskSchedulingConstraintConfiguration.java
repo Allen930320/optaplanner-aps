@@ -1,8 +1,9 @@
 package com.upec.factoryscheduling.aps.solver;
 
-import org.optaplanner.core.api.domain.constraintweight.ConstraintConfiguration;
-import org.optaplanner.core.api.domain.constraintweight.ConstraintWeight;
-import org.optaplanner.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
+
+import ai.timefold.solver.core.api.domain.constraintweight.ConstraintConfiguration;
+import ai.timefold.solver.core.api.domain.constraintweight.ConstraintWeight;
+import ai.timefold.solver.core.api.score.buildin.hardmediumsoft.HardMediumSoftScore;
 import org.springframework.stereotype.Component;
 
 @Component
