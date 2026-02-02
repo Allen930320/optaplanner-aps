@@ -132,9 +132,7 @@ public class SchedulingService {
                     saveSolution(finalBestSolution);
                 },
                 // 求解出错时的回调函数
-                (id, throwable) -> {
-                    log.error("Scheduling error: {}", throwable.getMessage());
-                });
+                (id, throwable) -> log.error("Scheduling error: {}", throwable.getMessage()));
     }
 
 
@@ -268,14 +266,11 @@ public class SchedulingService {
                         int procCompare = t1.getProcedure() != null && t2.getProcedure() != null ?
                                 t1.getProcedure().getId().compareTo(t2.getProcedure().getId()) : 0;
                         if (procCompare != 0) return procCompare;
-
                         // 然后按分片索引排序
                         return Integer.compare(t1.getIndex(), t2.getIndex());
                     }).collect(Collectors.toList());
-
             // 设置分片之间的连接关系
             setupSliceRelationships(sortedTimeslots);
-
             // 更新解决方案中的时间槽列表
             solution.setTimeslots(sortedTimeslots);
         }
@@ -353,6 +348,21 @@ public class SchedulingService {
         try {
             // 首先保存所有时间槽到数据库
             int savedCount = solution.getTimeslots().size();
+            for (Timeslot timeslot : solution.getTimeslots()) {
+                List<Procedure> next = timeslot.getProcedure().getNextProcedure();
+                if (!CollectionUtils.isEmpty(next) && CollectionUtils.isEmpty(next.get(0).getNextProcedure())&&next.get(0).getProcedureType().equals("ZP03")) {
+                    Procedure ZP03 = next.get(0);
+                    List<Timeslot> ZP03Timeslots = timeslotService.findListByProcedure(ZP03);
+                    if (!CollectionUtils.isEmpty(ZP03Timeslots)) {
+                        Timeslot last = ZP03Timeslots.get(0);
+                        last.setStartTime(timeslot.getStartTime().plusDays(1));
+                        last.setEndTime(timeslot.getEndTime().plusDays(1));
+                        last.getProcedure().setStartTime(timeslot.getStartTime().plusDays(1));
+                        last.getProcedure().setEndTime(timeslot.getEndTime().plusDays(1));
+                        timeslotService.save(last);
+                    }
+                }
+            }
             timeslotService.saveAll(solution.getTimeslots());
             log.info("已保存 {} 个时间槽到数据库", savedCount);
             // 根据工序ID对时间槽进行分组

@@ -76,6 +76,14 @@ public class TimeslotService {
         return timeslotRepository.saveAll(timeslots);
     }
 
+    public List<Timeslot> findListByProcedure(Procedure procedure) {
+        return timeslotRepository.findAllByProcedure(procedure);
+    }
+
+    public void save(Timeslot timeslot) {
+        timeslotRepository.save(timeslot);
+    }
+
     @Transactional("oracleTransactionManager")
     public void deleteAll() {
         timeslotRepository.deleteAll();
@@ -88,9 +96,9 @@ public class TimeslotService {
 
     public List<Timeslot> findAllByTaskIn(List<String> taskNos) {
         Sort sort = Sort.by(Sort.Direction.DESC, "procedureIndex", "index").ascending();
-        List<String> procedureTypes = List.of("ZP01","ZP02");
+        List<String> procedureTypes = List.of("ZP01", "ZP02");
         return timeslotRepository.findAllByProcedure_Task_TaskNoIsInAndProcedure_ProcedureTypeIsIn(taskNos,
-                procedureTypes,sort);
+                procedureTypes, sort);
     }
 
     @Transactional("oracleTransactionManager")
