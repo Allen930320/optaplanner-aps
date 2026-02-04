@@ -5,6 +5,7 @@ import { Routes, Route, Link, BrowserRouter, Navigate } from 'react-router-dom';
 import { HomeOutlined, FileTextOutlined, BarChartOutlined, SettingOutlined, LogoutOutlined, ClockCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import HomePage from './components/HomePage';
 import OrderTasksPage from './components/OrderTasksPage';
+import ApsOrderTasksPage from './components/ApsOrderTasksPage';
 import SchedulingTimelinePage from './components/SchedulingTimelinePage';
 import ProductUserSchedulingPage from './components/ProductUserSchedulingPage';
 import WorkCenterCalendarPage from './components/WorkCenterCalendarPage';
@@ -28,12 +29,17 @@ const menuItems = [
   {
     key: '5',
     icon: <FileTextOutlined />,
-    label: <Link to="/order-tasks">任务列表</Link>,
+    label: <Link to="/order-tasks">订单任务</Link>,
+  },
+  {
+    key: '11',
+    icon: <FileTextOutlined />,
+    label: <Link to="/aps-order-tasks">待排产任务</Link>,
   },
   {
     key: '8',
     icon: <FileTextOutlined />,
-    label: <Link to="/procedure-list">工序列表</Link>,
+    label: <Link to="/procedure-list">待排产工序</Link>,
   },
   {
     key: '6',
@@ -119,6 +125,7 @@ const AppContent = () => {
               <Routes>
               <Route path="/" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
+              <Route path="/aps-order-tasks" element={<ProtectedRoute><ApsOrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
               <Route path="/product-user-scheduling" element={<ProtectedRoute><ProductUserSchedulingPage /></ProtectedRoute>} />

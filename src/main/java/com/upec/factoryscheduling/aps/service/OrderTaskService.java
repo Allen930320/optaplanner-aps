@@ -3,12 +3,14 @@ package com.upec.factoryscheduling.aps.service;
 import com.upec.factoryscheduling.aps.dto.TaskTimeslotDTO;
 import com.upec.factoryscheduling.aps.entity.Task;
 import com.upec.factoryscheduling.aps.repository.TaskRepository;
+import com.upec.factoryscheduling.mes.dto.OrderTaskDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +60,7 @@ public class OrderTaskService {
                                                        String startTime,
                                                        String endTime,
                                                        Integer pageNum,
-                                                       Integer pageSize){
+                                                       Integer pageSize) {
         return taskRepository.queryTaskWithTimeslot(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
     }
 
@@ -70,7 +72,55 @@ public class OrderTaskService {
                                                       String startTime,
                                                       String endTime,
                                                       Integer pageNum,
-                                                      Integer pageSize){
+                                                      Integer pageSize) {
         return taskRepository.queryTaskWithTimeslotByUser(productName, productCode, taskNo, contractNum, startTime, endTime, pageNum, pageSize);
+    }
+
+
+    public Page<OrderTaskDTO> queryApsTaskPage(String orderName,
+                                               String orderNo,
+                                               String contractNum,
+                                               String startTime,
+                                               String endTime,
+                                               List<String> statusList,
+                                               Integer pageNum,
+                                               Integer pageSize) {
+        return taskRepository.queryApsTaskPage(orderName,
+                orderNo,
+                contractNum,
+                startTime,
+                endTime,
+                statusList,
+                pageNum,
+                pageSize);
+    }
+
+
+    public void lockedScheduling(List<String> taskNos) {
+        List<Task> tasks = findAllByTaskNoIsIn(taskNos);
+        for (Task task : tasks) {
+            task.setLockedRemark(Boolean.TRUE.toString());
+        }
+        taskRepository.saveAll(tasks);
+    }
+
+    public void unlockedScheduling(List<String> taskNos) {
+        List<Task> tasks = findAllByTaskNoIsIn(taskNos);
+        for (Task task : tasks) {
+            task.setLockedRemark(Boolean.FALSE.toString());
+        }
+        taskRepository.saveAll(tasks);
+    }
+
+
+    public void setPlanStartDate(String taskNo,LocalDate planStartEnd, LocalDate planEndDate) {
+        Task task = findById(taskNo);
+        if(planStartEnd!=null) {
+            task.setPlanStartDate(planStartEnd);
+        }
+        if(planEndDate!=null) {
+            task.setPlanEndDate(planEndDate);
+        }
+        taskRepository.save(task);
     }
 }

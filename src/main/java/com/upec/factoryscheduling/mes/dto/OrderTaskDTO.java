@@ -1,8 +1,10 @@
 package com.upec.factoryscheduling.mes.dto;
 
 import lombok.Data;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 @Data
 public class OrderTaskDTO implements Serializable {
@@ -17,17 +19,21 @@ public class OrderTaskDTO implements Serializable {
 
     private String taskStatus;
 
-    private String factStartDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate factStartDate;
 
-    private String factEndDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate factEndDate;
 
     private String createUser;
 
     private String createDate;
 
-    private String planStartDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate planStartDate;
 
-    private String planEndDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate planEndDate;
 
     private String oldTaskNo;
 

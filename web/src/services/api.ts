@@ -393,3 +393,77 @@ export const splitOutsourcingTimeslot = async (timeslotId: string, days: number)
     throw new Error(`拆分时间槽失败: ${response.msg || '未知错误'}`);
   }
 };
+
+// 获取待排产列表数据
+export const queryApsOrderTaskForPage = async (params: {
+  orderName?: string;
+  orderNo?: string;
+  contractNum?: string;
+  startTime?: string;
+  endTime?: string;
+  statusList?: string[];
+  pageNum?: number;
+  pageSize?: number;
+}): Promise<ApiResponse<SpringDataPage<any>>> => {
+  // 构建查询参数
+  const queryParams: Record<string, string | string[]> = {};
+  
+  // 添加基本参数
+  queryParams.orderName = params?.orderName || '';
+  queryParams.orderNo = params?.orderNo || '';
+  queryParams.contractNum = params?.contractNum || '';
+  queryParams.startTime = params?.startTime || '';
+  queryParams.endTime = params?.endTime || '';
+  queryParams.pageNum = (params?.pageNum || 1).toString();
+  queryParams.pageSize = (params?.pageSize || 20).toString();
+  
+  // 处理statusList参数
+  if (params?.statusList && params.statusList.length > 0) {
+    queryParams.statusList = params.statusList;
+  }
+  
+  // 调用后端接口
+  const result: ApiResponse<SpringDataPage<any>> = await apiClient.get('/api/orders/task/page', {
+    params: queryParams,
+    // 自定义参数序列化器，处理重复的参数名
+    paramsSerializer: function(params: Record<string, string | string[]>) {
+      let result = '';
+      Object.keys(params).forEach(key => {
+        const value = params[key];
+        if (Array.isArray(value)) {
+          // 对于数组，为每个元素创建一个同名参数
+          value.forEach(item => {
+            result += `${key}=${encodeURIComponent(item)}&`;
+          });
+        } else {
+          // 对于单个值，创建一个参数
+          result += `${key}=${encodeURIComponent(value)}&`;
+        }
+      });
+      // 移除末尾的&
+      return result.slice(0, -1);
+    }
+  });
+  
+  if (!result || result.code !== 200) {
+    throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+  }
+  return result;
+};
+
+// 设置计划开始和完成时间
+export const setEndDate = async (taskNo: string, planStartDate: string, planEndDate: string): Promise<void> => {
+  const params = new URLSearchParams();
+  params.append('taskNo', taskNo);
+  params.append('planStartDate', planStartDate);
+  params.append('planEndDate', planEndDate);
+  const response: ApiResponse<void> = await apiClient.post('/api/orders/task/setEndDate', params, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  });
+  
+  if (response.code !== 200) {
+    throw new Error(`设置计划时间失败: ${response.msg || '未知错误'}`);
+  }
+};

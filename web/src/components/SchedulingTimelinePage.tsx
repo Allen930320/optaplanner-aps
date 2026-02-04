@@ -94,19 +94,23 @@ const SchedulingTimelinePage: React.FC = () => {
                 tsList.forEach(ts => {
                     if (ts.startTime) {
                         const startTime = new Date(ts.startTime);
-                        minStartTime = minStartTime ? (startTime < minStartTime ? startTime : minStartTime) : startTime;
+                        if (!minStartTime || startTime < minStartTime) {
+                            minStartTime = startTime;
+                        }
                     }
                     if (ts.endTime) {
                         const endTime = new Date(ts.endTime);
-                        maxEndTime = maxEndTime ? (endTime > maxEndTime ? endTime : maxEndTime) : endTime;
+                        if (!maxEndTime || endTime > maxEndTime) {
+                            maxEndTime = endTime;
+                        }
                     }
                 });
                 
                 // 创建合并后的 timeslot
                 const mergedTs: Timeslot = {
                     ...baseTs,
-                    startTime: minStartTime ? minStartTime.toISOString() : null,
-                    endTime: maxEndTime ? maxEndTime.toISOString() : null,
+                    startTime: minStartTime ? (minStartTime as Date).toISOString() : '',
+                    endTime: maxEndTime ? (maxEndTime as Date).toISOString() : '',
                     // 合并 duration，取总和
                     duration: tsList.reduce((sum, ts) => sum + (ts.duration || 0), 0)
                 };

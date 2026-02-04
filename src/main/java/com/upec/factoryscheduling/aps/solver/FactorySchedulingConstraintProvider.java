@@ -113,12 +113,11 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
                         && timeslot.getDuration() > 0
-                        && !isOutsourcingWorkCenter(timeslot))
+                        && isOutsourcingWorkCenter(timeslot))
                 .groupBy(Timeslot::getMaintenance, sum(Timeslot::getDuration))
                 .filter((maintenance, totalDuration) -> {
-                    int totalUsage = maintenance.getUsageTime() + totalDuration;
                     int threshold = (int) (maintenance.getCapacity() * CAPACITY_THRESHOLD);
-                    return totalUsage > threshold;
+                    return totalDuration > threshold;
                 })
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 容量不超90%");
@@ -183,12 +182,12 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         // 同一工序
                         Joiners.equal(timeslot -> timeslot.getProcedure().getId(), timeslot -> timeslot.getProcedure().getId()),
                         // 前一个时间槽
-                        Joiners.equal(timeslot -> timeslot.getIndex() - 1, Timeslot::getIndex))
+                        Joiners.equal(timeslot -> timeslot.getIndex() + 1, Timeslot::getIndex))
                 .filter((current, previous) ->
                         previous.getMaintenance() != null
                                 && ChronoUnit.DAYS.between(
                                 previous.getMaintenance().getDate(),
-                                current.getMaintenance().getDate()) > 1)
+                                current.getMaintenance().getDate()) != 1)
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 外协工序必须连续");
     }
@@ -209,13 +208,15 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         && timeslot.getEndTime() != null
                         && timeslot.getIndex() == timeslot.getTotal()) // 前置工序的最后一个时间槽
                 .join(Timeslot.class,
-                        Joiners.equal(timeslot -> timeslot.getProcedure().getTask(), timeslot -> timeslot.getProcedure().getTask()),
+                        Joiners.equal(timeslot -> timeslot.getProcedure().getTask().getTaskNo(),
+                                timeslot -> timeslot.getProcedure().getTask().getTaskNo()),
                         Joiners.equal(timeslot -> timeslot.getProcedure().getLevel() + 1,
                                 timeslot -> timeslot.getProcedure().getLevel()))
-                .filter((previous, next) -> {
+                .filter((current, next) -> !(current.isParallel() && next.isParallel()))
+                .filter((current, next) -> {
                     // 后续工序的开始日期必须在前置工序结束日期的第二天或之后
                     long daysBetween = ChronoUnit.DAYS.between(
-                            previous.getMaintenance().getDate(),
+                            current.getMaintenance().getDate(),
                             next.getMaintenance().getDate());
                     return daysBetween < 1; // 必须至少间隔0天（同一天结束后第二天开始）
                 }).penalize(HardMediumSoftScore.ONE_HARD)
@@ -357,17 +358,21 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
      * 奖励提前完成的任务,越早完成奖励越高
      */
     protected Constraint earlyCompletionReward(ConstraintFactory factory) {
-        LocalDate today = LocalDate.now();
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
-                        && timeslot.getProcedure() != null
-                        && (timeslot.getProcedure().getNextProcedureNo() == null
-                        || timeslot.getProcedure().getNextProcedureNo().isEmpty())
-                        && timeslot.getIndex() == timeslot.getTotal() - 1)
+                        && timeslot.getIndex() == timeslot.getTotal())
+                .groupBy(timeslot -> timeslot.getProcedure().getTask().getTaskNo(),
+                        max(Comparator.comparing(timeslot -> timeslot.getProcedure().getLevel())))
                 .reward(HardMediumSoftScore.ONE_SOFT,
-                        timeslot -> {
+                        (taskNo, timeslot) -> {
                             LocalDate endDate = timeslot.getMaintenance().getDate();
-                            long daysFromNow = ChronoUnit.DAYS.between(today, endDate);
+                            LocalDate planEndDate = timeslot.getProcedure().getTask().getPlanEndDate();
+                            long daysFromNow = 0;
+                            if (planEndDate.isBefore(endDate)) {
+                                daysFromNow = ChronoUnit.DAYS.between(planEndDate, endDate);
+                            } else {
+                                daysFromNow = ChronoUnit.DAYS.between(endDate, planEndDate);
+                            }
                             // 越早完成奖励越高
                             if (daysFromNow <= 7) return SOFT_WEIGHT_HIGH * 5;
                             if (daysFromNow <= 14) return SOFT_WEIGHT_HIGH * 3;
@@ -441,7 +446,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
         return factory.forEach(Timeslot.class)
                 .filter(timeslot -> timeslot.getMaintenance() != null
                         && timeslot.getDuration() > 0
-                        && !isOutsourcingWorkCenter(timeslot))
+                        && isOutsourcingWorkCenter(timeslot))
                 .groupBy(Timeslot::getMaintenance, sum(Timeslot::getDuration))
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         (maintenance, totalDuration) -> {
@@ -539,9 +544,6 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
      * 判断是否为外协工作中心
      */
     private boolean isOutsourcingWorkCenter(Timeslot timeslot) {
-        return timeslot.getProcedure() != null
-                && timeslot.getProcedure().getWorkCenter() != null
-                && OUTSOURCING_WORK_CENTER.equals(
-                timeslot.getProcedure().getWorkCenter().getWorkCenterCode());
+        return !OUTSOURCING_WORK_CENTER.equals(timeslot.getProcedure().getWorkCenter().getWorkCenterCode());
     }
 }

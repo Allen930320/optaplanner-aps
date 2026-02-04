@@ -67,6 +67,9 @@ public class SchedulingService {
      */
     private TimeslotService timeslotService;
 
+    @Autowired
+    private OrderTaskService orderTaskService;
+
 
     @Autowired
     public void setTimeslotService(TimeslotService timeslotService) {
@@ -274,7 +277,7 @@ public class SchedulingService {
             // 更新解决方案中的时间槽列表
             solution.setTimeslots(sortedTimeslots);
         }
-
+        orderTaskService.lockedScheduling(solution.getTimeslots().stream().map(p -> p.getProcedure().getTask().getTaskNo()).distinct().collect(Collectors.toList()));
         return solution;
     }
 
@@ -350,7 +353,7 @@ public class SchedulingService {
             int savedCount = solution.getTimeslots().size();
             for (Timeslot timeslot : solution.getTimeslots()) {
                 List<Procedure> next = timeslot.getProcedure().getNextProcedure();
-                if (!CollectionUtils.isEmpty(next) && CollectionUtils.isEmpty(next.get(0).getNextProcedure())&&next.get(0).getProcedureType().equals("ZP03")) {
+                if (!CollectionUtils.isEmpty(next) && CollectionUtils.isEmpty(next.get(0).getNextProcedure()) && next.get(0).getProcedureType().equals("ZP03")) {
                     Procedure ZP03 = next.get(0);
                     List<Timeslot> ZP03Timeslots = timeslotService.findListByProcedure(ZP03);
                     if (!CollectionUtils.isEmpty(ZP03Timeslots)) {
@@ -374,6 +377,8 @@ public class SchedulingService {
         } catch (Exception e) {
             log.error("保存调度解决方案时发生错误：", e);
             throw e; // 重新抛出异常，让事务回滚
+        } finally {
+            orderTaskService.unlockedScheduling(timeslots.stream().map(timeslot -> timeslot.getProcedure().getTask().getTaskNo()).distinct().collect(Collectors.toList()));
         }
     }
 
@@ -436,7 +441,6 @@ public class SchedulingService {
             Map<String, List<Timeslot>> timeslotsByProcedure = solution.getTimeslots().stream()
                     .filter(t -> t.getProcedure() != null)
                     .collect(Collectors.groupingBy(t -> t.getProcedure().getId()));
-
             timeslotsByProcedure.forEach((procedureId, timeslotList) -> {
                 Procedure procedure = timeslotList.get(0).getProcedure();
                 if (procedure != null) {
