@@ -10,7 +10,7 @@ import type {
     Page,
     Task,
     UserInfo,
-    WorkCenterMaintenance, OrderTask, WorkCenter, TaskTimeslot
+    WorkCenterMaintenance, OrderTask, WorkCenter, TaskTimeslot, RouteProcedureQueryDTO
 } from './model';
 
 // 创建axios实例
@@ -458,4 +458,36 @@ export const setEndDate = async (taskNo: string, planStartDate: string, planEndD
     if (response.code !== 200) {
         throw new Error(`设置计划时间失败: ${response.msg || '未知错误'}`);
     }
+};
+
+// 分页查询工艺路线列表
+export const queryRouteProcedurePage = async (params: {
+    productName?: string;
+    productCode?: string;
+    orderNo?: string;
+    taskNo?: string;
+    contractNum?: string;
+    pageNum?: number;
+    pageSize?: number;
+}): Promise<ApiResponse<Page<RouteProcedureQueryDTO>>> => {
+    // 构建查询参数
+    const queryParams = {
+        productName: params.productName || '',
+        productCode: params.productCode || '',
+        orderNo: params.orderNo || '',
+        taskNo: params.taskNo || '',
+        contractNum: params.contractNum || '',
+        pageNum: params.pageNum || 1,
+        pageSize: params.pageSize || 20
+    };
+
+    // 调用后端接口
+    const result: ApiResponse<Page<RouteProcedureQueryDTO>> = await apiClient.get('/api/route-procedure/queryPage', {
+        params: queryParams
+    });
+
+    if (!result || result.code !== 200) {
+        throw new Error(`API调用失败: ${result?.msg || '未知错误'}`);
+    }
+    return result;
 };

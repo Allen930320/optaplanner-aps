@@ -20,4 +20,8 @@ public class MesRouteProcedureService {
     public List<MesRouteProcedure> findAllByRouteSeqIn(List<String> routeSeq) {
         return mesJjRouteProcedureRepository.findAllByRouteSeqIn(routeSeq);
     }
+
+    public MesRouteProcedure findById(String id) {
+        return mesJjRouteProcedureRepository.findById(id).orElse(null);
+    }
 }

@@ -10,8 +10,6 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 @Data
-@Setter
-@Getter
 @Entity
 @Table(name = "MES_JJ_ROUTE_PROCEDURE")
 public class MesRouteProcedure implements Serializable {

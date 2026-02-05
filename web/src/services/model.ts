@@ -279,3 +279,29 @@ export interface TaskTimeslot {
     productCode: string;
     timeslots: Timeslot[];
 }
+
+// 工艺路线查询DTO（适配新接口返回数据结构）
+export interface RouteProcedureQueryDTO {
+    id: string;
+    routeSeq: string;
+    procedureNo: number;
+    procedureCode: string;
+    procedureName: string;
+    procedureType: string;
+    procedureContent: string;
+    workCenterId: string;
+    machineHours: number | null;
+    humanHours: number | null;
+    dutyUser: string;
+    remark: string | null;
+    createUser: string;
+    createDate: string;
+    updateUser: string;
+    updateDate: string;
+    days: number | null;
+    productCode: string;
+    productVersion: string;
+    routeCode: string;
+    routeName: string;
+    routeVersion: string;
+}

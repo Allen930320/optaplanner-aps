@@ -13,6 +13,7 @@ import ProcedurePage from './components/ProcedurePage';
 import ProductionSchedulingResultPage from './components/ProductionSchedulingResultPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import RouteProcedurePage from './components/RouteProcedurePage';
 import { isLoggedIn, logout } from './services/orderService';
 import 'antd/dist/reset.css';
 import './App.css';
@@ -40,6 +41,11 @@ const menuItems = [
     key: '8',
     icon: <FileTextOutlined />,
     label: <Link to="/procedure-list">待排产工序</Link>,
+  },
+  {
+    key: '12',
+    icon: <FileTextOutlined />,
+    label: <Link to="/route-procedure">工艺路线</Link>,
   },
   {
     key: '6',
@@ -127,6 +133,7 @@ const AppContent = () => {
               <Route path="/order-tasks" element={<ProtectedRoute><OrderTasksPage /></ProtectedRoute>} />
               <Route path="/aps-order-tasks" element={<ProtectedRoute><ApsOrderTasksPage /></ProtectedRoute>} />
               <Route path="/procedure-list" element={<ProtectedRoute><ProcedurePage /></ProtectedRoute>} />
+              <Route path="/route-procedure" element={<ProtectedRoute><RouteProcedurePage /></ProtectedRoute>} />
               <Route path="/scheduling-timeline" element={<ProtectedRoute><SchedulingTimelinePage /></ProtectedRoute>} />
               <Route path="/product-user-scheduling" element={<ProtectedRoute><ProductUserSchedulingPage /></ProtectedRoute>} />
               <Route path="/production-scheduling-result" element={<ProtectedRoute><ProductionSchedulingResultPage /></ProtectedRoute>} />

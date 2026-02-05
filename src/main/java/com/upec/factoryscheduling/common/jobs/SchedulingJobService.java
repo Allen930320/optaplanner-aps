@@ -36,14 +36,14 @@ public class SchedulingJobService {
         this.workCenterMaintenanceService = workCenterMaintenanceService;
     }
 
-    @Scheduled(cron = "0 0 0 * * *")
+    @Scheduled(cron = "0 0/5 * * * *")
     @Transactional
     public void syncWorkCenterData() {
         mesBaseWorkCenterService.syncWorkCenterData();
     }
 
 
-    @Scheduled(cron = "0 0/5 * * * *")
+    @Scheduled(cron = "0 0/7 * * * *")
     public void createWorkCenterMaintenance() {
         LocalDate today = LocalDate.now();
         LocalDate maxDate = workCenterMaintenanceService.findFirstByCalendarDateMax();
