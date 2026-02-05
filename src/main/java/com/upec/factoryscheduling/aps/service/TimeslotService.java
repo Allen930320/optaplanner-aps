@@ -48,7 +48,7 @@ public class TimeslotService {
         this.procedureService = procedureService;
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public Timeslot updateTimeslot(ProcedureRequest request) {
 //        Order order = orderService.findFirstByOrderNo(request.getOrderNo());
 //        Machine machine = machineService.findFirstByMachineNo(request.getMachineNo());
@@ -71,7 +71,7 @@ public class TimeslotService {
     }
 
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public List<Timeslot> saveAll(List<Timeslot> timeslots) {
         return timeslotRepository.saveAll(timeslots);
     }
@@ -84,12 +84,12 @@ public class TimeslotService {
         timeslotRepository.save(timeslot);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public void deleteAll() {
         timeslotRepository.deleteAll();
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public List<Timeslot> saveTimeslot(List<Timeslot> timeslots) {
         return timeslotRepository.saveAll(timeslots);
     }
@@ -101,7 +101,7 @@ public class TimeslotService {
                 procedureTypes, sort);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public String createTimeslot(String procedureId, double time, int slice) {
         List<Timeslot> timeslots = timeslotRepository.findAllByProcedure_Id(procedureId);
         if (CollectionUtils.isEmpty(timeslots)) {

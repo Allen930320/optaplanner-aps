@@ -1,11 +1,9 @@
 package com.upec.factoryscheduling.mes.service;
 
-import com.google.common.collect.Lists;
 import com.upec.factoryscheduling.aps.entity.*;
 import com.upec.factoryscheduling.aps.service.*;
 import com.upec.factoryscheduling.common.utils.DateUtils;
 import com.upec.factoryscheduling.common.utils.NodeLevelManager;
-import com.upec.factoryscheduling.mes.entity.MesOrderTask;
 import com.upec.factoryscheduling.mes.entity.MesProcedure;
 import com.upec.factoryscheduling.mes.repository.MesOrderRepository;
 import com.xkzhangsan.time.utils.CollectionUtil;
@@ -14,7 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j

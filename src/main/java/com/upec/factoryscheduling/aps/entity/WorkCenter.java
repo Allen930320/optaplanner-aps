@@ -22,5 +22,8 @@ public class WorkCenter {
     private String workCenterCode;
     private String name;
     private String status;
+    private int capacity;
+    private String startTime;
+    private String endTime;
 
 }

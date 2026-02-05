@@ -10,12 +10,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
-/**
- * 优化的时间槽变量监听器
- * 主要功能:
- * 1. 实时更新WorkCenterMaintenance的usageTime
- * 2. 动态计算Timeslot的startTime和endTime
- */
+
 @Slf4j
 public class TimeslotVariableListener implements VariableListener<FactorySchedulingSolution, Timeslot>, Serializable {
 
@@ -31,10 +26,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         if (timeslot.getMaintenance() != null) {
             WorkCenterMaintenance oldMaintenance = timeslot.getMaintenance();
             releaseCapacity(oldMaintenance, timeslot.getDuration());
-//            log.debug("释放资源 - 工作中心: {}, 日期: {}, 时长: {}分钟",
-//                    oldMaintenance.getWorkCenter().getWorkCenterCode(),
-//                    oldMaintenance.getDate(),
-//                    timeslot.getDuration());
         }
     }
 
@@ -48,12 +39,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
 
             // 2. 更新开始和结束时间
             updateTimeslotTime(scoreDirector, timeslot, newMaintenance);
-//
-//            log.debug("分配资源 - 工作中心: {}, 日期: {}, 时长: {}分钟, 剩余容量: {}分钟",
-//                    newMaintenance.getWorkCenter().getWorkCenterCode(),
-//                    newMaintenance.getDate(),
-//                    timeslot.getDuration(),
-//                    newMaintenance.getRemainingCapacity());
         } else {
             // 如果取消分配,清空时间
             clearTimeslotTime(scoreDirector, timeslot);
@@ -64,9 +49,6 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
     public void beforeEntityAdded(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
         // 实体添加前不需要特殊处理
         if (timeslot.getMaintenance() != null) {
-//            log.debug("准备添加时间槽 - 工序: {}, 索引: {}",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex());
         }
     }
 
@@ -75,17 +57,11 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         // 实体添加后,如果已分配,需要分配资源并更新时间
         if (timeslot.getMaintenance() != null) {
             WorkCenterMaintenance maintenance = timeslot.getMaintenance();
-
             // 分配容量
             allocateCapacity(maintenance, timeslot.getDuration());
-
             // 更新时间
             updateTimeslotTime(scoreDirector, timeslot, maintenance);
-//
-//            log.debug("添加时间槽完成 - 工序: {}, 索引: {}, 日期: {}",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex(),
-//                    maintenance.getDate());
+
         }
     }
 
@@ -95,20 +71,12 @@ public class TimeslotVariableListener implements VariableListener<FactorySchedul
         if (timeslot.getMaintenance() != null) {
             WorkCenterMaintenance maintenance = timeslot.getMaintenance();
             releaseCapacity(maintenance, timeslot.getDuration());
-
-//            log.debug("准备移除时间槽 - 工序: {}, 索引: {}, 释放: {}分钟",
-//                    timeslot.getProcedure().getId(),
-//                    timeslot.getIndex(),
-//                    timeslot.getDuration());
         }
     }
 
     @Override
     public void afterEntityRemoved(ScoreDirector<FactorySchedulingSolution> scoreDirector, Timeslot timeslot) {
         // 实体移除后,清理可能的残留状态
-//        log.debug("移除时间槽完成 - 工序: {}, 索引: {}",
-//                timeslot.getProcedure().getId(),
-//                timeslot.getIndex());
     }
 
     /**

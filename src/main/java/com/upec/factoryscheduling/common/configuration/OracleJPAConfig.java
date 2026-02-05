@@ -22,9 +22,7 @@ import java.util.Properties;
         "com.upec.factoryscheduling.mes",
         "com.upec.factoryscheduling.auth",
         "com.upec.factoryscheduling.aps"
-},
-        entityManagerFactoryRef = "oracleSessionFactory",
-        transactionManagerRef = "oracleTransactionManager")
+}, entityManagerFactoryRef = "oracleSessionFactory")
 public class OracleJPAConfig {
 
     @Resource(name = "oracleDataSource")
@@ -76,7 +74,7 @@ public class OracleJPAConfig {
         return jpaProperties;
     }
 
-    @Bean("oracleTransactionManager")
+    @Bean
     public PlatformTransactionManager transactionManager(@Qualifier("oracleSessionFactory") EntityManagerFactory factory) {
         return new JpaTransactionManager(factory);
     }

@@ -2,19 +2,12 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space, Typography } from 'antd';
 import type { ColumnType } from 'antd/es/table';
 import { queryProductUserTimeslots } from '../services/api';
-import type { Timeslot } from '../services/model';
+import type { Timeslot,TaskTimeslot } from '../services/model';
 import moment from 'moment';
 import { SearchOutlined, FilterOutlined } from '@ant-design/icons';
 
 const { Text } = Typography;
 
-interface TaskTimeslot {
-    taskNo: string;
-    contractNum: string;
-    productName: string;
-    productCode: string;
-    timeslots: Timeslot[];
-}
 
 interface TableData {
     key: string;

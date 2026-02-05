@@ -21,6 +21,7 @@ import type {ColumnsType} from 'antd/es/table';
 import {queryApsOrderTaskForPage, startTasks, setEndDate} from '../services/api.ts';
 import {SearchOutlined, FilterOutlined, PlayCircleOutlined} from '@ant-design/icons';
 import dayjs from 'dayjs';
+import type {OrderTask} from "../services/model.ts";
 
 const {Text} = Typography;
 const {RangePicker} = DatePicker;
@@ -294,7 +295,7 @@ const ApsOrderTasksPage: React.FC = () => {
     };
 
     // 表格列定义
-    const columns: ColumnsType<any> = [
+    const columns: ColumnsType<OrderTask> = [
         {
             title: '任务信息',
             dataIndex: 'taskNo',

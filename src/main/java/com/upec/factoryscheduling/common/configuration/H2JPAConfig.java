@@ -69,7 +69,7 @@
 //        return jpaProperties;
 //    }
 //
-//    @Bean("oracleTransactionManager")
+//    @Bean
 //    public PlatformTransactionManager transactionManager(@Qualifier("h2SessionFactory") EntityManagerFactory factory) {
 //        JpaTransactionManager transactionManager = new JpaTransactionManager(factory);
 //        // 增加事务超时时间到5分钟（300秒），避免长时间运行的事务超时

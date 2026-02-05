@@ -186,8 +186,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .filter((current, previous) ->
                         previous.getMaintenance() != null
                                 && ChronoUnit.DAYS.between(
-                                previous.getMaintenance().getDate(),
-                                current.getMaintenance().getDate()) != 1)
+                                previous.getMaintenance().getCalendarDate(),
+                                current.getMaintenance().getCalendarDate()) != 1)
                 .penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 外协工序必须连续");
     }
@@ -216,8 +216,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .filter((current, next) -> {
                     // 后续工序的开始日期必须在前置工序结束日期的第二天或之后
                     long daysBetween = ChronoUnit.DAYS.between(
-                            current.getMaintenance().getDate(),
-                            next.getMaintenance().getDate());
+                            current.getMaintenance().getCalendarDate(),
+                            next.getMaintenance().getCalendarDate());
                     return daysBetween < 1; // 必须至少间隔0天（同一天结束后第二天开始）
                 }).penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 工序依赖顺序");
@@ -270,14 +270,14 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                     LocalDate latestEndDate = null;
                     for (Timeslot timeslot : timeslots) {
                         if (timeslot.getMaintenance() != null) {
-                            LocalDate endDate = timeslot.getMaintenance().getDate();
+                            LocalDate endDate = timeslot.getMaintenance().getCalendarDate();
                             if (latestEndDate == null || endDate.isAfter(latestEndDate)) {
                                 latestEndDate = endDate;
                             }
                         }
                     }
                     // 后续工序的开始日期必须在所有并行工序结束日期的第二天或之后
-                    return latestEndDate != null && !next.getMaintenance().getDate().isAfter(latestEndDate.plusDays(1));
+                    return latestEndDate != null && !next.getMaintenance().getCalendarDate().isAfter(latestEndDate.plusDays(1));
                 }).penalize(HardMediumSoftScore.ONE_HARD)
                 .asConstraint("硬约束: 并行工序同步");
     }
@@ -335,7 +335,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
                             LocalDate planEnd = timeslot.getProcedure().getTask().getPlanEndDate();
-                            LocalDate actualEnd = timeslot.getMaintenance().getDate();
+                            LocalDate actualEnd = timeslot.getMaintenance().getCalendarDate();
                             long daysDiff = Math.abs(ChronoUnit.DAYS.between(planEnd, actualEnd));
                             // 提前完成给予额外奖励
                             if (actualEnd.isBefore(planEnd)) {
@@ -365,7 +365,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                         max(Comparator.comparing(timeslot -> timeslot.getProcedure().getLevel())))
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         (taskNo, timeslot) -> {
-                            LocalDate endDate = timeslot.getMaintenance().getDate();
+                            LocalDate endDate = timeslot.getMaintenance().getCalendarDate();
                             LocalDate planEndDate = timeslot.getProcedure().getTask().getPlanEndDate();
                             long daysFromNow = 0;
                             if (planEndDate.isBefore(endDate)) {
@@ -400,8 +400,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         (current, previous) -> {
                             long daysBetween = ChronoUnit.DAYS.between(
-                                    previous.getMaintenance().getDate(),
-                                    current.getMaintenance().getDate());
+                                    previous.getMaintenance().getCalendarDate(),
+                                    current.getMaintenance().getCalendarDate());
 
                             // 连续天数给予高奖励，间隔越大奖励越少
                             if (daysBetween == 1) return SOFT_WEIGHT_HIGH * 20; // 连续天
@@ -427,7 +427,7 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                 .reward(HardMediumSoftScore.ONE_SOFT,
                         timeslot -> {
                             int priority = timeslot.getPriority();
-                            LocalDate scheduleDate = timeslot.getMaintenance().getDate();
+                            LocalDate scheduleDate = timeslot.getMaintenance().getCalendarDate();
                             long daysFromNow = ChronoUnit.DAYS.between(today, scheduleDate);
                             // 优先级越高,越早完成,奖励越高
                             int priorityWeight = (priority - 50) * 2; // 50-100映射到0-100
@@ -520,8 +520,8 @@ public class FactorySchedulingConstraintProvider implements ConstraintProvider, 
                     return next.getIndex() == 1;
                 }).penalize(HardMediumSoftScore.ONE_MEDIUM,
                         (previous, next) -> Math.abs((int) ChronoUnit.DAYS.between(
-                                previous.getMaintenance().getDate(),
-                                next.getMaintenance().getDate())))
+                                previous.getMaintenance().getCalendarDate(),
+                                next.getMaintenance().getCalendarDate())))
                 .asConstraint("软约束: 相邻工序时间接近");
     }
 

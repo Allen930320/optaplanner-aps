@@ -9,7 +9,5 @@ import java.util.List;
 @Repository
 public interface MesBaseWorkCenterRepository extends JpaRepository<MesBaseWorkCenter, String> {
 
-    List<MesBaseWorkCenter> findAllByWorkCenterCodeIn(List<String> workCenterCodes);
-
     List<MesBaseWorkCenter> findAllByFactorySeq(String factorySeq);
 }

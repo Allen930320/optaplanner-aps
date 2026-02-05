@@ -7,7 +7,6 @@ import 'regenerator-runtime/runtime';
 import * as dateFns from 'date-fns';
 
 // React相关导入
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 // 导入Ant Design React 19兼容性包
@@ -30,7 +29,5 @@ if (typeof (dateFns as typeof dateFns & { isValid?: (date: Date) => boolean }).i
 }
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>
+  <App />
 );

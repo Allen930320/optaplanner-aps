@@ -7,6 +7,7 @@ import com.upec.factoryscheduling.common.utils.UserContext;
 import com.upec.factoryscheduling.mes.dto.OrderTaskDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
@@ -14,7 +15,7 @@ import org.springframework.util.StringUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Service
+@Repository
 public class OrderTaskQueryImpl extends JdbcTemplatePagination implements OrderTaskQuery {
 
     @Override

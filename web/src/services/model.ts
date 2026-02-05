@@ -19,9 +19,10 @@ export interface OrderTask {
     contractNum: string;
     productCode: string;
     productName: string;
+    createUser: string;
+    createDate: string;
 }
 
-// 任务数据类型定义（适配/api/mesOrders/orderTasks/page接口）
 export interface Task {
     taskNo: string;
     orderNo: string;
@@ -96,7 +97,7 @@ export interface Pageable {
 }
 
 // Spring Data Page接口结构，适配新的返回格式
-export interface SpringDataPage<T> {
+export interface Page<T> {
     content: T[];
     pageable: Pageable;
     last: boolean;
@@ -179,6 +180,9 @@ export interface WorkCenter {
     workCenterCode: string;
     name: string;
     status: string;
+    capacity: number;
+    startTime: string;
+    endTime: string;
 }
 
 // 工序类型定义
@@ -188,7 +192,6 @@ export interface Procedure {
     id: string;
     taskNo: string;
     orderNo: string;
-    workCenterId: WorkCenter | null;
     procedureName: string;
     procedureNo: number;
     machineMinutes: number;
@@ -221,9 +224,9 @@ export interface ProcedureQueryDTO {
     endTime: string | null;
     planStartDate: string;
     planEndDate: string;
-    workCenterName:string;
-    procedureId:string;
-    procedureType:string;
+    workCenterName: string;
+    procedureId: string;
+    procedureType: string;
     timeslotDays: number;
 }
 
@@ -238,45 +241,13 @@ export interface Order {
     factEndDate: string | null;
 }
 
-// 维护计划类型定义
-export interface Maintenance {
-    id: string;
-    workCenter: WorkCenter;
-    year: number;
-    date: string;
-    capacity: number;
-    status: string;
-    description: string | null;
-    startTime: string;
-    endTime: string;
-    usageTime: number;
-    remainingCapacity: number;
-}
-
-// 工作中心详细信息接口
-export interface WorkCenterDetail {
-    seq: string;
-    workCenterCode: string;
-    description: string;
-    costCenterSeq: string;
-    status: string;
-    factorySeq: string;
-    createUser: string;
-    createDate: string;
-    attributes: string;
-    machineHoursCost: string;
-    humanHoursCost: string;
-    workCenterGroup: string | null;
-    remark: string | null;
-}
-
 // 工作中心维护计划接口
 export interface WorkCenterMaintenance {
     id: string;
-    workCenterCode: string;
-    workCenterName?: string;
-    localDate: string;
+    workCenter: WorkCenter;
+    calendarDate: string;
     capacity: number;
+    usageTime: number;
     status: string;
     startTime?: string;
     endTime?: string;
@@ -288,17 +259,23 @@ export interface Timeslot {
     id: string;
     problemId: number;
     procedure: Procedure;
-    order: Order;
-    task: Task;
-    workCenter?: WorkCenter;
     duration: number;
     priority: number;
     startTime: string;
     endTime: string;
-    maintenance: Maintenance;
+    maintenance: WorkCenterMaintenance;
     parallel: boolean;
     manual: boolean;
     index: number;
     total: number;
     procedureIndex: number;
+}
+
+export interface TaskTimeslot {
+    orderNo: string;
+    taskNo: string;
+    contractNum: string;
+    productName: string;
+    productCode: string;
+    timeslots: Timeslot[];
 }

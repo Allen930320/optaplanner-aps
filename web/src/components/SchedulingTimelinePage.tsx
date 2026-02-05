@@ -2,20 +2,12 @@ import React, {useEffect, useState, useCallback} from 'react';
 import {Card, message, Spin, Table, Form, Input, DatePicker, Row, Col, Button, Space, Typography} from 'antd';
 import type {ColumnType} from 'antd/es/table';
 import {queryTimeslots} from '../services/api';
-import type {Timeslot} from '../services/model';
+import type {Timeslot, TaskTimeslot} from '../services/model';
 import moment from 'moment';
 import {SearchOutlined, FilterOutlined} from '@ant-design/icons';
 
-const { Text } = Typography;
+const {Text} = Typography;
 
-interface TaskTimeslot {
-    orderNo: string;
-    taskNo: string;
-    contractNum: string;
-    productCode: string;
-    productName: string;
-    timeslots: Timeslot[];
-}
 
 interface TaskData {
     [key: string]: {
@@ -68,7 +60,7 @@ const SchedulingTimelinePage: React.FC = () => {
         // 合并相同工序的 timeslot 数据块
         const mergeTimeslotsByProcedure = (timeslots: Timeslot[]) => {
             const procedureMap = new Map<string, Timeslot[]>();
-            
+
             // 按工序 ID 分组 timeslot
             timeslots.forEach(ts => {
                 if (ts.procedure) {
@@ -79,17 +71,17 @@ const SchedulingTimelinePage: React.FC = () => {
                     procedureMap.get(procedureId)?.push(ts);
                 }
             });
-            
+
             // 合并每组中的 timeslot
             const mergedTimeslots: Timeslot[] = [];
             procedureMap.forEach((tsList) => {
                 if (tsList.length === 0) return;
-                
+
                 // 取第一个 timeslot 作为基础
                 const baseTs = tsList[0];
                 let minStartTime: Date | null = null;
                 let maxEndTime: Date | null = null;
-                
+
                 // 计算最小开始时间和最大结束时间
                 tsList.forEach(ts => {
                     if (ts.startTime) {
@@ -105,7 +97,7 @@ const SchedulingTimelinePage: React.FC = () => {
                         }
                     }
                 });
-                
+
                 // 创建合并后的 timeslot
                 const mergedTs: Timeslot = {
                     ...baseTs,
@@ -114,16 +106,16 @@ const SchedulingTimelinePage: React.FC = () => {
                     // 合并 duration，取总和
                     duration: tsList.reduce((sum, ts) => sum + (ts.duration || 0), 0)
                 };
-                
+
                 mergedTimeslots.push(mergedTs);
             });
-            
+
             return mergedTimeslots;
         };
-        
+
         // 合并相同工序的 timeslot
         const mergedTimeslots = mergeTimeslotsByProcedure(uniqueTimeslots);
-        
+
         // 按开始时间排序时间槽，确保时间轴上的工序按时间顺序排列
         const sortedTimeslots = [...mergedTimeslots].sort((a, b) => {
             if (!a.startTime) return 1; // 无开始时间的排在后面
@@ -149,14 +141,14 @@ const SchedulingTimelinePage: React.FC = () => {
         // 如果没有时间信息，使用当前时间作为默认值
         if (!minTime) minTime = new Date();
         if (!maxTime) maxTime = new Date(minTime.getTime() + 2 * 60 * 60 * 1000); // 默认2小时时间范围
-        
+
         // 调整时间轴范围：开始时间设为当天0点，结束时间设为当天23:59
         const adjustedMinTime = new Date(minTime);
         adjustedMinTime.setHours(0, 0, 0, 0);
-        
+
         const adjustedMaxTime = new Date(maxTime);
         adjustedMaxTime.setHours(23, 59, 59, 999);
-        
+
         minTime = adjustedMinTime;
         maxTime = adjustedMaxTime;
 
@@ -547,7 +539,8 @@ const SchedulingTimelinePage: React.FC = () => {
                     contractNum: taskTimeslot.contractNum || '',
                     productCode: taskTimeslot.productCode || '',
                     productName: taskTimeslot.productName || '',
-                    dateMap: new Map()};
+                    dateMap: new Map()
+                };
             }
 
             // 处理每个时间槽
@@ -623,7 +616,7 @@ const SchedulingTimelinePage: React.FC = () => {
             // 构建表格行数据
             const row: TableData = {
                 key: taskNo, // 将任务号作为key
-                taskNo:taskNo,
+                taskNo: taskNo,
                 orderNo: data.orderNo,
                 contractNum: data.contractNum || '',
                 productName: data.productName || '',
@@ -748,7 +741,7 @@ const SchedulingTimelinePage: React.FC = () => {
                 // 构建表格数据
                 const table = buildTableData(grouped, dates);
                 // 设置总记录数为分组后的数据条数，解决分页问题
-                setTotal(response.data.totalElements|| 0);
+                setTotal(response.data.totalElements || 0);
                 // 更新表格数据
                 setTableData(table);
             } else {
@@ -776,18 +769,23 @@ const SchedulingTimelinePage: React.FC = () => {
 
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+        <div style={{minHeight: '100vh', backgroundColor: '#f0f2f5'}}>
             {/* 主要内容 */}
-            <div style={{ padding: 2 }}>
+            <div style={{padding: 2}}>
                 {/* 查询条件 */}
                 <Card
                     title={
                         <Space>
-                            <FilterOutlined />
+                            <FilterOutlined/>
                             <Text>查询条件</Text>
                         </Space>
                     }
-                    style={{ marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px' }}
+                    style={{
+                        marginBottom: 6,
+                        borderRadius: 6,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        padding: '8px 6px'
+                    }}
                     extra={
                         <Button
                             type="link"
@@ -798,96 +796,97 @@ const SchedulingTimelinePage: React.FC = () => {
                         </Button>
                     }
                 >
-                <Form
-                    form={form}
-                    layout="horizontal"
-                    labelCol={{ span: 6 }}
-                    wrapperCol={{ span: 18 }}
-                    size="small"
-                    style={{ marginBottom: 0 }}
-                >
-                    <Row gutter={[8, 8]}>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="taskNo" label="任务编号" style={{ marginBottom: 4 }}>
-                                <Input placeholder="请输入任务编号" size="small" style={{ height: 24 }}/>
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productName" label="产品名称" style={{ marginBottom: 4 }}>
-                                <Input placeholder="请输入产品名称" size="small" style={{ height: 24 }}/>
-                            </Form.Item>
-                        </Col>
-                        <Col xs={24} sm={12} md={8} lg={6}>
-                            <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
-                                <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }}/>
-                            </Form.Item>
-                        </Col>
+                    <Form
+                        form={form}
+                        layout="horizontal"
+                        labelCol={{span: 6}}
+                        wrapperCol={{span: 18}}
+                        size="small"
+                        style={{marginBottom: 0}}
+                    >
+                        <Row gutter={[8, 8]}>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="taskNo" label="任务编号" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入任务编号" size="small" style={{height: 24}}/>
+                                </Form.Item>
+                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="productName" label="产品名称" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入产品名称" size="small" style={{height: 24}}/>
+                                </Form.Item>
+                            </Col>
+                            <Col xs={24} sm={12} md={8} lg={6}>
+                                <Form.Item name="productCode" label="产品编码" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入产品编码" size="small" style={{height: 24}}/>
+                                </Form.Item>
+                            </Col>
 
-                        {filterVisible && (
-                            <>
-                                <Col xs={24} sm={12} md={8} lg={6}>
-                                    <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
-                                        <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }}/>
-                                    </Form.Item>
-                                </Col>
-                                <Col xs={24} sm={24} md={16} lg={12}>
-                                    <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
-                                        <DatePicker.RangePicker style={{width: '100%', height: 24 }} size="small"/>
-                                    </Form.Item>
-                                </Col>
-                            </>
-                        )}
+                            {filterVisible && (
+                                <>
+                                    <Col xs={24} sm={12} md={8} lg={6}>
+                                        <Form.Item name="contractNum" label="合同编号" style={{marginBottom: 4}}>
+                                            <Input placeholder="请输入合同编号" size="small" style={{height: 24}}/>
+                                        </Form.Item>
+                                    </Col>
+                                    <Col xs={24} sm={24} md={16} lg={12}>
+                                        <Form.Item name="dateRange" label="日期范围" style={{marginBottom: 4}}>
+                                            <DatePicker.RangePicker style={{width: '100%', height: 24}} size="small"/>
+                                        </Form.Item>
+                                    </Col>
+                                </>
+                            )}
 
-                        <Col xs={24} sm={24} md={8} lg={6}>
-                            <Form.Item label="" style={{ marginBottom: 4 }}>
-                                <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
-                                    <Button
-                                        type="primary"
-                                        size="small"
-                                        icon={<SearchOutlined/>}
-                                        onClick={handleSearch}
-                                        loading={loading}
-                                        style={{ height: 24, padding: '0 12px' }}
-                                    >
-                                        搜索
-                                    </Button>
-                                    <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
-                                </Space>
-                            </Form.Item>
-                        </Col>
-                    </Row>
-                </Form>
+                            <Col xs={24} sm={24} md={8} lg={6}>
+                                <Form.Item label="" style={{marginBottom: 4}}>
+                                    <Space size="small" style={{width: '100%', justifyContent: 'flex-start'}}>
+                                        <Button
+                                            type="primary"
+                                            size="small"
+                                            icon={<SearchOutlined/>}
+                                            onClick={handleSearch}
+                                            loading={loading}
+                                            style={{height: 24, padding: '0 12px'}}
+                                        >
+                                            搜索
+                                        </Button>
+                                        <Button size="small" onClick={handleReset}
+                                                style={{height: 24, padding: '0 12px'}}>重置</Button>
+                                    </Space>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Card>
 
                 <Spin spinning={loading}>
-                <Card style={{borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)'}}>
-                    <Table
-                        columns={generateColumns()}
-                        dataSource={tableData}
-                        scroll={{x: 'max-content', y: 500}}
-                        pagination={{
-                            current: currentPage,
-                            pageSize: pageSize,
-                            total: total,
-                            showSizeChanger: true,
-                            pageSizeOptions: ['10', '20', '50', '100'],
-                            showTotal: (total) => `共 ${total} 条记录`,
-                            showQuickJumper: true,
-                            onChange: handlePaginationChange,
-                            size: 'small'
-                        }}
-                        size="small"
-                        bordered
-                        rowKey="key"
-                        className="scheduling-timeline-table"
-                        style={{borderCollapse: 'collapse'}}
-                    />
-                </Card>
-                {!loading && tableData.length === 0 && (
-                    <div style={{textAlign: 'center', padding: '32px', color: '#999', fontSize: '14px'}}>
-                        暂无调度数据
-                    </div>
-                )}
+                    <Card style={{borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)'}}>
+                        <Table
+                            columns={generateColumns()}
+                            dataSource={tableData}
+                            scroll={{x: 'max-content', y: 500}}
+                            pagination={{
+                                current: currentPage,
+                                pageSize: pageSize,
+                                total: total,
+                                showSizeChanger: true,
+                                pageSizeOptions: ['10', '20', '50', '100'],
+                                showTotal: (total) => `共 ${total} 条记录`,
+                                showQuickJumper: true,
+                                onChange: handlePaginationChange,
+                                size: 'small'
+                            }}
+                            size="small"
+                            bordered
+                            rowKey="key"
+                            className="scheduling-timeline-table"
+                            style={{borderCollapse: 'collapse'}}
+                        />
+                    </Card>
+                    {!loading && tableData.length === 0 && (
+                        <div style={{textAlign: 'center', padding: '32px', color: '#999', fontSize: '14px'}}>
+                            暂无调度数据
+                        </div>
+                    )}
                 </Spin>
 
                 {/* 外协工序时间槽拆分弹窗 */}

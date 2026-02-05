@@ -1,6 +1,5 @@
 package com.upec.factoryscheduling.aps.entity;
 
-import com.upec.factoryscheduling.common.utils.PubFun;
 import com.upec.factoryscheduling.common.utils.RandomFun;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,81 +8,63 @@ import javax.persistence.*;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
-@Entity
-@Table(name = "aps_work_center_maintenance")
-@Getter
 @Setter
+@Getter
+@Entity
+@Table(name = "APS_WORK_CENTER_MAINTENANCE")
 public class WorkCenterMaintenance implements Serializable {
-    private static final long serialVersionUID = 1L;
-
+    // 手动添加getter和setter方法
     @Id
+    @Column(name = "ID", nullable = false, length = 30)
     private String id;
 
+    @JoinColumn(name = "WORK_CENTER")
     @OneToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "work_center")
     private WorkCenter workCenter;
 
-    @Column(name = "calendar_year")
-    private int year;
+    @Column(name = "CALENDAR_DATE", nullable = false, length = 20)
+    private LocalDate calendarDate;
 
-    @Column(name = "calendar_date")
-    private LocalDate date;
-
-    //机器容量(分钟)
+    @Column(name = "CAPACITY", nullable = false)
     private int capacity;
 
-    private String status;
-
-    private String description;
-
-    @Column(name = "start_time")
-    private LocalDateTime startTime;
-
-    @Column(name = "end_time")
-    private LocalDateTime endTime;
-
-    @Column(name = "usage_time")
+    @Column(name = "USAGE_TIME", nullable = false)
     private int usageTime;
 
-    /**
-     * 检查是否还有可用容量
-     */
-    public synchronized boolean hasAvailableCapacity() {
-        return this.capacity >= this.usageTime;
+    @Column(name = "STATUS", nullable = false, length = 20)
+    private String status;
+
+    @Column(name = "START_TIME", nullable = false, length = 20)
+    private LocalDateTime startTime;
+
+    @Column(name = "END_TIME", nullable = false, length = 20)
+    private LocalDateTime endTime;
+
+    @Column(name = "DESCRIPTION", length = 200)
+    private String description;
+
+
+    public void addUsageTime(int usageTime) {
+        this.usageTime += usageTime;
     }
 
-    /**
-     * 获取剩余可用容量
-     */
-    public synchronized int getRemainingCapacity() {
-        return this.capacity - this.usageTime;
+    public void subtractUsageTime(int usageTime) {
+        this.usageTime -= usageTime;
     }
 
-    /**
-     * 累加使用时间 - 线程安全
-     */
-    public synchronized void addUsageTime(int duration) {
-        this.usageTime = this.usageTime + duration;
-    }
-
-    /**
-     * 减少使用时间 - 线程安全
-     */
-    public synchronized void subtractUsageTime(int duration) {
-        this.usageTime = this.usageTime - duration;
-    }
 
     public WorkCenterMaintenance() {
+
     }
 
-    public WorkCenterMaintenance(WorkCenter workCenter, LocalDate date, int capacity, String description) {
+    public WorkCenterMaintenance(WorkCenter workCenter, LocalDate calendarDate) {
         this.workCenter = workCenter;
-        this.date = date;
-        this.capacity = capacity;
-        this.description = description;
+        this.calendarDate = calendarDate;
         this.id = RandomFun.getInstance().getRandom();
+        this.status = workCenter.getStatus();
+        this.capacity = workCenter.getCapacity();
+        this.startTime = calendarDate.atTime(9, 0);
+        this.endTime = calendarDate.atTime(18, 0);
     }
-
 }

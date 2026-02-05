@@ -1,20 +1,28 @@
 import React, {useState, useCallback, useEffect} from 'react';
-import {Card, message, Spin, Table, Tag, Tooltip, Form, Input, DatePicker, Row, Col, Button, Space, Typography} from 'antd';
+import {
+    Card,
+    message,
+    Spin,
+    Table,
+    Tag,
+    Tooltip,
+    Form,
+    Input,
+    DatePicker,
+    Row,
+    Col,
+    Button,
+    Space,
+    Typography
+} from 'antd';
 import type {ColumnType} from 'antd/es/table';
 import {queryTimeslots} from '../services/api';
-import type {Timeslot} from '../services/model';
+import type {Timeslot, TaskTimeslot} from '../services/model';
 import moment from 'moment';
 import {SearchOutlined, FilterOutlined} from '@ant-design/icons';
 
-const { Text } = Typography;
+const {Text} = Typography;
 
-interface TaskTimeslot {
-    taskNo: string;
-    contractNum: string;
-    productName: string;
-    productCode: string;
-    timeslots: Timeslot[];
-}
 
 interface TableData {
     key: string;
@@ -37,7 +45,7 @@ const ProductionSchedulingResultPage: React.FC = () => {
     const [filterVisible, setFilterVisible] = useState(false);
 
     const formatProcedureDetail = (timeslot: Timeslot) => {
-        const {procedure, startTime, endTime, duration,maintenance} = timeslot;
+        const {procedure, startTime, endTime, duration, maintenance} = timeslot;
         const durationHours = duration ? Number((duration).toFixed(2)) : 0;
         return (
             <div style={{fontSize: '12px', lineHeight: '1.5'}}>
@@ -141,7 +149,6 @@ const ProductionSchedulingResultPage: React.FC = () => {
     const extractDates = (data: TaskTimeslot[]) => {
         const dateSet = new Set<string>();
         const today = moment().format('YYYY-MM-DD');
-
         data.forEach(item => {
             if (item.timeslots) {
                 item.timeslots.forEach((timeslot: Timeslot) => {
@@ -341,18 +348,23 @@ const ProductionSchedulingResultPage: React.FC = () => {
     }, []);
 
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+        <div style={{minHeight: '100vh', backgroundColor: '#f0f2f5'}}>
             {/* 主要内容 */}
-            <div style={{ padding: 2 }}>
+            <div style={{padding: 2}}>
                 {/* 查询条件 */}
                 <Card
                     title={
                         <Space>
-                            <FilterOutlined />
+                            <FilterOutlined/>
                             <Text>查询条件</Text>
                         </Space>
                     }
-                    style={{ marginBottom: 6, borderRadius: 6, boxShadow: '0 1px 3px rgba(0,0,0,0.1)', padding: '8px 6px' }}
+                    style={{
+                        marginBottom: 6,
+                        borderRadius: 6,
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+                        padding: '8px 6px'
+                    }}
                     extra={
                         <Button
                             type="link"
@@ -366,57 +378,58 @@ const ProductionSchedulingResultPage: React.FC = () => {
                     <Form
                         form={form}
                         layout="horizontal"
-                        labelCol={{ span: 6 }}
-                        wrapperCol={{ span: 18 }}
+                        labelCol={{span: 6}}
+                        wrapperCol={{span: 18}}
                         size="small"
-                        style={{ marginBottom: 0 }}
+                        style={{marginBottom: 0}}
                     >
                         <Row gutter={[8, 8]}>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="taskNo" label="任务编号" style={{ marginBottom: 4 }}>
-                                    <Input placeholder="请输入任务编号" size="small" style={{ height: 24 }} />
+                                <Form.Item name="taskNo" label="任务编号" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入任务编号" size="small" style={{height: 24}}/>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="productName" label="产品名称" style={{ marginBottom: 4 }}>
-                                    <Input placeholder="请输入产品名称" size="small" style={{ height: 24 }} />
+                                <Form.Item name="productName" label="产品名称" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入产品名称" size="small" style={{height: 24}}/>
                                 </Form.Item>
                             </Col>
                             <Col xs={24} sm={12} md={8} lg={6}>
-                                <Form.Item name="productCode" label="产品编码" style={{ marginBottom: 4 }}>
-                                    <Input placeholder="请输入产品编码" size="small" style={{ height: 24 }} />
+                                <Form.Item name="productCode" label="产品编码" style={{marginBottom: 4}}>
+                                    <Input placeholder="请输入产品编码" size="small" style={{height: 24}}/>
                                 </Form.Item>
                             </Col>
 
                             {filterVisible && (
                                 <>
                                     <Col xs={24} sm={12} md={8} lg={6}>
-                                        <Form.Item name="contractNum" label="合同编号" style={{ marginBottom: 4 }}>
-                                            <Input placeholder="请输入合同编号" size="small" style={{ height: 24 }} />
+                                        <Form.Item name="contractNum" label="合同编号" style={{marginBottom: 4}}>
+                                            <Input placeholder="请输入合同编号" size="small" style={{height: 24}}/>
                                         </Form.Item>
                                     </Col>
                                     <Col xs={24} sm={24} md={16} lg={12}>
-                                        <Form.Item name="dateRange" label="日期范围" style={{ marginBottom: 4 }}>
-                                            <DatePicker.RangePicker style={{ width: '100%', height: 24 }} size="small" />
+                                        <Form.Item name="dateRange" label="日期范围" style={{marginBottom: 4}}>
+                                            <DatePicker.RangePicker style={{width: '100%', height: 24}} size="small"/>
                                         </Form.Item>
                                     </Col>
                                 </>
                             )}
 
                             <Col xs={24} sm={24} md={8} lg={6}>
-                                <Form.Item label="" style={{ marginBottom: 4 }}>
-                                    <Space size="small" style={{ width: '100%', justifyContent: 'flex-start' }}>
+                                <Form.Item label="" style={{marginBottom: 4}}>
+                                    <Space size="small" style={{width: '100%', justifyContent: 'flex-start'}}>
                                         <Button
                                             type="primary"
                                             size="small"
-                                            icon={<SearchOutlined />}
+                                            icon={<SearchOutlined/>}
                                             onClick={handleSearch}
                                             loading={loading}
-                                            style={{ height: 24, padding: '0 12px' }}
+                                            style={{height: 24, padding: '0 12px'}}
                                         >
                                             搜索
                                         </Button>
-                                        <Button size="small" onClick={handleReset} style={{ height: 24, padding: '0 12px' }}>重置</Button>
+                                        <Button size="small" onClick={handleReset}
+                                                style={{height: 24, padding: '0 12px'}}>重置</Button>
                                     </Space>
                                 </Form.Item>
                             </Col>

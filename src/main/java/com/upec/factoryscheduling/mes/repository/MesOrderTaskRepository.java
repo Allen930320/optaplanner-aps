@@ -13,7 +13,4 @@ import java.util.List;
 public interface MesOrderTaskRepository extends JpaRepository<MesOrderTask, String>,
         JpaSpecificationExecutor<MesOrderTask>, MesOrderTaskQuery {
 
-    List<MesOrderTask> queryAllByOrderNoInAndTaskStatusIn(Collection<String> orderNos, Collection<String> taskStatuses);
-
-    List<MesOrderTask> queryAllByTaskNoInAndTaskStatusIn(Collection<String> taskNos, Collection<String> taskStatuses);
 }

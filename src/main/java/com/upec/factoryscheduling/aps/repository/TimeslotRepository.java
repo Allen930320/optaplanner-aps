@@ -16,16 +16,9 @@ import java.util.List;
 public interface TimeslotRepository extends JpaRepository<Timeslot, String>, JpaSpecificationExecutor<Timeslot> {
 
     List<Timeslot> findAllByProcedure_Task_TaskNoIsIn(List<String> taskNos);
-
-    List<Timeslot> findAllByProcedure_Task_TaskNoIsIn(List<String> taskNos, Sort sort);
-
     List<Timeslot> findAllByProcedure_Task_TaskNoIsInAndProcedure_ProcedureTypeIsIn(List<String> taskNos,
                                                                                     List<String> procedureTypes,Sort sort);
     List<Timeslot> findAllByProcedure(Procedure procedure);
-
-    List<Timeslot> findAllByIdIsIn(Collection<String> ids);
-
-    List<Timeslot> findAllByProcedureAndIdNot(Procedure procedure, String id);
 
     @Query("select distinct t1 from Timeslot t1 inner join MesProcedure t2 on t1.procedure.id=t2.seq " +
             " left join MesProcedureJoiner t3 on t3.procedureSeq=t2.seq " +

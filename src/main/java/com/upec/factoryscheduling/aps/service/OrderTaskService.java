@@ -27,7 +27,7 @@ public class OrderTaskService {
         this.taskRepository = taskRepository;
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public List<Task> saveAll(List<Task> tasks) {
         return taskRepository.saveAll(tasks);
     }
@@ -48,7 +48,7 @@ public class OrderTaskService {
         return taskRepository.findById(taskNo).orElse(null);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public void save(Task task) {
         taskRepository.save(task);
     }

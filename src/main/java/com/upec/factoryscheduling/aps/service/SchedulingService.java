@@ -244,7 +244,8 @@ public class SchedulingService {
         // 确定时间范围（基于订单的计划开始和结束日期）
         LocalDate start = LocalDate.now();
         LocalDate end = LocalDate.now().plusDays(20);
-        List<WorkCenterMaintenance> maintenances = maintenanceService.findAllByMachineInAndDateBetween(workCenters, start, end.plusDays(10));
+        List<WorkCenterMaintenance> maintenances =
+                maintenanceService.findAllByWorkCenterCodeAndLocalDateBetween(workCenters, start, end.plusDays(10));
         return new FactorySchedulingSolution(timeslots, maintenances);
     }
 
@@ -324,7 +325,7 @@ public class SchedulingService {
      *
      * @param solution FactorySchedulingSolution - 求解器生成的调度解决方案
      */
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public void saveSolution(FactorySchedulingSolution solution) {
         log.info("开始保存调度解决方案");
 
@@ -461,19 +462,11 @@ public class SchedulingService {
      * @return FactorySchedulingSolution - 包含所有已保存数据的解决方案对象
      */
     public FactorySchedulingSolution getFinalBestSolution() {
-        // 初始化数据容器
         List<Timeslot> timeslots = new ArrayList<>();
         List<WorkCenterMaintenance> maintenances = new ArrayList<>();
-        // 获取所有时间槽数据
         if (timeslotService != null) {
-            // 直接从时间槽服务获取所有时间槽
             timeslots = timeslotService.findAll().getTimeslots();
         }
-        // 获取所有维护记录
-        if (maintenanceService != null) {
-            maintenances = maintenanceService.getAllMaintenances();
-        }
-        // 使用正确的构造函数创建解决方案实例
         return new FactorySchedulingSolution(timeslots, maintenances);
     }
 
@@ -519,91 +512,5 @@ public class SchedulingService {
         FactorySchedulingSolution solution = getBestSolution(problemId);
         // 使用解决方案管理器生成解释
         return solutionManager.explain(solution);
-    }
-
-    /**
-     * 删除所有调度相关数据
-     * <p>清空系统中的所有调度数据，包括时间槽、维护记录、工作中心、订单和工序信息。
-     * 此方法主要用于测试或系统重置场景，谨慎使用。</p>
-     */
-    @Transactional("oracleTransactionManager")
-    public void delete() {
-        // 按顺序删除所有相关数据
-        timeslotService.deleteAll();
-        maintenanceService.deleteAll();
-        workCenterService.deleteAll();
-        orderService.deleteAll();
-        processService.deleteAll();
-    }
-
-
-    /**
-     * 验证解决方案的约束满足情况
-     * <p>对调度解决方案进行额外的业务规则验证，主要检查：
-     * 1. 是否超出设备每日容量限制
-     * 2. 设备使用时间是否存在重叠
-     * 只验证手动设置的时间槽。</p>
-     *
-     * @param solution 需要验证的解决方案
-     * @return 验证后的解决方案，包含验证结果信息
-     */
-    public FactorySchedulingSolution validation(FactorySchedulingSolution solution) {
-        // 初始化验证结果列表
-        List<ValidateSolution> validateSolutions = new ArrayList<>();
-        List<Timeslot> timeslots = solution.getTimeslots();
-        // 按设备和日期分组时间槽
-        Map<String, List<Timeslot>> map = timeslots.stream()
-                .collect(Collectors.groupingBy(timeslot ->
-                        timeslot.getProcedure().getWorkCenter().getWorkCenterCode() + "-" +
-                                timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))));
-        // 遍历每个时间槽进行验证
-        for (Timeslot timeslot : timeslots) {
-            // 只验证手动设置的时间槽
-            if (!timeslot.isManual()) {
-                continue;
-            }
-            // 构建当前时间槽的设备-日期键
-            String key = timeslot.getProcedure().getWorkCenter().getWorkCenterCode() + "-" +
-                    timeslot.getStartTime().toLocalDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-            // 获取同一天同一设备的所有时间槽
-            List<Timeslot> timeslotList = map.get(key);
-            // 计算当日累计使用工时
-            double countDailyHours = timeslotList.stream()
-                    .mapToDouble(Timeslot::getDuration)
-                    .sum();
-            // 获取时间和设备信息
-            LocalDateTime dateTime = timeslot.getStartTime();
-            WorkCenter workCenter = timeslot.getProcedure().getWorkCenter();
-            // 获取设备当日的维护计划（包含容量信息）
-            WorkCenterMaintenance maintenance = maintenanceService.findFirstByMachineAndDate(workCenter, dateTime.toLocalDate());
-            // 创建验证结果对象
-            ValidateSolution validateSolution = new ValidateSolution(
-                    timeslot.getProcedure(),
-                    timeslot.getProcedure().getOrder(),
-                    timeslot.getMaintenance().getWorkCenter(),
-                    maintenance);
-            // 检查是否超出设备容量
-            if (countDailyHours > maintenance.getCapacity()) {
-                validateSolution.setMessage("超出当日机器容量!");
-            }
-            // 检查时间重叠
-            long overlapTime = timeslotList.stream()
-                    .mapToLong(t -> DateTimeCalculatorUtil.overlapTime(
-                            timeslot.getStartTime().getMinute(),
-                            timeslot.getStartTime().plusMinutes(timeslot.getDuration() * 60L).getMinute(),
-                            t.getStartTime().getMinute(),
-                            t.getStartTime().plusMinutes(t.getStartTime().getMinute()).getMinute()))
-                    .sum();
-            if (overlapTime > 0) {
-                validateSolution.setMessage("当日机器使用时间有重叠部分");
-            }
-            // 添加到验证结果列表
-            validateSolutions.add(validateSolution);
-            // 更新时间槽的维护计划信息
-            timeslot.setMaintenance(maintenance);
-        }
-        // 更新解决方案对象
-        solution.setTimeslots(timeslots);
-        return solution;
     }
 }

@@ -25,27 +25,27 @@ public class OrderService {
         return orderRepository.findById(id);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public Order save(Order order) {
         return orderRepository.save(order);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public List<Order> createOrders(List<Order> orders) {
         return orderRepository.saveAll(orders);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public void deleteOrder(String id) {
         orderRepository.deleteById(id);
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public void deleteAll() {
         orderRepository.deleteAll();
     }
 
-    @Transactional("oracleTransactionManager")
+    @Transactional
     public List<Order> saveAll(List<Order> orders) {
         return orderRepository.saveAll(orders);
     }
